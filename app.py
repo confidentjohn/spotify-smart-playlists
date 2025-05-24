@@ -45,6 +45,11 @@ def run_tracker():
         return f"Error: {str(e)}"
 
 
+@app.route('/init-db')
+def init_db():
+    import subprocess
+    result = subprocess.run(['python', 'init_db.py'], capture_output=True, text=True)
+    return f"<pre>{result.stdout or result.stderr}</pre>"
 
 
 
