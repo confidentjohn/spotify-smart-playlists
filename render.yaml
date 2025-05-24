@@ -11,5 +11,41 @@ services:
         sync: false
       - key: SPOTIFY_REDIRECT_URI
         sync: false
+      - key: SPOTIFY_REFRESH_TOKEN
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
       - key: FLASK_SECRET
         sync: false
+
+cronjobs:
+  - name: track-spotify-plays
+    schedule: "@hourly"
+    command: "python track_plays.py"
+    envVars:
+      - key: SPOTIFY_CLIENT_ID
+        fromService: spotify-oauth-tracker
+      - key: SPOTIFY_CLIENT_SECRET
+        fromService: spotify-oauth-tracker
+      - key: SPOTIFY_REDIRECT_URI
+        fromService: spotify-oauth-tracker
+      - key: SPOTIFY_REFRESH_TOKEN
+        fromService: spotify-oauth-tracker
+      - key: DB_HOST
+        fromService: spotify-oauth-tracker
+      - key: DB_PORT
+        fromService: spotify-oauth-tracker
+      - key: DB_NAME
+        fromService: spotify-oauth-tracker
+      - key: DB_USER
+        fromService: spotify-oauth-tracker
+      - key: DB_PASSWORD
+        fromService: spotify-oauth-tracker
