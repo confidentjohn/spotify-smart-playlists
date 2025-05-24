@@ -11,33 +11,35 @@ conn = psycopg2.connect(
 
 cur = conn.cursor()
 
+# Create or ensure albums table
 cur.execute("""
 CREATE TABLE IF NOT EXISTS albums (
     id TEXT PRIMARY KEY,
     name TEXT,
     artist TEXT,
     release_date TEXT,
-    total_tracks INTEGER
+    total_tracks INTEGER,
+    is_saved BOOLEAN DEFAULT TRUE
 );
 """)
 
-
+# Create or ensure tracks table
 cur.execute("""
 CREATE TABLE IF NOT EXISTS tracks (
     id TEXT PRIMARY KEY,
     name TEXT,
     artist TEXT,
     album TEXT,
-    is_liked BOOLEAN
+    is_liked BOOLEAN DEFAULT FALSE,
+    from_album BOOLEAN DEFAULT FALSE
 );
 """)
 
-# Add this inside or after your CREATE TABLE tracks block
-cur.execute("""
-ALTER TABLE tracks
-ADD COLUMN IF NOT EXISTS from_album BOOLEAN DEFAULT FALSE;
-""")
+# Add the columns in case the table already existed before
+cur.execute("""ALTER TABLE albums ADD COLUMN IF NOT EXISTS is_saved BOOLEAN DEFAULT TRUE;""")
+cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS is_liked BOOLEAN DEFAULT FALSE;""")
 
+# Plays table
 cur.execute("""
 CREATE TABLE IF NOT EXISTS plays (
     id SERIAL PRIMARY KEY,
@@ -47,12 +49,8 @@ CREATE TABLE IF NOT EXISTS plays (
 );
 """)
 
-
-
-
-
 conn.commit()
 cur.close()
 conn.close()
 
-print("✅ Tables created successfully.")
+print("✅ Tables created and updated successfully.")
