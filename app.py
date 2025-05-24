@@ -51,6 +51,12 @@ def init_db():
     result = subprocess.run(['python', 'init_db.py'], capture_output=True, text=True)
     return f"<pre>{result.stdout or result.stderr}</pre>"
 
+@app.route('/sync-library')
+def sync_library():
+    import subprocess
+    result = subprocess.run(['python', 'sync_library.py'], capture_output=True, text=True)
+    return f"<pre>{result.stdout or result.stderr}</pre>"
+
 
 
 
