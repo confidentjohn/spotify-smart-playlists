@@ -57,6 +57,12 @@ def sync_library():
     result = subprocess.run(['python', 'sync_library.py'], capture_output=True, text=True)
     return f"<pre>{result.stdout or result.stderr}</pre>"
 
+@app.route('/sync-albums')
+def sync_albums():
+    import subprocess
+    result = subprocess.run(['python', 'sync_albums.py'], capture_output=True, text=True)
+    return f"<pre>{result.stdout or result.stderr}</pre>"
+
 
 
 

@@ -12,6 +12,17 @@ conn = psycopg2.connect(
 cur = conn.cursor()
 
 cur.execute("""
+CREATE TABLE IF NOT EXISTS albums (
+    id TEXT PRIMARY KEY,
+    name TEXT,
+    artist TEXT,
+    release_date TEXT,
+    total_tracks INTEGER
+);
+""")
+
+
+cur.execute("""
 CREATE TABLE IF NOT EXISTS tracks (
     id TEXT PRIMARY KEY,
     name TEXT,
