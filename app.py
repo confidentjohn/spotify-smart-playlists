@@ -16,7 +16,7 @@ def login():
         client_id=os.environ['SPOTIFY_CLIENT_ID'],
         client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
         redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
-        scope="user-read-recently-played"
+        scope="user-read-recently-played user-library-read"
     )
     return redirect(sp_oauth.get_authorize_url())
 
@@ -26,7 +26,7 @@ def callback():
         client_id=os.environ['SPOTIFY_CLIENT_ID'],
         client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
         redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
-        scope="user-read-recently-played"
+        scope="user-read-recently-played user-library-read"
     )
     code = request.args.get('code')
     token_info = sp_oauth.get_access_token(code)
