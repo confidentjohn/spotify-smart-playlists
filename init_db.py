@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS plays (
 );
 """)
 
+
+
 conn.commit()
 cur.close()
 conn.close()
