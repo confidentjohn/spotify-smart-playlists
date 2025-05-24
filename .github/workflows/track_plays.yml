@@ -1,4 +1,6 @@
+# Trigger redeploy
 name: Track Spotify Plays
+
 
 on:
   schedule:
