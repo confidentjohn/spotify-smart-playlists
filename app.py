@@ -1,0 +1,33 @@
+from flask import Flask, request, redirect
+import os
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+
+app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
+
+@app.route('/')
+def index():
+    return '<a href="/login">Login with Spotify</a>'
+
+@app.route('/login')
+def login():
+    sp_oauth = SpotifyOAuth(
+        client_id=os.environ['SPOTIFY_CLIENT_ID'],
+        client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
+        redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
+        scope="user-read-recently-played"
+    )
+    return redirect(sp_oauth.get_authorize_url())
+
+@app.route('/callback')
+def callback():
+    sp_oauth = SpotifyOAuth(
+        client_id=os.environ['SPOTIFY_CLIENT_ID'],
+        client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
+        redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
+        scope="user-read-recently-played"
+    )
+    code = request.args.get('code')
+    token_info = sp_oauth.get_access_token(code)
+    return f"✅ Refresh Token: <code>{token_info['refresh_token']}</code>"
