@@ -32,6 +32,23 @@ def callback():
     token_info = sp_oauth.get_access_token(code)
     return f"✅ Refresh Token: <code>{token_info['refresh_token']}</code>"
 
+
+
+import subprocess
+
+@app.route('/run-tracker')
+def run_tracker():
+    try:
+        result = subprocess.run(['python', 'track_plays.py'], capture_output=True, text=True)
+        return f"<pre>{result.stdout or result.stderr}</pre>"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
+
+
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
