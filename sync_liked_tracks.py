@@ -18,7 +18,7 @@ def get_access_token():
     )
     return auth_response.json()['access_token']
 
-# Acquire exclusive lock
+# Acquire exclusive lock to avoid overlap with album sync
 with open(LOCK_FILE, 'w') as lock_file:
     try:
         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -37,6 +37,9 @@ with open(LOCK_FILE, 'w') as lock_file:
         port=os.environ.get('DB_PORT', 5432),
     )
     cur = conn.cursor()
+
+    # Reset all liked flags before re-syncing
+    cur.execute("UPDATE tracks SET is_liked = FALSE")
 
     limit = 50
     offset = 0
@@ -75,5 +78,3 @@ with open(LOCK_FILE, 'w') as lock_file:
     cur.close()
     conn.close()
     print("✅ Synced saved tracks from library.")
-
-    # Lock will auto-release when file closes
