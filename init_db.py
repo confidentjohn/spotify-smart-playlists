@@ -32,6 +32,12 @@ CREATE TABLE IF NOT EXISTS tracks (
 );
 """)
 
+# Add this inside or after your CREATE TABLE tracks block
+cur.execute("""
+ALTER TABLE tracks
+ADD COLUMN IF NOT EXISTS from_album BOOLEAN DEFAULT FALSE;
+""")
+
 cur.execute("""
 CREATE TABLE IF NOT EXISTS plays (
     id SERIAL PRIMARY KEY,
@@ -40,6 +46,8 @@ CREATE TABLE IF NOT EXISTS plays (
     UNIQUE(track_id, played_at)
 );
 """)
+
+
 
 
 
