@@ -1,7 +1,10 @@
 import os
 import psycopg2
 import requests
+import fcntl
 from spotipy import Spotify
+
+LOCK_FILE = "/tmp/sync_library.lock"
 
 def get_access_token():
     auth_response = requests.post(
@@ -15,45 +18,62 @@ def get_access_token():
     )
     return auth_response.json()['access_token']
 
-access_token = get_access_token()
-sp = Spotify(auth=access_token)
+# Acquire exclusive lock
+with open(LOCK_FILE, 'w') as lock_file:
+    try:
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        print("❌ Another sync is already running.")
+        exit(1)
 
-conn = psycopg2.connect(
-    dbname=os.environ['DB_NAME'],
-    user=os.environ['DB_USER'],
-    password=os.environ['DB_PASSWORD'],
-    host=os.environ['DB_HOST'],
-    port=os.environ.get('DB_PORT', 5432),
-)
-cur = conn.cursor()
+    access_token = get_access_token()
+    sp = Spotify(auth=access_token)
 
-limit = 50
-offset = 0
-while True:
-    results = sp.current_user_saved_tracks(limit=limit, offset=offset)
-    tracks = results['items']
+    conn = psycopg2.connect(
+        dbname=os.environ['DB_NAME'],
+        user=os.environ['DB_USER'],
+        password=os.environ['DB_PASSWORD'],
+        host=os.environ['DB_HOST'],
+        port=os.environ.get('DB_PORT', 5432),
+    )
+    cur = conn.cursor()
 
-    if not tracks:
-        break
+    limit = 50
+    offset = 0
+    batch_size = 50
+    counter = 0
 
-    for item in tracks:
-        track = item['track']
-        track_id = track['id']
-        name = track['name']
-        artist = track['artists'][0]['name']
-        album = track['album']['name']
+    while True:
+        results = sp.current_user_saved_tracks(limit=limit, offset=offset)
+        tracks = results['items']
 
-        cur.execute("""
-            INSERT INTO tracks (id, name, artist, album, is_liked)
-            VALUES (%s, %s, %s, %s, TRUE)
-            ON CONFLICT (id) DO UPDATE SET is_liked = TRUE;
-        """, (track_id, name, artist, album))
+        if not tracks:
+            break
 
-    offset += len(tracks)
-    if len(tracks) < limit:
-        break
+        for item in tracks:
+            track = item['track']
+            track_id = track['id']
+            name = track['name']
+            artist = track['artists'][0]['name']
+            album = track['album']['name']
 
-conn.commit()
-cur.close()
-conn.close()
-print("✅ Synced saved tracks from library.")
+            cur.execute("""
+                INSERT INTO tracks (id, name, artist, album, is_liked)
+                VALUES (%s, %s, %s, %s, TRUE)
+                ON CONFLICT (id) DO UPDATE SET is_liked = TRUE;
+            """, (track_id, name, artist, album))
+
+            counter += 1
+            if counter % batch_size == 0:
+                conn.commit()
+
+        offset += len(tracks)
+        if len(tracks) < limit:
+            break
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    print("✅ Synced saved tracks from library.")
+
+    # Lock will auto-release when file closes
