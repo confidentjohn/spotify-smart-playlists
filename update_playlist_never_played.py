@@ -1,9 +1,12 @@
 import os
+import re
 import psycopg2
 import requests
 from spotipy import Spotify
 
-# ─────────────── Spotify Auth ────────────────
+# ─────────────────────────────────────────────
+# Auth with Spotipy
+# ─────────────────────────────────────────────
 def get_access_token():
     auth_response = requests.post(
         'https://accounts.spotify.com/api/token',
@@ -21,7 +24,9 @@ sp = Spotify(auth=access_token)
 user_id = sp.current_user()["id"]
 print(f"🔐 Authenticated as: {user_id}", flush=True)
 
-# ───────────── PostgreSQL Connection ─────────────
+# ─────────────────────────────────────────────
+# Connect to PostgreSQL
+# ─────────────────────────────────────────────
 conn = psycopg2.connect(
     dbname=os.environ["DB_NAME"],
     user=os.environ["DB_USER"],
@@ -31,8 +36,11 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor()
 
-# ───────────── Find Playlist ID ─────────────
+# ─────────────────────────────────────────────
+# Get playlist ID from mappings table
+# ─────────────────────────────────────────────
 playlist_name = "Never Played"
+
 cur.execute("SELECT playlist_id FROM playlist_mappings WHERE name = %s", (playlist_name,))
 row = cur.fetchone()
 
@@ -40,10 +48,17 @@ if not row:
     print(f"❌ Playlist name '{playlist_name}' not found in playlist_mappings.")
     exit(1)
 
-playlist_id = row[0]
-print(f"📎 Playlist mapping found → {playlist_id}", flush=True)
+playlist_url = row[0]
+match = re.search(r"playlist/([a-zA-Z0-9]+)", playlist_url)
+if not match:
+    print("❌ Failed to extract playlist ID from URL.")
+    exit(1)
+playlist_id = match.group(1)
+print(f"📎 Extracted playlist ID: {playlist_id}", flush=True)
 
-# ───────────── Build Track List ─────────────
+# ─────────────────────────────────────────────
+# Fetch unplayed tracks (limit to 9000)
+# ─────────────────────────────────────────────
 cur.execute('''
     SELECT 'spotify:track:' || t.id
     FROM tracks t
@@ -54,34 +69,21 @@ cur.execute('''
     LIMIT 9000
 ''')
 rows = cur.fetchall()
-track_uris = [row[0] for row in rows if row[0]]
-
-if not track_uris:
-    print("⚠️ No unplayed tracks found.")
-    cur.close()
-    conn.close()
-    exit(0)
+track_uris = [row[0] for row in rows]
 
 print(f"🎯 Preparing to upload {len(track_uris)} tracks", flush=True)
 
-# ───────────── Verify Playlist Ownership ─────────────
-playlist_info = sp.playlist(playlist_id)
-playlist_owner = playlist_info['owner']['id']
-if playlist_owner != user_id:
-    print(f"⚠️ Playlist owner is {playlist_owner}, but logged in as {user_id}. Cannot modify.")
-    exit(1)
-
-# ───────────── Clear Playlist ─────────────
+# ─────────────────────────────────────────────
+# Replace playlist content
+# ─────────────────────────────────────────────
 print("🧹 Clearing existing playlist contents...", flush=True)
 sp.playlist_replace_items(playlist_id, [])
 
-# ───────────── Add New Tracks ─────────────
-print("🎶 Uploading tracks in batches...", flush=True)
+print("➕ Adding tracks in batches of 100...", flush=True)
 for i in range(0, len(track_uris), 100):
-    batch = track_uris[i:i+100]
-    print(f"➕ Adding batch {i//100 + 1}: {len(batch)} tracks", flush=True)
-    sp.playlist_add_items(playlist_id, batch)
+    sp.playlist_add_items(playlist_id, track_uris[i:i + 100])
+    print(f"   → Added {i + len(track_uris[i:i + 100])} / {len(track_uris)}", flush=True)
 
 cur.close()
 conn.close()
-print("✅ Playlist successfully updated.")
+print("✅ Playlist sync complete.")
