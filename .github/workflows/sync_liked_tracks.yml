@@ -1,12 +1,12 @@
-name: Sync Spotify Albums
+name: Sync Liked Tracks
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Every day at 2am UTC
+    - cron: '30 2 * * *'  # Every day at 2:30am UTC
   workflow_dispatch:
 
 jobs:
-  sync-albums:
+  sync-liked:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -20,8 +20,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run sync_albums
-        run: python sync_albums.py
+      - name: Run sync_liked_tracks
+        run: python sync_liked_tracks.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
