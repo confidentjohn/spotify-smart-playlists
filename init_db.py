@@ -59,7 +59,7 @@ cur.execute("""
 CREATE TABLE IF NOT EXISTS playlist_mappings (
     slug TEXT PRIMARY KEY,
     name TEXT,
-    playlist_id TEXT,
+    playlist_id TEXT
 );
 """)
 
