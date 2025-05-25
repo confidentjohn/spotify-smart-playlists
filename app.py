@@ -79,6 +79,10 @@ def update_oldest_played_playlist():
 def update_playlist_most_played():
     return run_script('update_playlist_most_played.py')
 
+@app.route('/update-playlist-loved-added-last-30-days')
+def update_playlist_loved_added_last_30_days():
+    return run_script('update_playlist_loved_added_last_30_days.py')
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
