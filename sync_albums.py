@@ -29,6 +29,7 @@ cur = conn.cursor()
 
 limit = 20
 offset = 0
+current_album_ids = set()
 
 while True:
     results = sp.current_user_saved_albums(limit=limit, offset=offset)
@@ -45,35 +46,54 @@ while True:
         release_date = album.get('release_date')
         total_tracks = album.get('total_tracks')
 
-        # Insert album record
+        current_album_ids.add(album_id)
+
+        # Insert or update album
         cur.execute("""
-            INSERT INTO albums (id, name, artist, release_date, total_tracks)
-            VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (id) DO NOTHING;
+            INSERT INTO albums (id, name, artist, release_date, total_tracks, is_saved)
+            VALUES (%s, %s, %s, %s, %s, TRUE)
+            ON CONFLICT (id) DO UPDATE SET is_saved = TRUE;
         """, (album_id, name, artist, release_date, total_tracks))
 
-        # Insert each track in the album into the tracks table
+        # Insert tracks for this album
         album_tracks = sp.album(album_id)['tracks']['items']
         for track in album_tracks:
             track_id = track['id']
             track_name = track['name']
             track_artist = track['artists'][0]['name']
-            track_album = album['name']
+            track_album = name
             track_number = track.get("track_number") or 1
 
             cur.execute("""
                 INSERT INTO tracks (id, name, artist, album, is_liked, from_album, track_number)
                 VALUES (%s, %s, %s, %s, FALSE, TRUE, %s)
                 ON CONFLICT (id) DO UPDATE SET
-                from_album = TRUE,
-                track_number = EXCLUDED.track_number;
+                    from_album = TRUE,
+                    track_number = EXCLUDED.track_number;
             """, (track_id, track_name, track_artist, track_album, track_number))
 
     offset += len(items)
     if len(items) < limit:
         break
 
+# Mark removed albums
+cur.execute("""
+    UPDATE albums
+    SET is_saved = FALSE
+    WHERE id NOT IN %s
+""", (tuple(current_album_ids),))
+
+# Mark tracks from removed albums
+cur.execute("""
+    UPDATE tracks
+    SET from_album = FALSE
+    WHERE album IN (
+        SELECT name FROM albums WHERE is_saved = FALSE
+    )
+""")
+
 conn.commit()
 cur.close()
 conn.close()
+
 print("✅ Synced saved albums and their tracks.")
