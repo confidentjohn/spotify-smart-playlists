@@ -1,16 +1,13 @@
-# Trigger redeploy
 name: Track Spotify Plays
-
 
 on:
   schedule:
-    - cron: '0 * * * *'  # every hour
-  workflow_dispatch:     # allows manual run from GitHub UI
+    - cron: '0 * * * *'  # Every hour
+  workflow_dispatch:
 
 jobs:
-  run-tracker:
+  track-plays:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -23,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tracker
+      - name: Run track_plays
         run: python track_plays.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
