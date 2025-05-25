@@ -34,6 +34,22 @@ conn = psycopg2.connect(
 cur = conn.cursor()
 
 # ─────────────────────────────────────────────
+# Fetch playlist ID from playlist_mappings table
+# ─────────────────────────────────────────────
+playlist_name = "🎧 Never Played Tracks"
+cur.execute("SELECT playlist_id FROM playlist_mappings WHERE name = %s", (playlist_name,))
+row = cur.fetchone()
+
+if not row:
+    print(f"❌ Playlist name '{playlist_name}' not found in playlist_mappings table.")
+    cur.close()
+    conn.close()
+    exit()
+
+playlist_id = row[0]
+print(f"📎 Found playlist mapping → ID: {playlist_id}")
+
+# ─────────────────────────────────────────────
 # Fetch unplayed tracks (limit to 9000)
 # ─────────────────────────────────────────────
 cur.execute('''
@@ -56,31 +72,10 @@ if not track_uris:
     exit()
 
 # ─────────────────────────────────────────────
-# Locate existing playlist
-# ─────────────────────────────────────────────
-playlist_name = "🎧 Never Played Tracks"
-user_id = sp.current_user()["id"]
-
-print("📋 Searching user playlists...")
-playlists = sp.current_user_playlists(limit=50)
-playlist_id = None
-
-for pl in playlists["items"]:
-    print(f"🔎 Found playlist: {pl['name']} ({pl['id']})")
-    if pl["name"] == playlist_name:
-        playlist_id = pl["id"]
-
-if not playlist_id:
-    print(f"❌ Playlist '{playlist_name}' not found. Please create it manually.")
-    cur.close()
-    conn.close()
-    exit()
-
-# ─────────────────────────────────────────────
 # Clear and update the playlist
 # ─────────────────────────────────────────────
-print(f"📝 Updating existing playlist: {playlist_name}")
-sp.playlist_replace_items(playlist_id, [])  # Clear existing contents
+print(f"📝 Replacing contents of playlist ID {playlist_id}")
+sp.playlist_replace_items(playlist_id, [])  # Clear
 
 print(f"🎶 Adding {len(track_uris)} tracks to playlist...")
 for i in range(0, len(track_uris), 100):
