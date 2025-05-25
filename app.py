@@ -63,6 +63,9 @@ def sync_albums():
     result = subprocess.run(['python', 'sync_albums.py'], capture_output=True, text=True)
     return f"<pre>{result.stdout or result.stderr}</pre>"
 
+@app.route('/drop-tables')
+def drop_tables():
+    return run_script('drop_tables.py')
 
 
 
