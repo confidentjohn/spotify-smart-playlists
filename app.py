@@ -67,6 +67,10 @@ def sync_library():
 def update_never_played_playlist():
     return run_script('update_playlist_never_played.py')
 
+@app.route('/update-played-once-playlist')
+def update_played_once_playlist():
+    return run_script('update_playlist_played_once.py')
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
