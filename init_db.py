@@ -41,7 +41,8 @@ cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS album_id TEXT;""")
 cur.execute("""ALTER TABLE albums ADD COLUMN IF NOT EXISTS is_saved BOOLEAN DEFAULT TRUE;""")
 cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS is_liked BOOLEAN DEFAULT FALSE;""")
 cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS track_number INTEGER;""")
-
+cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS added_at TIMESTAMP;""")
+cur.execute("""ALTER TABLE albums ADD COLUMN IF NOT EXISTS added_at TIMESTAMP;""")
 
 # Plays table
 cur.execute("""
@@ -50,6 +51,15 @@ CREATE TABLE IF NOT EXISTS plays (
     track_id TEXT REFERENCES tracks(id),
     played_at TIMESTAMP,
     UNIQUE(track_id, played_at)
+);
+""")
+
+# Playlist mapping table
+cur.execute("""
+CREATE TABLE IF NOT EXISTS playlist_mappings (
+    slug TEXT PRIMARY KEY,
+    name TEXT,
+    playlist_id TEXT,
 );
 """)
 

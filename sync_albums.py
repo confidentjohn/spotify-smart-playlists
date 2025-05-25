@@ -45,15 +45,15 @@ while True:
         artist = album['artists'][0]['name']
         release_date = album.get('release_date')
         total_tracks = album.get('total_tracks')
-
+        added_at = item.get('added_at')
         current_album_ids.add(album_id)
 
         # Insert or update album
         cur.execute("""
-            INSERT INTO albums (id, name, artist, release_date, total_tracks, is_saved)
-            VALUES (%s, %s, %s, %s, %s, TRUE)
+            INSERT INTO albums (id, name, artist, release_date, total_tracks, is_saved, added_at)
+            VALUES (%s, %s, %s, %s, %s, TRUE, %s)
             ON CONFLICT (id) DO UPDATE SET is_saved = TRUE;
-        """, (album_id, name, artist, release_date, total_tracks))
+        """, (album_id, name, artist, release_date, total_tracks, added_at))
 
         # Insert tracks for this album
         album_tracks = sp.album(album_id)['tracks']['items']
@@ -65,14 +65,13 @@ while True:
             track_number = track.get("track_number") or 1
 
             cur.execute("""
-    INSERT INTO tracks (id, name, artist, album, album_id, is_liked, from_album, track_number)
-    VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s)
-    ON CONFLICT (id) DO UPDATE SET
-        from_album = TRUE,
-        track_number = EXCLUDED.track_number,
-        album_id = EXCLUDED.album_id;
-""", (track_id, track_name, track_artist, track_album, album_id, track_number))
-
+                INSERT INTO tracks (id, name, artist, album, album_id, is_liked, from_album, track_number, added_at)
+                VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    from_album = TRUE,
+                    track_number = EXCLUDED.track_number,
+                    album_id = EXCLUDED.album_id;
+            """, (track_id, track_name, track_artist, track_album, album_id, track_number, added_at))
 
     offset += len(items)
     if len(items) < limit:
