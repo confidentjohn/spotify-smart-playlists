@@ -58,10 +58,6 @@ def sync_albums():
 def sync_liked_tracks():
     return run_script('sync_liked_tracks.py')
 
-@app.route('/drop-tables')
-def drop_tables():
-    return run_script('drop_tables.py')
-
 @app.route('/sync-library')
 def sync_library():
     return run_script('sync_liked_tracks.py')
