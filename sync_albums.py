@@ -59,12 +59,15 @@ while True:
             track_name = track['name']
             track_artist = track['artists'][0]['name']
             track_album = album['name']
+            track_number = track.get("track_number")
 
             cur.execute("""
-                INSERT INTO tracks (id, name, artist, album, is_liked, from_album)
-                VALUES (%s, %s, %s, %s, FALSE, TRUE)
-                ON CONFLICT (id) DO UPDATE SET from_album = TRUE;
-            """, (track_id, track_name, track_artist, track_album))
+                INSERT INTO tracks (id, name, artist, album, is_liked, from_album, track_number)
+                VALUES (%s, %s, %s, %s, FALSE, TRUE, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                from_album = TRUE,
+                track_number = EXCLUDED.track_number;
+            """, (track_id, track_name, track_artist, track_album, track_number))
 
     offset += len(items)
     if len(items) < limit:

@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS tracks (
 # Add the columns in case the table already existed before
 cur.execute("""ALTER TABLE albums ADD COLUMN IF NOT EXISTS is_saved BOOLEAN DEFAULT TRUE;""")
 cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS is_liked BOOLEAN DEFAULT FALSE;""")
+cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS track_number INTEGER;""")
+
 
 # Plays table
 cur.execute("""
