@@ -65,12 +65,14 @@ while True:
             track_number = track.get("track_number") or 1
 
             cur.execute("""
-                INSERT INTO tracks (id, name, artist, album, is_liked, from_album, track_number)
-                VALUES (%s, %s, %s, %s, FALSE, TRUE, %s)
-                ON CONFLICT (id) DO UPDATE SET
-                    from_album = TRUE,
-                    track_number = EXCLUDED.track_number;
-            """, (track_id, track_name, track_artist, track_album, track_number))
+    INSERT INTO tracks (id, name, artist, album, album_id, is_liked, from_album, track_number)
+    VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s)
+    ON CONFLICT (id) DO UPDATE SET
+        from_album = TRUE,
+        track_number = EXCLUDED.track_number,
+        album_id = EXCLUDED.album_id;
+""", (track_id, track_name, track_artist, track_album, album_id, track_number))
+
 
     offset += len(items)
     if len(items) < limit:
@@ -87,8 +89,8 @@ cur.execute("""
 cur.execute("""
     UPDATE tracks
     SET from_album = FALSE
-    WHERE album IN (
-        SELECT name FROM albums WHERE is_saved = FALSE
+    WHERE album_id IN (
+        SELECT id FROM albums WHERE is_saved = FALSE
     )
 """)
 
