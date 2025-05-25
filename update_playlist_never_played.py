@@ -36,7 +36,7 @@ cur = conn.cursor()
 # ─────────────────────────────────────────────
 # Fetch playlist ID from playlist_mappings table
 # ─────────────────────────────────────────────
-playlist_name = "🎧 Never Played Tracks"
+playlist_name = "Never Played"
 cur.execute("SELECT playlist_id FROM playlist_mappings WHERE name = %s", (playlist_name,))
 row = cur.fetchone()
 
