@@ -59,12 +59,14 @@ with open(LOCK_FILE, 'w') as lock_file:
             name = track['name']
             artist = track['artists'][0]['name']
             album = track['album']['name']
+            added_at = item['added_at']
 
             cur.execute("""
-                INSERT INTO tracks (id, name, artist, album, is_liked)
-                VALUES (%s, %s, %s, %s, TRUE)
-                ON CONFLICT (id) DO UPDATE SET is_liked = TRUE;
-            """, (track_id, name, artist, album))
+                INSERT INTO tracks (id, name, artist, album, is_liked, added_at)
+                VALUES (%s, %s, %s, %s, TRUE, %s)
+                ON CONFLICT (id) DO UPDATE SET is_liked = TRUE, added_at = EXCLUDED.added_at;
+                    added_at = COALESCE(tracks.added_at, EXCLUDED.added_at);
+            """, (track_id, name, artist, album, added_at))
 
             counter += 1
             if counter % batch_size == 0:

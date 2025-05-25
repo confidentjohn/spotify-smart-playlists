@@ -52,7 +52,7 @@ while True:
         cur.execute("""
             INSERT INTO albums (id, name, artist, release_date, total_tracks, is_saved, added_at)
             VALUES (%s, %s, %s, %s, %s, TRUE, %s)
-            ON CONFLICT (id) DO UPDATE SET is_saved = TRUE;
+            ON CONFLICT (id) DO UPDATE SET is_saved = TRUE, added_at = EXCLUDED.added_at;
         """, (album_id, name, artist, release_date, total_tracks, added_at))
 
         # Insert tracks for this album
@@ -71,6 +71,7 @@ while True:
                     from_album = TRUE,
                     track_number = EXCLUDED.track_number,
                     album_id = EXCLUDED.album_id;
+                    added_at = EXCLUDED.added_at;
             """, (track_id, track_name, track_artist, track_album, album_id, track_number, added_at))
 
     offset += len(items)
