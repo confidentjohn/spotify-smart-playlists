@@ -71,6 +71,10 @@ def update_never_played_playlist():
 def update_played_once_playlist():
     return run_script('update_playlist_played_once.py')
 
+@app.route('/update-oldest-played-playlist')
+def update_oldest_played_playlist():
+    return run_script('update_playlist_oldest_played.py')
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
