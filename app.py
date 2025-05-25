@@ -1,10 +1,32 @@
 from flask import Flask, request, redirect
 import os
+import subprocess
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
+
+# ─────────────────────────────────────────────────────
+# Utilities for subprocess-triggered syncs (MOVED UP!)
+# ─────────────────────────────────────────────────────
+def run_script(script_name):
+    try:
+        result = subprocess.run(['python', script_name], capture_output=True, text=True)
+        return f"<pre>{result.stdout or result.stderr}</pre>"
+    except Exception as e:
+        return f"<pre>Error: {str(e)}</pre>"
+
+# ─────────────────────────────────────────────────────
+# Spotify OAuth
+# ─────────────────────────────────────────────────────
+def get_spotify_oauth():
+    return SpotifyOAuth(
+        client_id=os.environ['SPOTIFY_CLIENT_ID'],
+        client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
+        redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
+        scope="user-read-recently-played user-library-read"
+    )
 
 @app.route('/')
 def index():
@@ -12,66 +34,38 @@ def index():
 
 @app.route('/login')
 def login():
-    sp_oauth = SpotifyOAuth(
-        client_id=os.environ['SPOTIFY_CLIENT_ID'],
-        client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
-        redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
-        scope="user-read-recently-played user-library-read"
-    )
-    return redirect(sp_oauth.get_authorize_url())
+    return redirect(get_spotify_oauth().get_authorize_url())
 
 @app.route('/callback')
 def callback():
-    sp_oauth = SpotifyOAuth(
-        client_id=os.environ['SPOTIFY_CLIENT_ID'],
-        client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
-        redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
-        scope="user-read-recently-played user-library-read"
-    )
     code = request.args.get('code')
-    token_info = sp_oauth.get_access_token(code)
+    token_info = get_spotify_oauth().get_access_token(code)
     return f"✅ Refresh Token: <code>{token_info['refresh_token']}</code>"
-
-
-
-import subprocess
 
 @app.route('/run-tracker')
 def run_tracker():
-    try:
-        result = subprocess.run(['python', 'track_plays.py'], capture_output=True, text=True)
-        return f"<pre>{result.stdout or result.stderr}</pre>"
-    except Exception as e:
-        return f"Error: {str(e)}"
-
+    return run_script('track_plays.py')
 
 @app.route('/init-db')
 def init_db():
-    import subprocess
-    result = subprocess.run(['python', 'init_db.py'], capture_output=True, text=True)
-    return f"<pre>{result.stdout or result.stderr}</pre>"
-
-@app.route('/sync-library')
-def sync_library():
-    import subprocess
-    result = subprocess.run(['python', 'sync_library.py'], capture_output=True, text=True)
-    return f"<pre>{result.stdout or result.stderr}</pre>"
+    return run_script('init_db.py')
 
 @app.route('/sync-albums')
 def sync_albums():
-    import subprocess
-    result = subprocess.run(['python', 'sync_albums.py'], capture_output=True, text=True)
-    return f"<pre>{result.stdout or result.stderr}</pre>"
+    return run_script('sync_albums.py')
+
+@app.route('/sync-liked-tracks')
+def sync_liked_tracks():
+    return run_script('sync_liked_tracks.py')
 
 @app.route('/drop-tables')
 def drop_tables():
     return run_script('drop_tables.py')
 
-
+@app.route('/sync-library')
+def sync_library():
+    return run_script('sync_liked_tracks.py')
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
-
-# Trigger redeploy
