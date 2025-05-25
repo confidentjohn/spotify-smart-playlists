@@ -1,11 +1,11 @@
 import os
-import re
 import psycopg2
 import requests
+import re
 from spotipy import Spotify
 
 # ─────────────────────────────────────────────
-# Auth with Spotipy
+# Get Access Token
 # ─────────────────────────────────────────────
 def get_access_token():
     auth_response = requests.post(
@@ -37,29 +37,34 @@ conn = psycopg2.connect(
 cur = conn.cursor()
 
 # ─────────────────────────────────────────────
-# Get playlist ID from mappings table
+# Get playlist mapping
 # ─────────────────────────────────────────────
-playlist_name = "Never Played"
-
-cur.execute("SELECT playlist_id FROM playlist_mappings WHERE name = %s", (playlist_name,))
-row = cur.fetchone()
-
-if not row:
-    print(f"❌ Playlist name '{playlist_name}' not found in playlist_mappings.")
+cur.execute("""
+    SELECT playlist_id
+    FROM playlist_mappings
+    WHERE name = 'Never Played'
+    LIMIT 1;
+""")
+result = cur.fetchone()
+if not result:
+    print("❌ No playlist mapping found for 'Never Played'", flush=True)
     exit(1)
 
-playlist_url = row[0]
+playlist_url = result[0]
+print(f"📎 Playlist mapping found → {playlist_url}", flush=True)
+
 match = re.search(r"playlist/([a-zA-Z0-9]+)", playlist_url)
 if not match:
-    print("❌ Failed to extract playlist ID from URL.")
+    print("❌ Invalid playlist URL format.", flush=True)
     exit(1)
+
 playlist_id = match.group(1)
-print(f"📎 Extracted playlist ID: {playlist_id}", flush=True)
+print(f"🎯 Extracted playlist ID: {playlist_id}", flush=True)
 
 # ─────────────────────────────────────────────
-# Fetch unplayed tracks (limit to 9000)
+# Fetch unplayed track URIs
 # ─────────────────────────────────────────────
-cur.execute('''
+cur.execute("""
     SELECT 'spotify:track:' || t.id
     FROM tracks t
     LEFT JOIN plays p ON t.id = p.track_id
@@ -67,23 +72,25 @@ cur.execute('''
     WHERE p.track_id IS NULL AND (a.is_saved IS NULL OR a.is_saved = TRUE)
     ORDER BY t.album_id, t.track_number NULLS LAST
     LIMIT 9000
-''')
+""")
 rows = cur.fetchall()
 track_uris = [row[0] for row in rows]
 
 print(f"🎯 Preparing to upload {len(track_uris)} tracks", flush=True)
+print(f"🧪 Sample track URIs: {track_uris[:5]}", flush=True)
 
 # ─────────────────────────────────────────────
-# Replace playlist content
+# Replace contents and add tracks
 # ─────────────────────────────────────────────
 print("🧹 Clearing existing playlist contents...", flush=True)
 sp.playlist_replace_items(playlist_id, [])
 
-print("➕ Adding tracks in batches of 100...", flush=True)
-for i in range(0, len(track_uris), 100):
-    sp.playlist_add_items(playlist_id, track_uris[i:i + 100])
-    print(f"   → Added {i + len(track_uris[i:i + 100])} / {len(track_uris)}", flush=True)
+if track_uris:
+    print("➕ Adding tracks in batches of 100...", flush=True)
+    for i in range(0, len(track_uris), 100):
+        batch = track_uris[i:i+100]
+        sp.playlist_add_items(playlist_id, batch)
 
+print("✅ Playlist sync complete.", flush=True)
 cur.close()
 conn.close()
-print("✅ Playlist sync complete.")
