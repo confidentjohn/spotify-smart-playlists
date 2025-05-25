@@ -1,0 +1,52 @@
+name: Update All Playlists
+
+on:
+  workflow_run:
+    workflows: ["Track Spotify Plays"]
+    types:
+      - completed
+
+jobs:
+  update-playlists:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Never Played Playlist Update
+        run: python update_playlist_never_played.py
+        env: &envVars
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      - name: Run Played Once Playlist Update
+        run: python update_playlist_played_once.py
+        env: *envVars
+
+      - name: Run Most Played Playlist Update
+        run: python update_playlist_most_played.py
+        env: *envVars
+
+      - name: Run Oldest Played Playlist Update
+        run: python update_playlist_oldest_played.py
+        env: *envVars
+
+      - name: Run Recently Loved Playlist Update
+        run: python update_playlist_loved_added_last_30_days.py
+        env: *envVars
