@@ -59,7 +59,7 @@ while True:
             track_name = track['name']
             track_artist = track['artists'][0]['name']
             track_album = album['name']
-            track_number = track.get("track_number")
+            track_number = track.get("track_number") or 1
 
             cur.execute("""
                 INSERT INTO tracks (id, name, artist, album, is_liked, from_album, track_number)
