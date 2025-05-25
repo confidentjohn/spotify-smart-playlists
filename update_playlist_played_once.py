@@ -54,12 +54,13 @@ print(f"🎯 Using playlist ID: {playlist_id}")
 # Fetch tracks
 # ─────────────────────────────────────────────
 cur.execute("""
-    SELECT 'spotify:track:' || track_id
-    FROM plays
-    GROUP BY track_id
-    HAVING COUNT(*) = 1
-    ORDER BY MAX(played_at) DESC
-    LIMIT 9000;
+    SELECT 'spotify:track:' || p.track_id
+FROM plays p
+JOIN tracks t ON p.track_id = t.id
+GROUP BY p.track_id, t.album_id, t.track_number
+HAVING COUNT(*) = 1
+ORDER BY t.album_id, t.track_number NULLS LAST
+LIMIT 9000;
 """)
 rows = cur.fetchall()
 track_uris = [row[0] for row in rows]
