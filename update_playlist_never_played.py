@@ -7,12 +7,20 @@ from spotipy.oauth2 import SpotifyOAuth
 # ─────────────────────────────────────────────
 # Auth with Spotipy
 # ─────────────────────────────────────────────
-sp = Spotify(auth_manager=SpotifyOAuth(
-    client_id=os.environ["SPOTIFY_CLIENT_ID"],
-    client_secret=os.environ["SPOTIFY_CLIENT_SECRET"],
-    redirect_uri=os.environ["SPOTIFY_REDIRECT_URI"],
-    scope="playlist-modify-public playlist-modify-private"
-))
+def get_access_token():
+    auth_response = requests.post(
+        'https://accounts.spotify.com/api/token',
+        data={
+            'grant_type': 'refresh_token',
+            'refresh_token': os.environ['SPOTIFY_REFRESH_TOKEN'],
+            'client_id': os.environ['SPOTIFY_CLIENT_ID'],
+            'client_secret': os.environ['SPOTIFY_CLIENT_SECRET']
+        }
+    )
+    return auth_response.json()['access_token']
+
+access_token = get_access_token()
+sp = Spotify(auth=access_token)
 
 # ─────────────────────────────────────────────
 # Connect to PostgreSQL
