@@ -25,8 +25,9 @@ def get_spotify_oauth():
         client_id=os.environ['SPOTIFY_CLIENT_ID'],
         client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
         redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
-        scope="user-read-recently-played user-library-read"
+        scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public"
     )
+
 
 @app.route('/')
 def index():
