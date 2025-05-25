@@ -62,6 +62,11 @@ def sync_liked_tracks():
 def sync_library():
     return run_script('sync_liked_tracks.py')
 
+@app.route('/update-never-played-playlist')
+def update_never_played_playlist():
+    return run_script('update_playlist_never_played.py')
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
