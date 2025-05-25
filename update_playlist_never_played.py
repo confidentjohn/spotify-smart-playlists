@@ -2,7 +2,6 @@ import os
 import psycopg2
 import requests
 from spotipy import Spotify
-from spotipy.oauth2 import SpotifyOAuth
 
 # ─────────────────────────────────────────────
 # Auth with Spotipy
@@ -48,31 +47,42 @@ cur.execute('''
 ''')
 rows = cur.fetchall()
 track_uris = [row[0] for row in rows]
+print(f"🎯 Found {len(track_uris)} tracks to add to playlist")
+
+if not track_uris:
+    print("⚠️ No tracks to add. Aborting playlist update.")
+    cur.close()
+    conn.close()
+    exit()
 
 # ─────────────────────────────────────────────
-# Create or update playlist
+# Locate existing playlist
 # ─────────────────────────────────────────────
 playlist_name = "🎧 Never Played Tracks"
 user_id = sp.current_user()["id"]
 
-# Find playlist if it exists
-existing = sp.current_user_playlists()
+print("📋 Searching user playlists...")
+playlists = sp.current_user_playlists(limit=50)
 playlist_id = None
-for pl in existing["items"]:
+
+for pl in playlists["items"]:
+    print(f"🔎 Found playlist: {pl['name']} ({pl['id']})")
     if pl["name"] == playlist_name:
         playlist_id = pl["id"]
-        break
 
-if playlist_id:
-    print(f"📝 Updating existing playlist: {playlist_name}")
-    sp.playlist_replace_items(playlist_id, [])  # Clear first
-else:
-    print(f"➕ Creating new playlist: {playlist_name}")
-    playlist = sp.user_playlist_create(user=user_id, name=playlist_name, public=False)
-    playlist_id = playlist["id"]
+if not playlist_id:
+    print(f"❌ Playlist '{playlist_name}' not found. Please create it manually.")
+    cur.close()
+    conn.close()
+    exit()
 
-# Add tracks in batches of 100
-print(f"🎶 Adding {len(track_uris)} tracks to playlist")
+# ─────────────────────────────────────────────
+# Clear and update the playlist
+# ─────────────────────────────────────────────
+print(f"📝 Updating existing playlist: {playlist_name}")
+sp.playlist_replace_items(playlist_id, [])  # Clear existing contents
+
+print(f"🎶 Adding {len(track_uris)} tracks to playlist...")
 for i in range(0, len(track_uris), 100):
     sp.playlist_add_items(playlist_id, track_uris[i:i + 100])
 
