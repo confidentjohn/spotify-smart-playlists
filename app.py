@@ -8,9 +8,17 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
 # ─────────────────────────────────────────────────────
-# Utilities for subprocess-triggered syncs (MOVED UP!)
+# 🔐 Token checker
 # ─────────────────────────────────────────────────────
-def run_script(script_name):
+def is_authorized(req):
+    return req.args.get("token") == os.environ.get("ACCESS_TOKEN")
+
+# ─────────────────────────────────────────────────────
+# 🛠 Script runner with optional auth
+# ─────────────────────────────────────────────────────
+def run_script(script_name, require_auth=False):
+    if require_auth and not is_authorized(request):
+        return "❌ Unauthorized", 401
     try:
         result = subprocess.run(['python', script_name], capture_output=True, text=True)
         return f"<pre>{result.stdout or result.stderr}</pre>"
@@ -18,7 +26,7 @@ def run_script(script_name):
         return f"<pre>Error: {str(e)}</pre>"
 
 # ─────────────────────────────────────────────────────
-# Spotify OAuth
+# 🎧 Spotify OAuth Setup
 # ─────────────────────────────────────────────────────
 def get_spotify_oauth():
     return SpotifyOAuth(
@@ -27,7 +35,6 @@ def get_spotify_oauth():
         redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
         scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public"
     )
-
 
 @app.route('/')
 def index():
@@ -43,25 +50,28 @@ def callback():
     token_info = get_spotify_oauth().get_access_token(code)
     return f"✅ Refresh Token: <code>{token_info['refresh_token']}</code>"
 
+# ─────────────────────────────────────────────────────
+# 🔁 Script Endpoints (some protected)
+# ─────────────────────────────────────────────────────
 @app.route('/run-tracker')
 def run_tracker():
     return run_script('track_plays.py')
 
 @app.route('/init-db')
 def init_db():
-    return run_script('init_db.py')
+    return run_script('init_db.py', require_auth=True)
 
 @app.route('/sync-albums')
 def sync_albums():
-    return run_script('sync_albums.py')
+    return run_script('sync_albums.py', require_auth=True)
 
 @app.route('/sync-liked-tracks')
 def sync_liked_tracks():
-    return run_script('sync_liked_tracks.py')
+    return run_script('sync_liked_tracks.py', require_auth=True)
 
 @app.route('/sync-library')
 def sync_library():
-    return run_script('sync_liked_tracks.py')
+    return run_script('sync_liked_tracks.py', require_auth=True)
 
 @app.route('/update-never-played-playlist')
 def update_never_played_playlist():
@@ -83,7 +93,7 @@ def update_playlist_most_played():
 def update_playlist_loved_added_last_30_days():
     return run_script('update_playlist_loved_added_last_30_days.py')
 
-
+# ─────────────────────────────────────────────────────
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
