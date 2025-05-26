@@ -5,6 +5,9 @@ import time
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 
+# ─────────────────────────────────────────────
+# Get Access Token
+# ─────────────────────────────────────────────
 def get_access_token():
     auth_response = requests.post(
         'https://accounts.spotify.com/api/token',
@@ -17,6 +20,9 @@ def get_access_token():
     )
     return auth_response.json()['access_token']
 
+# ─────────────────────────────────────────────
+# Safe Spotify API Wrapper
+# ─────────────────────────────────────────────
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0
     while True:
@@ -32,6 +38,9 @@ def safe_spotify_call(func, *args, **kwargs):
                 print(f"❌ Spotify error: {e}", flush=True)
                 raise
 
+# ─────────────────────────────────────────────
+# Start sync
+# ─────────────────────────────────────────────
 access_token = get_access_token()
 sp = Spotify(auth=access_token)
 
@@ -46,7 +55,10 @@ cur = conn.cursor()
 
 print("🎼 Syncing album tracks for unsynced albums...", flush=True)
 
-cur.execute("SELECT id, name FROM albums WHERE is_saved = TRUE AND (tracks_synced = FALSE OR tracks_synced IS NULL)")
+cur.execute("""
+    SELECT id, name FROM albums
+    WHERE is_saved = TRUE AND (tracks_synced = FALSE OR tracks_synced IS NULL)
+""")
 albums = cur.fetchall()
 
 for album_id, album_name in albums:
@@ -72,8 +84,20 @@ for album_id, album_name in albums:
         ))
 
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
-    conn.commit()
 
+# ─────────────────────────────────────────────
+# Cleanup Removed Album Tracks
+# ─────────────────────────────────────────────
+print("🧹 Deleting tracks from removed albums...", flush=True)
+cur.execute("""
+    DELETE FROM tracks
+    WHERE album_id IN (
+        SELECT id FROM albums WHERE is_saved = FALSE
+    )
+""")
+
+conn.commit()
 cur.close()
 conn.close()
+
 print("✅ Album tracks synced.", flush=True)

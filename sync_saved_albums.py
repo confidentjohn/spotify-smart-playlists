@@ -81,7 +81,7 @@ while True:
         break
 
 # Mark removed albums
-cur.execute("UPDATE albums SET is_saved = FALSE WHERE id NOT IN %s", (tuple(current_album_ids),))
+cur.execute("UPDATE albums SET is_saved = FALSE,tracks_synced = FALSE WHERE id NOT IN %s", (tuple(current_album_ids),))
 
 conn.commit()
 cur.close()
