@@ -6,8 +6,6 @@ from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 
 # ─────────────────────────────────────────────
-# Get Access Token
-# ─────────────────────────────────────────────
 def get_access_token():
     auth_response = requests.post(
         'https://accounts.spotify.com/api/token',
@@ -20,9 +18,6 @@ def get_access_token():
     )
     return auth_response.json()['access_token']
 
-# ─────────────────────────────────────────────
-# Safe Spotify API Wrapper
-# ─────────────────────────────────────────────
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0
     while True:
@@ -38,8 +33,6 @@ def safe_spotify_call(func, *args, **kwargs):
                 print(f"❌ Spotify error: {e}", flush=True)
                 raise
 
-# ─────────────────────────────────────────────
-# Start sync
 # ─────────────────────────────────────────────
 access_token = get_access_token()
 sp = Spotify(auth=access_token)
@@ -83,7 +76,7 @@ for album_id, album_name in saved_albums:
 
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
 
-# 2️⃣ Update removed albums' tracks (mark from_album = FALSE)
+# 2️⃣ Handle removed albums (mark tracks as not from_album)
 cur.execute("""
     SELECT id FROM albums
     WHERE is_saved = FALSE AND (tracks_synced = FALSE OR tracks_synced IS NULL)
@@ -97,8 +90,14 @@ for album_id, in removed_albums:
         SET from_album = FALSE
         WHERE album_id = %s
     """, (album_id,))
-
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
+
+# 3️⃣ Remove orphaned tracks (not liked + not from any saved album)
+print("🧽 Removing orphaned tracks (not liked, not from album)...", flush=True)
+cur.execute("""
+    DELETE FROM tracks
+    WHERE is_liked = FALSE AND from_album = FALSE
+""")
 
 # ✅ Done
 conn.commit()
