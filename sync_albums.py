@@ -1,7 +1,9 @@
 import os
 import psycopg2
 import requests
+import time
 from spotipy import Spotify
+from spotipy.exceptions import SpotifyException  # Needed for catching rate limit errors
 
 def get_access_token():
     auth_response = requests.post(
@@ -14,6 +16,22 @@ def get_access_token():
         }
     )
     return auth_response.json()['access_token']
+
+def safe_spotify_call(func, *args, **kwargs):
+    """Retry Spotify API call if rate limited. Logs retry attempts."""
+    retries = 0
+    while True:
+        try:
+            return func(*args, **kwargs)
+        except SpotifyException as e:
+            if e.http_status == 429:
+                retry_after = int(e.headers.get("Retry-After", 5))
+                retries += 1
+                print(f"⚠️ Spotify rate limited. Retry #{retries} in {retry_after} seconds...", flush=True)
+                time.sleep(retry_after)
+            else:
+                print(f"❌ Spotify API error: {e}", flush=True)
+                raise
 
 access_token = get_access_token()
 sp = Spotify(auth=access_token)
@@ -32,7 +50,7 @@ offset = 0
 current_album_ids = set()
 
 while True:
-    results = sp.current_user_saved_albums(limit=limit, offset=offset)
+    results = safe_spotify_call(sp.current_user_saved_albums, limit=limit, offset=offset)
     items = results['items']
 
     if not items:
@@ -57,7 +75,8 @@ while True:
         """, (album_id, name, artist, release_date, total_tracks, added_at))
 
         # Insert tracks for this album
-        album_tracks = sp.album(album_id)['tracks']['items']
+        album_data = safe_spotify_call(sp.album, album_id)
+        album_tracks = album_data['tracks']['items']
         for track in album_tracks:
             track_id = track['id']
             track_name = track['name']

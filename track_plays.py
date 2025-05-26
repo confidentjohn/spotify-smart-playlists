@@ -1,11 +1,12 @@
 import os
 import psycopg2
 import requests
+import time
 from spotipy import Spotify
+from spotipy.exceptions import SpotifyException
 from datetime import datetime
 from zoneinfo import ZoneInfo  # Python 3.9+
 
-# Function to get a new access token using the refresh token
 def get_access_token():
     auth_response = requests.post(
         'https://accounts.spotify.com/api/token',
@@ -18,7 +19,22 @@ def get_access_token():
     )
     return auth_response.json()['access_token']
 
-# Get the access token and init Spotipy client
+def safe_spotify_call(func, *args, **kwargs):
+    """Retry Spotify API call if rate limited. Logs retry attempts."""
+    retries = 0
+    while True:
+        try:
+            return func(*args, **kwargs)
+        except SpotifyException as e:
+            if e.http_status == 429:
+                retry_after = int(e.headers.get("Retry-After", 5))
+                retries += 1
+                print(f"⚠️ Spotify rate limited. Retry #{retries} in {retry_after} seconds...", flush=True)
+                time.sleep(retry_after)
+            else:
+                print(f"❌ Spotify API error: {e}", flush=True)
+                raise
+
 access_token = get_access_token()
 sp = Spotify(auth=access_token)
 
@@ -33,7 +49,7 @@ conn = psycopg2.connect(
 cur = conn.cursor()
 
 # Fetch recent plays (max 50)
-results = sp.current_user_recently_played(limit=50)
+results = safe_spotify_call(sp.current_user_recently_played, limit=50)
 
 for item in results['items']:
     track = item['track']
@@ -45,7 +61,7 @@ for item in results['items']:
     played_at = datetime.fromisoformat(played_at.replace('Z', '+00:00')).astimezone(ZoneInfo('UTC'))
 
     # Check if track is saved in your library
-    is_liked = sp.current_user_saved_tracks_contains([track_id])[0]
+    is_liked = safe_spotify_call(sp.current_user_saved_tracks_contains, [track_id])[0]
 
     # Insert or update track metadata
     cur.execute("""

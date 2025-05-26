@@ -2,7 +2,9 @@ import os
 import psycopg2
 import requests
 import fcntl
+import time
 from spotipy import Spotify
+from spotipy.exceptions import SpotifyException
 
 LOCK_FILE = "/tmp/sync_library.lock"
 
@@ -17,6 +19,22 @@ def get_access_token():
         }
     )
     return auth_response.json()['access_token']
+
+def safe_spotify_call(func, *args, **kwargs):
+    """Retry Spotify API call if rate limited. Logs retry attempts."""
+    retries = 0
+    while True:
+        try:
+            return func(*args, **kwargs)
+        except SpotifyException as e:
+            if e.http_status == 429:
+                retry_after = int(e.headers.get("Retry-After", 5))
+                retries += 1
+                print(f"⚠️ Spotify rate limited. Retry #{retries} in {retry_after} seconds...", flush=True)
+                time.sleep(retry_after)
+            else:
+                print(f"❌ Spotify API error: {e}", flush=True)
+                raise
 
 # Acquire exclusive lock to avoid overlap with album sync
 with open(LOCK_FILE, 'w') as lock_file:
@@ -47,7 +65,7 @@ with open(LOCK_FILE, 'w') as lock_file:
     counter = 0
 
     while True:
-        results = sp.current_user_saved_tracks(limit=limit, offset=offset)
+        results = safe_spotify_call(sp.current_user_saved_tracks, limit=limit, offset=offset)
         tracks = results['items']
 
         if not tracks:
@@ -62,12 +80,12 @@ with open(LOCK_FILE, 'w') as lock_file:
             added_at = item['added_at']
 
             cur.execute("""
-    INSERT INTO tracks (id, name, artist, album, is_liked, added_at)
-    VALUES (%s, %s, %s, %s, TRUE, %s)
-    ON CONFLICT (id) DO UPDATE 
-    SET is_liked = TRUE, 
-        added_at = COALESCE(tracks.added_at, EXCLUDED.added_at);
-""", (track_id, name, artist, album, added_at))
+                INSERT INTO tracks (id, name, artist, album, is_liked, added_at)
+                VALUES (%s, %s, %s, %s, TRUE, %s)
+                ON CONFLICT (id) DO UPDATE 
+                SET is_liked = TRUE, 
+                    added_at = EXCLUDED.added_at;
+            """, (track_id, name, artist, album, added_at))
 
             counter += 1
             if counter % batch_size == 0:
