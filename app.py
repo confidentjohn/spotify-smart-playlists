@@ -13,7 +13,10 @@ app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 def is_authorized(req):
     provided = req.args.get("token")
     expected = os.environ.get("ACCESS_TOKEN")
+        return f"🔍 ACCESS_TOKEN from os.environ: {token or 'Not Set'}"
+
     print(f"🔐 DEBUG: Provided token = {provided}, Expected token = {expected}", flush=True)
+
     return provided == expected
 
 # ─────────────────────────────────────────────────────
