@@ -8,10 +8,13 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
 # ─────────────────────────────────────────────────────
-# 🔐 Token checker
+# 🔐 Token checker with debug
 # ─────────────────────────────────────────────────────
 def is_authorized(req):
-    return req.args.get("token") == os.environ.get("ACCESS_TOKEN")
+    provided = req.args.get("token")
+    expected = os.environ.get("ACCESS_TOKEN")
+    print(f"🔐 DEBUG: Provided token = {provided}, Expected token = {expected}")
+    return provided == expected
 
 # ─────────────────────────────────────────────────────
 # 🛠 Script runner with optional auth
