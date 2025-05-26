@@ -8,10 +8,11 @@ conn = psycopg2.connect(
     host=os.environ["DB_HOST"],
     port=os.environ.get("DB_PORT", 5432),
 )
-
 cur = conn.cursor()
 
-# Create or ensure albums table
+# ────────────────────────────────
+# Create albums table
+# ────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS albums (
     id TEXT PRIMARY KEY,
@@ -19,11 +20,15 @@ CREATE TABLE IF NOT EXISTS albums (
     artist TEXT,
     release_date TEXT,
     total_tracks INTEGER,
-    is_saved BOOLEAN DEFAULT TRUE
+    is_saved BOOLEAN DEFAULT TRUE,
+    added_at TIMESTAMP,
+    tracks_synced BOOLEAN DEFAULT FALSE
 );
 """)
 
-# Create or ensure tracks table
+# ────────────────────────────────
+# Create tracks table
+# ────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS tracks (
     id TEXT PRIMARY KEY,
@@ -32,33 +37,27 @@ CREATE TABLE IF NOT EXISTS tracks (
     album TEXT,
     album_id TEXT,
     is_liked BOOLEAN DEFAULT FALSE,
-    from_album BOOLEAN DEFAULT FALSE
+    from_album BOOLEAN DEFAULT FALSE,
+    track_number INTEGER,
+    added_at TIMESTAMP
 );
 """)
 
-# Add the columns in case the table already existed before
-cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS album_id TEXT;""")
-cur.execute("""ALTER TABLE albums ADD COLUMN IF NOT EXISTS is_saved BOOLEAN DEFAULT TRUE;""")
-cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS is_liked BOOLEAN DEFAULT FALSE;""")
-cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS track_number INTEGER;""")
-cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS added_at TIMESTAMP;""")
-cur.execute("""ALTER TABLE albums ADD COLUMN IF NOT EXISTS added_at TIMESTAMP;""")
-cur.execute("""ALTER TABLE albums ADD COLUMN IF NOT EXISTS tracks_synced BOOLEAN DEFAULT FALSE;""")
-
-
-
-
-# Plays table
+# ────────────────────────────────
+# Create plays table (no FK)
+# ────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS plays (
     id SERIAL PRIMARY KEY,
-    track_id TEXT REFERENCES tracks(id),
+    track_id TEXT,
     played_at TIMESTAMP,
     UNIQUE(track_id, played_at)
 );
 """)
 
-# Playlist mapping table
+# ────────────────────────────────
+# Create playlist_mappings table
+# ────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS playlist_mappings (
     slug TEXT PRIMARY KEY,
@@ -70,5 +69,4 @@ CREATE TABLE IF NOT EXISTS playlist_mappings (
 conn.commit()
 cur.close()
 conn.close()
-
 print("✅ Tables created and updated successfully.")
