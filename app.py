@@ -13,15 +13,23 @@ app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 def is_authorized(req):
     provided = req.args.get("token")
     expected = os.environ.get("ACCESS_TOKEN")
-    print(f"🔐 DEBUG: Provided token = {provided}, Expected token = {expected}")
+    print(f"🔐 DEBUG: Provided token = {provided}, Expected token = {expected}", flush=True)
     return provided == expected
 
 # ─────────────────────────────────────────────────────
 # 🛠 Script runner with optional auth
 # ─────────────────────────────────────────────────────
 def run_script(script_name, require_auth=False):
-    if require_auth and not is_authorized(request):
-        return "❌ Unauthorized", 401
+    print(f"🔧 Running {script_name} | Auth required: {require_auth}", flush=True)
+
+    if require_auth:
+        print("🔐 Authorization required. Checking token...", flush=True)
+        if not is_authorized(request):
+            print("❌ Token check failed", flush=True)
+            return "❌ Unauthorized", 401
+        else:
+            print("✅ Token check passed", flush=True)
+
     try:
         result = subprocess.run(['python', script_name], capture_output=True, text=True)
         return f"<pre>{result.stdout or result.stderr}</pre>"
