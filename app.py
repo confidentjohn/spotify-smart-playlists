@@ -8,35 +8,16 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
 # ─────────────────────────────────────────────────────
-# 🔐 Token checker with debug
-# ─────────────────────────────────────────────────────
-def is_authorized(req):
-    provided = req.args.get("token")
-    expected = os.environ.get("ACCESS_TOKEN")
-
-    print(f"🔐 DEBUG: Provided token = {provided}, Expected token = {expected}", flush=True)
-
-    return provided == expected
-
-# ─────────────────────────────────────────────────────
 # 🛠 Script runner with optional auth
 # ─────────────────────────────────────────────────────
 def run_script(script_name, require_auth=False):
-    print(f"🔧 Running {script_name} | Auth required: {require_auth}", flush=True)
-
-    if require_auth:
-        print("🔐 Authorization required. Checking token...", flush=True)
-        if not is_authorized(request):
-            print("❌ Token check failed", flush=True)
-            return "❌ Unauthorized", 401
-        else:
-            print("✅ Token check passed", flush=True)
-
+    print(f"🔧 Running {script_name}", flush=True)
     try:
         result = subprocess.run(['python', script_name], capture_output=True, text=True)
         return f"<pre>{result.stdout or result.stderr}</pre>"
     except Exception as e:
         return f"<pre>Error: {str(e)}</pre>"
+
 
 # ─────────────────────────────────────────────────────
 # 🎧 Spotify OAuth Setup
@@ -72,19 +53,19 @@ def run_tracker():
 
 @app.route('/init-db')
 def init_db():
-    return run_script('init_db.py', require_auth=True)
+    return run_script('init_db.py')
 
 @app.route('/sync-albums')
 def sync_albums():
-    return run_script('sync_albums.py', require_auth=True)
+    return run_script('sync_albums.py')
 
 @app.route('/sync-liked-tracks')
 def sync_liked_tracks():
-    return run_script('sync_liked_tracks.py', require_auth=True)
+    return run_script('sync_liked_tracks.py')
 
 @app.route('/sync-library')
 def sync_library():
-    return run_script('sync_liked_tracks.py', require_auth=True)
+    return run_script('sync_liked_tracks.py')
 
 @app.route('/update-never-played-playlist')
 def update_never_played_playlist():
@@ -106,10 +87,6 @@ def update_playlist_most_played():
 def update_playlist_loved_added_last_30_days():
     return run_script('update_playlist_loved_added_last_30_days.py')
 
-@app.route('/debug-env')
-def debug_env():
-    token_env = os.environ.get("ACCESS_TOKEN")
-    return f"🔍 ACCESS_TOKEN from os.environ: {token_env or 'Not Set'}"
 
 
 # ─────────────────────────────────────────────────────
