@@ -85,16 +85,6 @@ for album_id, album_name in albums:
 
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
 
-# ─────────────────────────────────────────────
-# Cleanup Removed Album Tracks
-# ─────────────────────────────────────────────
-print("🧹 Deleting tracks from removed albums...", flush=True)
-cur.execute("""
-    DELETE FROM tracks
-    WHERE album_id IN (
-        SELECT id FROM albums WHERE is_saved = FALSE
-    )
-""")
 
 conn.commit()
 cur.close()
