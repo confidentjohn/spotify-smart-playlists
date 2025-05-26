@@ -54,13 +54,19 @@ print(f"🎯 Using playlist ID: {playlist_id}")
 # Fetch tracks
 # ─────────────────────────────────────────────
 cur.execute("""
-    SELECT 'spotify:track:' || id
-    FROM tracks
-    WHERE is_liked = TRUE
-    AND added_at >= NOW() - INTERVAL '30 days'
-    ORDER BY added_at DESC
+    SELECT 'spotify:track:' || t.id
+    FROM tracks t
+    JOIN (
+        SELECT track_id
+        FROM plays
+        GROUP BY track_id
+        HAVING COUNT (*) > 1
+    ) p ON t. id = p.track_id
+    WHERE t.is_liked = TRUE
+        AND t.added_at >= NOW() - INTERVAL '30 days'
+    ORDER BY t. added_at DESC
     LIMIT 9000;
-""")
+    """)
 rows = cur.fetchall()
 track_uris = [row[0] for row in rows]
 
