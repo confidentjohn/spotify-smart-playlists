@@ -43,6 +43,10 @@ cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS is_liked BOOLEAN DEFA
 cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS track_number INTEGER;""")
 cur.execute("""ALTER TABLE tracks ADD COLUMN IF NOT EXISTS added_at TIMESTAMP;""")
 cur.execute("""ALTER TABLE albums ADD COLUMN IF NOT EXISTS added_at TIMESTAMP;""")
+cur.execute("""ALTER TABLE albums ADD COLUMN IF NOT EXISTS tracks_synced BOOLEAN DEFAULT FALSE;""")
+
+
+
 
 # Plays table
 cur.execute("""
