@@ -55,18 +55,23 @@ cur = conn.cursor()
 
 print("🎼 Syncing album tracks for unsynced albums...", flush=True)
 
+# 1️⃣ Sync tracks for still-saved albums
 cur.execute("""
     SELECT id, name FROM albums
     WHERE is_saved = TRUE AND (tracks_synced = FALSE OR tracks_synced IS NULL)
 """)
-albums = cur.fetchall()
+saved_albums = cur.fetchall()
 
-for album_id, album_name in albums:
-    print(f"🎵 Fetching tracks for: {album_name} ({album_id})", flush=True)
+for album_id, album_name in saved_albums:
+    print(f"🎵 Syncing tracks for: {album_name} ({album_id})", flush=True)
     album_tracks = safe_spotify_call(sp.album, album_id)['tracks']['items']
 
     for track in album_tracks:
         track_id = track['id']
+        track_name = track['name']
+        track_artist = track['artists'][0]['name']
+        track_number = track.get('track_number') or 1
+
         cur.execute("""
             INSERT INTO tracks (id, name, artist, album, album_id, is_liked, from_album, track_number)
             VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s)
@@ -74,20 +79,29 @@ for album_id, album_name in albums:
                 from_album = TRUE,
                 track_number = EXCLUDED.track_number,
                 album_id = EXCLUDED.album_id;
-        """, (
-            track_id,
-            track['name'],
-            track['artists'][0]['name'],
-            album_name,
-            album_id,
-            track.get('track_number') or 1
-        ))
+        """, (track_id, track_name, track_artist, album_name, album_id, track_number))
 
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
 
+# 2️⃣ Update removed albums' tracks (mark from_album = FALSE)
+cur.execute("""
+    SELECT id FROM albums
+    WHERE is_saved = FALSE AND (tracks_synced = FALSE OR tracks_synced IS NULL)
+""")
+removed_albums = cur.fetchall()
 
+for album_id, in removed_albums:
+    print(f"🧹 Marking tracks from removed album as not from_album: {album_id}", flush=True)
+    cur.execute("""
+        UPDATE tracks
+        SET from_album = FALSE
+        WHERE album_id = %s
+    """, (album_id,))
+
+    cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
+
+# ✅ Done
 conn.commit()
 cur.close()
 conn.close()
-
 print("✅ Album tracks synced.", flush=True)
