@@ -47,25 +47,26 @@ def callback():
 # ─────────────────────────────────────────────────────
 # 🔁 Script Endpoints (some protected)
 # ─────────────────────────────────────────────────────
-@app.route('/run-tracker')
-def run_tracker():
-    return run_script('track_plays.py')
 
 @app.route('/init-db')
 def init_db():
     return run_script('init_db.py')
 
-@app.route('/sync-albums')
-def sync_albums():
-    return run_script('sync_albums.py')
+@app.route('/sync-saved-albums')
+def sync_saved_albums():
+    return run_script('sync_saved_albums.py')
+
+@app.route('/sync-album-tracks')
+def sync_album_tracks():
+    return run_script('sync_album_tracks.py')    
 
 @app.route('/sync-liked-tracks')
 def sync_liked_tracks():
     return run_script('sync_liked_tracks.py')
 
-@app.route('/sync-library')
-def sync_library():
-    return run_script('sync_liked_tracks.py')
+@app.route('/run-tracker')
+def run_tracker():
+    return run_script('track_plays.py')   
 
 @app.route('/update-never-played-playlist')
 def update_never_played_playlist():

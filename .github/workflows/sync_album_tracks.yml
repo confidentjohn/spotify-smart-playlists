@@ -1,8 +1,8 @@
-name: Sync Spotify Albums
+name: Sync Spotify Album tracks
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Every day at 2am UTC
+    - cron: '0 3 * * *'  # Every day at 2am UTC
   workflow_dispatch:
 
 jobs:
@@ -20,8 +20,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run sync_saved_albums
-        run: python sync_saved_albums.py
+      - name: Run sync_album_tracks
+        run: python sync_album_tracks.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
