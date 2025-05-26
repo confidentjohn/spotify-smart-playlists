@@ -6,11 +6,12 @@ This project tracks your Spotify library, play history, and builds smart playlis
 
 ## 📌 Features
 
-* 🔄 Daily sync of Spotify saved albums and liked tracks
-* 🎯 Hourly sync of recently played tracks
-* 🧠 Smart playlist generation (never played, most played, recently added, etc.)
-* ☁️ Hosted on [Render.com](https://render.com/) for API endpoints
-* 🛠️ GitHub Actions for automation
+- 🔄 Daily sync of Spotify saved albums and liked tracks
+- 🎯 Hourly sync of recently played tracks
+- 🧠 Smart playlist generation (never played, most played, recently added, etc.)
+- ☁️ Hosted on [Render.com](https://render.com/) for API endpoints
+- 🛠️ GitHub Actions for automation
+- ⚠️ Handles Spotify rate limits automatically
 
 ---
 
@@ -18,123 +19,74 @@ This project tracks your Spotify library, play history, and builds smart playlis
 
 ```bash
 spotify-oauth-tracker/
-├── app.py                       # Flask web interface for triggering syncs
-├── init_db.py                  # Creates DB tables (albums, tracks, plays, playlist_mappings)
-├── sync_albums.py              # Syncs saved albums & album tracks
-├── sync_liked_tracks.py        # Syncs liked/saved tracks
-├── track_plays.py              # Syncs recently played tracks
-├── update_playlist_*.py        # Scripts to create/update smart playlists
+├── app.py
+├── init_db.py
+├── sync_saved_albums.py
+├── sync_album_tracks.py
+├── sync_liked_tracks.py
+├── track_plays.py
+├── update_playlist_*.py
 ├── .github/workflows/
 │   ├── sync_spotify_library.yml
 │   ├── track_spotify_plays.yml
 │   └── update_all_playlists.yml
-└── requirements.txt            # Dependencies
+└── requirements.txt
 ```
 
 ---
 
-## 🗃️ PostgreSQL Schema Overview
+## 🗃️ PostgreSQL Schema
 
-* `albums` — All saved albums
-* `tracks` — All tracks, with flags for `is_liked` and `from_album`
-* `plays` — Timestamped history of played tracks
-* `playlist_mappings` — Maps internal playlist scripts to real Spotify playlist IDs
+| Table               | Purpose                                |
+|---------------------|----------------------------------------|
+| `albums`            | Saved albums from library              |
+| `tracks`            | All tracks (liked or from albums)      |
+| `plays`             | Full history of Spotify plays          |
+| `playlist_mappings` | Maps playlist slugs to Spotify IDs     |
+
+Tracks can be orphaned (not liked, not from albums) and are cleaned automatically.
 
 ---
 
-## 🧠 Playlists Generated
+## 🧠 Smart Playlists
 
-| Script File                                   | Playlist Logic                             |
-| --------------------------------------------- | ------------------------------------------ |
-| `update_playlist_never_played.py`             | Tracks never played before                 |
-| `update_playlist_played_once.py`              | Tracks played exactly once                 |
-| `update_playlist_oldest_played.py`            | Tracks played more than once, oldest first |
-| `update_playlist_most_played.py`              | Tracks with the most play count            |
-| `update_playlist_loved_added_last_30_days.py` | Liked tracks added in the last 30 days     |
+| Script File                             | Playlist Logic                                 |
+|----------------------------------------|------------------------------------------------|
+| `update_playlist_never_played.py`      | Tracks never played before                    |
+| `update_playlist_played_once.py`       | Tracks played exactly once                   |
+| `update_playlist_oldest_played.py`     | Tracks played more than once, oldest first   |
+| `update_playlist_most_played.py`       | Tracks with the most play count              |
+| `update_playlist_loved_added_last_30_days.py` | Liked tracks added in the last 30 days |
 
 ---
 
 ## 🔄 Automation via GitHub Actions
 
-* **`Track Spotify Plays`**
-
-  * ⏱️ Runs hourly
-  * Updates the `plays` table
-* **`Sync Spotify Albums`**
-
-  * ⏰ Runs daily
-  * Refreshes `albums` and `tracks` tables
-* **`Sync Liked Tracks`**
-
-  * ⏰ Runs daily
-  * Refreshes `is_liked` flags
-* **`Update All Playlists`**
-
-  * 🚀 Triggers after `Track Spotify Plays`
-  * Updates all smart playlists
+| Workflow                  | Schedule          | Action                                         |
+|---------------------------|-------------------|------------------------------------------------|
+| `track_spotify_plays.yml` | Hourly (7am–1am)  | Tracks Spotify plays and updates the DB       |
+| `sync_spotify_library.yml`| Daily             | Syncs albums, tracks, liked tracks            |
+| `update_all_playlists.yml`| After play sync   | Rebuilds all playlists                        |
 
 ---
 
-## 🔐 Environment Variables (Render.com + GitHub Secrets)
+## 🔐 Environment Variables
 
-| Key                     | Purpose                   |
-| ----------------------- | ------------------------- |
-| `SPOTIFY_CLIENT_ID`     | Spotify App Client ID     |
-| `SPOTIFY_CLIENT_SECRET` | Spotify App Client Secret |
-| `SPOTIFY_REFRESH_TOKEN` | Token for refreshing auth |
-| `SPOTIFY_REDIRECT_URI`  | URI used during OAuth     |
-| `DB_HOST`               | PostgreSQL host           |
-| `DB_PORT`               | PostgreSQL port           |
-| `DB_NAME`               | PostgreSQL DB name        |
-| `DB_USER`               | PostgreSQL username       |
-| `DB_PASSWORD`           | PostgreSQL password       |
-
----
-
-## 🌐 Triggering Syncs Manually
-
-Hosted on Render (example URLs):
-
-* `https://<your-app>.onrender.com/sync-albums`
-* `https://<your-app>.onrender.com/sync-liked-tracks`
-* `https://<your-app>.onrender.com/run-tracker`
-* `https://<your-app>.onrender.com/update-never-played-playlist`
+| Key                     | Purpose                            |
+|------------------------|------------------------------------|
+| `SPOTIFY_CLIENT_ID`     | Spotify App Client ID              |
+| `SPOTIFY_CLIENT_SECRET` | Spotify App Client Secret          |
+| `SPOTIFY_REFRESH_TOKEN` | Token for refreshing auth          |
+| `SPOTIFY_REDIRECT_URI`  | URI used during OAuth              |
+| `DB_HOST`               | PostgreSQL host                    |
+| `DB_PORT`               | PostgreSQL port                    |
+| `DB_NAME`               | PostgreSQL DB name                 |
+| `DB_USER`               | PostgreSQL username                |
+| `DB_PASSWORD`           | PostgreSQL password                |
 
 ---
 
-## 📊 Architecture Diagram
-
-```mermaid
-graph TD
-    subgraph GitHub Actions
-        A[Track Spotify Plays]
-        B[Sync Albums]
-        C[Sync Liked Tracks]
-        D[Update All Playlists]
-    end
-
-    subgraph Render Flask App
-        E[app.py endpoints]
-        E -->|triggers| B
-        E -->|triggers| C
-        E -->|triggers| A
-        E -->|triggers| D
-    end
-
-    A -->|updates| DB[(PostgreSQL)]
-    B -->|updates| DB
-    C -->|updates| DB
-    D -->|reads + writes| SpotifyAPI[(Spotify API)]
-    DB -->|feeds| D
-```
-
----
-
-## ✅ Setup Guide (Step-by-Step)
-
-Follow these steps to get the tracker running smoothly with your Spotify account:
-
----
+## ✅ Setup Guide
 
 ### 1. Clone the Repo
 
@@ -143,121 +95,103 @@ git clone https://github.com/confidentjohn/spotify-oauth-tracker.git
 cd spotify-oauth-tracker
 ```
 
----
-
 ### 2. Register a Spotify Developer App
 
-Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications) and:
+Create an app on the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)  
+Set your redirect URI to `https://<your-app>.onrender.com/callback`
 
-* Click **Create App**
-* Set the **Redirect URI** to `https://<your-render-app>.onrender.com/callback`
-* Note the `Client ID` and `Client Secret`
+### 3. Deploy to Render
 
----
+- Add as a Web Service, point to `app.py`
+- Set all necessary environment variables
+- Enable auto-deploy from GitHub
 
-### 3. Configure Environment Variables
+### 4. Get Your Refresh Token
 
-Set these secrets in **Render.com** and **GitHub Secrets**:
+- Visit `/login` on your deployed site
+- Complete Spotify login
+- Copy the refresh token from the `/callback` response
 
-| Variable                | Description                                     |
-| ----------------------- | ----------------------------------------------- |
-| `SPOTIFY_CLIENT_ID`     | From your Spotify app                           |
-| `SPOTIFY_CLIENT_SECRET` | From your Spotify app                           |
-| `SPOTIFY_REDIRECT_URI`  | e.g. `https://<your-app>.onrender.com/callback` |
-| `DB_HOST`               | Your PostgreSQL host (Render or other)          |
-| `DB_PORT`               | Usually `5432`                                  |
-| `DB_NAME`               | Your DB name                                    |
-| `DB_USER`               | Your DB username                                |
-| `DB_PASSWORD`           | Your DB password                                |
+### 5. Initialize DB
 
-In GitHub: go to your repo → **Settings** → **Secrets and variables** → **Actions**
+Visit `/init-db` to create tables:
+- `albums`, `tracks`, `plays`, `playlist_mappings`
 
----
-
-### 4. Deploy to Render
-
-* Add a new **Web Service**
-* Point to `app.py`
-* Set your **environment variables**
-* Deploy the app
-
-Test the web app by visiting:
-`https://<your-app>.onrender.com`
-
----
-
-### 5. Initialize the Database
-
-Once the app is live:
-
-* Open: `https://<your-app>.onrender.com/init-db`
-* This will create all necessary tables (`albums`, `tracks`, `plays`, `playlist_mappings`)
-
----
-
-### 6. Get Your Spotify Refresh Token
-
-* Visit `https://<your-app>.onrender.com/login`
-* Authenticate with your Spotify account
-* You’ll be redirected with a **refresh token** shown in the browser
-* Copy this and add it as `SPOTIFY_REFRESH_TOKEN` in your GitHub and Render secrets
-
----
-
-### 7. Add Your Smart Playlist Mappings
-
-Each playlist-generating script looks up its destination from the DB.
-
-Use this SQL to add a mapping:
+### 6. Add Playlist Mappings
 
 ```sql
 INSERT INTO playlist_mappings (slug, name, playlist_id)
-VALUES (
-  'never_played',
-  'Never Played',
-  'your_spotify_playlist_id_here'
-);
+VALUES ('never_played', 'Never Played', 'your_spotify_playlist_id');
 ```
 
-Repeat for:
+Repeat for each playlist.
 
-* `played_once`
-* `oldest_played`
-* `most_played`
-* `loved_added_last_30_days`
+### 7. Trigger a Sync
 
-Find the Playlist ID in the Spotify URL like:
-`https://open.spotify.com/playlist/**YOUR_ID**?si=...`
+Visit:
 
----
-
-### 8. Trigger a Manual Sync
-
-From your browser:
-
-* `/sync-albums`
-* `/sync-liked-tracks`
-* `/run-tracker`
-* `/update-never-played-playlist` (and others)
+- `/sync-library`
+- `/track-plays`
+- `/update-never-played-playlist` etc.
 
 ---
 
-### 9. Enable GitHub Actions
+## 📊 Architecture Overview
 
-GitHub Actions automate everything:
+```mermaid
+graph TD
+    A[Track Spotify Plays] --> DB[(PostgreSQL)]
+    B[Sync Saved Albums] --> DB
+    C[Sync Liked Tracks] --> DB
+    D[Sync Album Tracks] --> DB
+    DB --> E[Playlist Generators] --> Spotify[(Spotify API)]
 
-* Runs hourly/daily
-* Keeps the DB up to date
-* Updates playlists continuously
+    subgraph GitHub Actions
+        A
+        B
+        C
+        D
+        E
+    end
 
-Check `.github/workflows/` — it’s already preconfigured!
+    subgraph Render.com
+        Web[Flask App / app.py] --> DB
+        Web --> Spotify
+    end
+```
 
 ---
 
-🎉 You're done!
+## ⚙️ Rate Limit Handling
 
-Your Spotify data is now automatically tracked and transformed into dynamic playlists.
+The Spotify API enforces rate limits (429 errors). All API interactions are wrapped with retry logic that:
+
+- Detects `429 Too Many Requests`
+- Waits `Retry-After` seconds
+- Logs retry attempts
+
+This ensures your syncs won’t fail silently.
 
 ---
 
-For questions or enhancements, feel free to open an issue or fork the project 🚀
+## ✅ Example Logs
+
+```text
+🎼 Syncing album tracks for unsynced albums...
+🎵 Fetching tracks for: Evermore (6AORtDjduMM3bupSWzbTSG)
+⚠️ Rate limit hit. Retry #1 in 3s...
+✅ Album tracks synced.
+```
+
+---
+
+## 📂 Maintenance Notes
+
+- `init_db.py` sets up schema and constraints
+- `sync_album_tracks.py` only syncs unsynced albums
+- Tracks not liked and not from albums are cleaned up
+- `plays` are **not deleted**, even if the track is removed from library
+
+---
+
+Feel free to fork and extend. PRs welcome!
