@@ -22,7 +22,7 @@ jobs:
       - name: Run check_track_availability.py
         run: python -u check_track_availability.py  # 👈 forces unbuffered output
         env:
-          PYTHONUNBUFFERED: 1  # 👈 also helps ensure real-time output
+          #PYTHONUNBUFFERED: 1  # 👈 also helps ensure real-time output
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
           SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
