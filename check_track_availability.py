@@ -2,12 +2,10 @@ import os
 import psycopg2
 import requests
 import time
+from datetime import datetime
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
-from datetime import datetime
 
-# ─────────────────────────────────────────────
-# Get Access Token
 # ─────────────────────────────────────────────
 def get_access_token():
     auth_response = requests.post(
@@ -21,9 +19,6 @@ def get_access_token():
     )
     return auth_response.json()['access_token']
 
-# ─────────────────────────────────────────────
-# Safe Spotify API Wrapper
-# ─────────────────────────────────────────────
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0
     while True:
@@ -44,8 +39,6 @@ def safe_spotify_call(func, *args, **kwargs):
             time.sleep(5)
 
 # ─────────────────────────────────────────────
-# Start Script
-# ─────────────────────────────────────────────
 access_token = get_access_token()
 sp = Spotify(auth=access_token)
 
@@ -61,18 +54,17 @@ cur = conn.cursor()
 print("🔍 Checking track availability for outdated or missing records...", flush=True)
 
 cur.execute("""
-SELECT t.id
-FROM tracks t
-LEFT JOIN track_availability a ON t.id = a.track_id
-WHERE a.checked_at IS NULL OR a.checked_at < NOW() - INTERVAL '30 days'
+    SELECT t.id
+    FROM tracks t
+    LEFT JOIN track_availability a ON t.id = a.track_id
+    WHERE a.checked_at IS NULL OR a.checked_at < NOW() - INTERVAL '30 days'
 """)
 track_ids = [row[0] for row in cur.fetchall()]
-
-print(f"Found {len(track_ids)} track(s) to check", flush=True)
+total = len(track_ids)
+print(f"Found {total} track(s) to check", flush=True)
 
 now = datetime.utcnow()
-
-for track_id in track_ids:
+for i, track_id in enumerate(track_ids, start=1):
     try:
         track = safe_spotify_call(sp.track, track_id)
         is_playable = track.get('is_playable', bool(track.get('available_markets')))
@@ -88,7 +80,10 @@ for track_id in track_ids:
             checked_at = EXCLUDED.checked_at;
     """, (track_id, is_playable, now))
 
-conn.commit()
+    if i % 100 == 0 or i == total:
+        print(f"🔄 Checked {i} of {total} tracks", flush=True)
+        conn.commit()  # Commit every 100 tracks for stability
+
 cur.close()
 conn.close()
 print("✅ Finished checking availability.", flush=True)
