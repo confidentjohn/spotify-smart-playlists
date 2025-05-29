@@ -68,6 +68,10 @@ def sync_liked_tracks():
 def run_tracker():
     return run_script('track_plays.py')   
 
+@app.route('/check-track-availability')
+def check_track_availability():
+    return run_script('check_track_availability.py')
+
 @app.route('/update-never-played-playlist')
 def update_never_played_playlist():
     return run_script('update_playlist_never_played.py')
