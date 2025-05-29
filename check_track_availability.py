@@ -79,12 +79,12 @@ for track_id in track_ids:
         available = False
 
     cur.execute("""
-        INSERT INTO track_availability (track_id, available, checked_at)
-        VALUES (%s, %s, NOW())
+        INSERT INTO track_availability (track_id, is_playable, checked_at)
+        VALUES (%s, %s, %s)
         ON CONFLICT (track_id) DO UPDATE SET
-            available = EXCLUDED.available,
+            is_playable = EXCLUDED.available,
             checked_at = EXCLUDED.checked_at;
-    """, (track_id, available))
+    """, (track_id, is_playable, now))
 
 conn.commit()
 cur.close()
