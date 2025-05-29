@@ -84,14 +84,15 @@ now = datetime.utcnow()
 for i, track_id in enumerate(track_ids, start=1):
     print(f"🎯 [{i}/{total}] Checking track: {track_id}", flush=True)
     try:
-        track = safe_spotify_call(sp.track, track_id)
+        # Now using market param based on user country
+        track = safe_spotify_call(sp.track, track_id, market=user_country)
         print(json.dumps(track, indent=2), flush=True)
 
         is_playable = track.get('is_playable')
         if is_playable is None:
             available_markets = track.get('available_markets', [])
             is_playable = user_country in available_markets
-            print(f"📌 Available in user's country ({user_country}): {is_playable}", flush=True)
+            print(f"📌 Fallback: Available in user's country ({user_country}): {is_playable}", flush=True)
 
         print(f"✅ Track {track_id} → is_playable: {is_playable}", flush=True)
 
