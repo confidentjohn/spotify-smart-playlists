@@ -1,6 +1,7 @@
 name: Update All Spotify Playlists
 
 on:
+  workflow_dispatch:  # Allows manual trigger from GitHub Actions tab
   schedule:
     - cron: '0 */12 * * *'  # Every 12 hours (at 00:00 and 12:00 UTC)
 
@@ -120,7 +121,7 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
-update-never-played-new:
+  update-never-played-new:
     name: Update Never Played New Playlist
     runs-on: ubuntu-latest
     steps:
