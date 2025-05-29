@@ -1,10 +1,8 @@
 name: Update All Spotify Playlists
 
 on:
-  workflow_run:
-    workflows: ["Track Spotify Plays"]
-    types:
-      - completed
+  schedule:
+    - cron: '0 */12 * * *'  # Every 12 hours (at 00:00 and 12:00 UTC)
 
 jobs:
   update-never-played:
@@ -112,6 +110,29 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run update_playlist_loved_added_last_30_days.py
         run: python update_playlist_loved_added_last_30_days.py
+        env:
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+update-never-played-new:
+    name: Update Never Played New Playlist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run update_playlist_never_played_new_tracks.py
+        run: python update_playlist_never_played_new_tracks.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}

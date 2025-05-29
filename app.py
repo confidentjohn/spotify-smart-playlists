@@ -88,6 +88,10 @@ def update_playlist_most_played():
 def update_playlist_loved_added_last_30_days():
     return run_script('update_playlist_loved_added_last_30_days.py')
 
+@app.route('/update-playlist-never-played-new-tracks')
+def update_playlist_never_played_new_tracks():
+    return run_script('update_playlist_never_played_new_tracks.py')
+
 
 
 # ─────────────────────────────────────────────────────

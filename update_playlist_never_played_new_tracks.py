@@ -40,7 +40,7 @@ cur = conn.cursor()
 # ─────────────────────────────────────────────
 # Get playlist ID from mapping table
 # ─────────────────────────────────────────────
-cur.execute("SELECT playlist_id FROM playlist_mappings WHERE name = %s", ("Oldest Played",))
+cur.execute("SELECT playlist_id FROM playlist_mappings WHERE name = %s", ("Never Played New",))
 row = cur.fetchone()
 if not row:
     print("❌ No playlist mapping found.")
@@ -54,11 +54,17 @@ print(f"🎯 Using playlist ID: {playlist_id}")
 # Fetch tracks
 # ─────────────────────────────────────────────
 cur.execute("""
-    SELECT 'spotify:track:' || p.track_id
-    FROM plays p
-    GROUP BY p.track_id
-    ORDER BY MIN(p.played_at) ASC
-    LIMIT 9000;
+    SELECT 'spotify:track:' || t.id
+FROM tracks t
+LEFT JOIN plays p ON t.id = p.track_id
+LEFT JOIN albums a ON t.album_id = a.id
+WHERE
+    p.track_id IS NULL
+    AND (a.is_saved IS NULL OR a.is_saved = TRUE)
+    AND t.added_at >= DATE '2025-05-29'
+ORDER BY t.album_id, t.track_number NULLS LAST
+LIMIT 9000;
+
 """)
 rows = cur.fetchall()
 track_uris = [row[0] for row in rows]
