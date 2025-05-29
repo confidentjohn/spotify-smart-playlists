@@ -72,9 +72,12 @@ for i, track_id in enumerate(track_ids, start=1):
     print(f"🎯 [{i}/{total}] Checking track: {track_id}", flush=True)
     try:
         track = safe_spotify_call(sp.track, track_id)
+
+        # 🔎 Debug: Show full response
+        print(f"🪵 Raw Spotify response for {track_id}:\n{track}", flush=True)
+
         is_playable = track.get('is_playable')
         if is_playable is None:
-            # fallback check
             is_playable = bool(track.get('available_markets'))
 
         print(f"✅ Track {track_id} → is_playable: {is_playable}", flush=True)
