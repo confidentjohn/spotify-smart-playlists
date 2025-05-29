@@ -1,10 +1,10 @@
-
 import os
 import psycopg2
 import requests
 import time
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
+from datetime import datetime
 
 # ─────────────────────────────────────────────
 # Get Access Token
@@ -70,19 +70,21 @@ track_ids = [row[0] for row in cur.fetchall()]
 
 print(f"Found {len(track_ids)} track(s) to check", flush=True)
 
+now = datetime.utcnow()
+
 for track_id in track_ids:
     try:
         track = safe_spotify_call(sp.track, track_id)
-        available = track['is_playable'] if 'is_playable' in track else track['available_markets'] != []
+        is_playable = track.get('is_playable', bool(track.get('available_markets')))
     except Exception as e:
         print(f"⚠️ Could not check track {track_id}: {e}", flush=True)
-        available = False
+        is_playable = False
 
     cur.execute("""
         INSERT INTO track_availability (track_id, is_playable, checked_at)
         VALUES (%s, %s, %s)
         ON CONFLICT (track_id) DO UPDATE SET
-            is_playable = EXCLUDED.available,
+            is_playable = EXCLUDED.is_playable,
             checked_at = EXCLUDED.checked_at;
     """, (track_id, is_playable, now))
 
