@@ -1,6 +1,7 @@
 import os
 import psycopg2
 
+# Connect to PostgreSQL
 conn = psycopg2.connect(
     dbname=os.environ["DB_NAME"],
     user=os.environ["DB_USER"],
@@ -8,11 +9,12 @@ conn = psycopg2.connect(
     host=os.environ["DB_HOST"],
     port=os.environ.get("DB_PORT", 5432),
 )
+
 cur = conn.cursor()
 
-# ────────────────────────────────
-# Create albums table
-# ────────────────────────────────
+# ─────────────────────────────────────────────
+# Albums table
+# ─────────────────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS albums (
     id TEXT PRIMARY KEY,
@@ -26,9 +28,9 @@ CREATE TABLE IF NOT EXISTS albums (
 );
 """)
 
-# ────────────────────────────────
-# Create tracks table
-# ────────────────────────────────
+# ─────────────────────────────────────────────
+# Tracks table
+# ─────────────────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS tracks (
     id TEXT PRIMARY KEY,
@@ -43,21 +45,21 @@ CREATE TABLE IF NOT EXISTS tracks (
 );
 """)
 
-# ────────────────────────────────
-# Create plays table (no FK)
-# ────────────────────────────────
+# ─────────────────────────────────────────────
+# Plays table
+# ─────────────────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS plays (
     id SERIAL PRIMARY KEY,
-    track_id TEXT,
+    track_id TEXT
     played_at TIMESTAMP,
     UNIQUE(track_id, played_at)
 );
 """)
 
-# ────────────────────────────────
-# Create playlist_mappings table
-# ────────────────────────────────
+# ─────────────────────────────────────────────
+# Playlist mapping table
+# ─────────────────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS playlist_mappings (
     slug TEXT PRIMARY KEY,
@@ -66,7 +68,19 @@ CREATE TABLE IF NOT EXISTS playlist_mappings (
 );
 """)
 
+# ─────────────────────────────────────────────
+# NEW: Track availability table
+# ─────────────────────────────────────────────
+cur.execute("""
+CREATE TABLE IF NOT EXISTS track_availability (
+    track_id TEXT PRIMARY KEY REFERENCES tracks(id),
+    is_playable BOOLEAN,
+    checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+""")
+
 conn.commit()
 cur.close()
 conn.close()
+
 print("✅ Tables created and updated successfully.")
