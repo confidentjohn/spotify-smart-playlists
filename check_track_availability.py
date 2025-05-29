@@ -46,6 +46,16 @@ def safe_spotify_call(func, *args, **kwargs):
 access_token = get_access_token()
 sp = Spotify(auth=access_token)
 
+# 🌍 Get user country
+try:
+    user_profile = safe_spotify_call(sp.current_user)
+    user_country = user_profile.get("country", "US")
+    print(f"🌍 User country detected: {user_country}", flush=True)
+except Exception as e:
+    print(f"⚠️ Could not retrieve user country, defaulting to 'US': {e}", flush=True)
+    user_country = "US"
+
+# ─────────────────────────────────────────────
 conn = psycopg2.connect(
     dbname=os.environ['DB_NAME'],
     user=os.environ['DB_USER'],
@@ -73,13 +83,13 @@ for i, track_id in enumerate(track_ids, start=1):
     print(f"🎯 [{i}/{total}] Checking track: {track_id}", flush=True)
     try:
         track = safe_spotify_call(sp.track, track_id)
-
-        # Pretty-print Spotify's raw JSON response for debugging
         print(json.dumps(track, indent=2), flush=True)
 
         is_playable = track.get('is_playable')
         if is_playable is None:
-            is_playable = bool(track.get('available_markets'))
+            available_markets = track.get('available_markets', [])
+            is_playable = user_country in available_markets
+            print(f"📌 Available in user's country ({user_country}): {is_playable}", flush=True)
 
         print(f"✅ Track {track_id} → is_playable: {is_playable}", flush=True)
 
