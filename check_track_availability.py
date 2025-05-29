@@ -2,6 +2,7 @@ import os
 import psycopg2
 import requests
 import time
+import json
 from datetime import datetime
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
@@ -73,8 +74,8 @@ for i, track_id in enumerate(track_ids, start=1):
     try:
         track = safe_spotify_call(sp.track, track_id)
 
-        # 🔎 Debug: Show full response
-        print(f"🪵 Raw Spotify response for {track_id}:\n{track}", flush=True)
+        # Pretty-print Spotify's raw JSON response for debugging
+        print(json.dumps(track, indent=2), flush=True)
 
         is_playable = track.get('is_playable')
         if is_playable is None:
