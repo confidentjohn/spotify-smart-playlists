@@ -37,6 +37,9 @@ def safe_spotify_call(func, *args, **kwargs):
             retries += 1
             print(f"⏳ Timeout hit. Retry #{retries} in 5s... ({e})", flush=True)
             time.sleep(5)
+        except Exception as e:
+            print(f"❌ Unexpected error: {e}", flush=True)
+            raise
 
 # ─────────────────────────────────────────────
 access_token = get_access_token()
@@ -61,28 +64,39 @@ cur.execute("""
 """)
 track_ids = [row[0] for row in cur.fetchall()]
 total = len(track_ids)
-print(f"Found {total} track(s) to check", flush=True)
+print(f"📦 Found {total} track(s) to check", flush=True)
 
 now = datetime.utcnow()
+
 for i, track_id in enumerate(track_ids, start=1):
+    print(f"🎯 [{i}/{total}] Checking track: {track_id}", flush=True)
     try:
         track = safe_spotify_call(sp.track, track_id)
-        is_playable = track.get('is_playable', bool(track.get('available_markets')))
+        is_playable = track.get('is_playable')
+        if is_playable is None:
+            # fallback check
+            is_playable = bool(track.get('available_markets'))
+
+        print(f"✅ Track {track_id} → is_playable: {is_playable}", flush=True)
+
     except Exception as e:
-        print(f"⚠️ Could not check track {track_id}: {e}", flush=True)
+        print(f"⚠️ Error retrieving track {track_id}: {e}", flush=True)
         is_playable = False
 
-    cur.execute("""
-        INSERT INTO track_availability (track_id, is_playable, checked_at)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (track_id) DO UPDATE SET
-            is_playable = EXCLUDED.is_playable,
-            checked_at = EXCLUDED.checked_at;
-    """, (track_id, is_playable, now))
+    try:
+        cur.execute("""
+            INSERT INTO track_availability (track_id, is_playable, checked_at)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (track_id) DO UPDATE SET
+                is_playable = EXCLUDED.is_playable,
+                checked_at = EXCLUDED.checked_at;
+        """, (track_id, is_playable, now))
+    except Exception as db_err:
+        print(f"❌ Database error for track {track_id}: {db_err}", flush=True)
 
-    if i % 100 == 0 or i == total:
-        print(f"🔄 Checked {i} of {total} tracks", flush=True)
-        conn.commit()  # Commit every 100 tracks for stability
+    if i % 50 == 0 or i == total:
+        conn.commit()
+        print(f"💾 Committed batch up to track #{i}", flush=True)
 
 cur.close()
 conn.close()
