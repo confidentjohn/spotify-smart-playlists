@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS tracks (
 cur.execute("""
 CREATE TABLE IF NOT EXISTS plays (
     id SERIAL PRIMARY KEY,
-    track_id TEXT
+    track_id TEXT,
     played_at TIMESTAMP,
     UNIQUE(track_id, played_at)
 );
