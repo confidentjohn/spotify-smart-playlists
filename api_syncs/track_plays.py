@@ -5,6 +5,7 @@ import psycopg2
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from datetime import datetime
+from utils.logger import log_event
 
 # ─────────────────────────────────────────────
 # Get Access Token
@@ -33,14 +34,14 @@ def safe_spotify_call(func, *args, **kwargs):
             if e.http_status == 429:
                 retry_after = int(e.headers.get("Retry-After", 5))
                 retries += 1
-                print(f"⚠️ Rate limit hit. Retry #{retries} in {retry_after}s...", flush=True)
+                log_event("track_plays", f"Rate limit hit. Retry #{retries} in {retry_after}s")
                 time.sleep(retry_after)
             else:
-                print(f"❌ Spotify error: {e}", flush=True)
+                log_event("track_plays", f"Spotify error: {e}", level="error")
                 raise
         except requests.exceptions.ReadTimeout as e:
             retries += 1
-            print(f"⏳ Timeout hit. Retry #{retries} in 5s... ({e})", flush=True)
+            log_event("track_plays", f"Timeout hit. Retry #{retries} in 5s... ({e})")
             time.sleep(5)
 
 # ─────────────────────────────────────────────
@@ -64,10 +65,11 @@ cur = conn.cursor()
 # ─────────────────────────────────────────────
 # Sync recently played tracks
 # ─────────────────────────────────────────────
-print("🎧 Tracking recently played tracks...", flush=True)
+log_event("track_plays", "Tracking recently played tracks")
 results = safe_spotify_call(sp.current_user_recently_played, limit=50)
 recent_plays = results["items"]
 
+new_count = 0
 for item in recent_plays:
     track = item["track"]
     track_id = track["id"]
@@ -83,11 +85,11 @@ for item in recent_plays:
         VALUES (%s, %s)
         ON CONFLICT (track_id, played_at) DO NOTHING;
     """, (track_id, played_at_dt))
-
+    new_count += 1
     time.sleep(0.1)  # optional light throttle
 
 conn.commit()
 cur.close()
 conn.close()
 
-print("✅ Tracked recent plays.", flush=True)
+log_event("track_plays", f"Tracked recent plays. New entries: {new_count}")

@@ -64,6 +64,7 @@ spotify-oauth-tracker/
 | `plays`              | Full history of Spotify plays      |
 | `playlist_mappings`  | Maps playlist slugs to Spotify IDs |
 | `track_availability` | Tracks removed from Spotify        |
+| `logs`               | Output logs from syncs to debug    |
 
 Tracks can be orphaned (not liked, not from albums) and are cleaned automatically.
 
