@@ -3,14 +3,8 @@ services:
     name: spotify-oauth-tracker
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: flask run --host=0.0.0.0 --port=5000
+    startCommand: python -m app.app  # updated to match your new structure
     envVars:
-      - key: FLASK_APP
-        value: app/app.py
-      - key: FLASK_ENV
-        value: development
-      - key: PORT
-        value: 5000
       - key: SPOTIFY_CLIENT_ID
         sync: false
       - key: SPOTIFY_CLIENT_SECRET
