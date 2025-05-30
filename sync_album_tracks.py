@@ -65,7 +65,6 @@ for album_id, album_name, album_added_at in saved_albums:
         track_artist = track['artists'][0]['name']
         track_number = track.get('track_number') or 1
 
-        # Insert with album_added_at (this is the key logic)
         cur.execute("""
             INSERT INTO tracks (id, name, artist, album, album_id, is_liked, from_album, track_number, added_at)
             VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s, %s)
@@ -94,11 +93,18 @@ for album_id, in removed_albums:
     """, (album_id,))
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
 
-# 3️⃣ Remove orphaned tracks (not liked + not from any saved album)
+# 3️⃣ Remove orphaned tracks (not liked + not from album)
 print("🧽 Removing orphaned tracks (not liked, not from album)...", flush=True)
 cur.execute("""
     DELETE FROM tracks
     WHERE is_liked = FALSE AND from_album = FALSE
+""")
+
+# 4️⃣ Also clean up availability data for deleted tracks
+print("🧹 Cleaning orphaned availability data...", flush=True)
+cur.execute("""
+    DELETE FROM track_availability
+    WHERE track_id NOT IN (SELECT id FROM tracks)
 """)
 
 # ✅ Done
