@@ -100,15 +100,7 @@ cur.execute("""
     WHERE is_liked = FALSE AND from_album = FALSE
 """)
 
-# 4️⃣ Remove albums that are no longer saved and have no remaining tracks
-print("🗑️ Cleaning up removed albums with no tracks...", flush=True)
-cur.execute("""
-    DELETE FROM albums
-    WHERE is_saved = FALSE
-      AND id NOT IN (SELECT DISTINCT album_id FROM tracks)
-""")
-
-# 5️⃣ Clean up availability data for deleted tracks
+# 4️⃣ Clean up availability data for deleted tracks
 print("🧹 Cleaning orphaned availability data...", flush=True)
 cur.execute("""
     DELETE FROM track_availability

@@ -80,8 +80,20 @@ while True:
     if len(items) < limit:
         break
 
-# Mark removed albums
-cur.execute("UPDATE albums SET is_saved = FALSE,tracks_synced = FALSE WHERE id NOT IN %s", (tuple(current_album_ids),))
+# 🚫 Mark albums no longer saved
+cur.execute("""
+    UPDATE albums 
+    SET is_saved = FALSE, tracks_synced = FALSE 
+    WHERE id NOT IN %s
+""", (tuple(current_album_ids),))
+
+# 🗑️ Delete albums that are no longer saved AND have no associated tracks
+print("🗑️ Cleaning up removed albums with no remaining tracks...", flush=True)
+cur.execute("""
+    DELETE FROM albums
+    WHERE is_saved = FALSE
+      AND id NOT IN (SELECT DISTINCT album_id FROM tracks)
+""")
 
 conn.commit()
 cur.close()
