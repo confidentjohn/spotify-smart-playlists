@@ -1,3 +1,4 @@
+
 import os
 import psycopg2
 import requests
@@ -21,7 +22,6 @@ def get_access_token():
     return auth_response.json()['access_token']
 
 def safe_spotify_call(func, *args, **kwargs):
-    """Retry Spotify API call if rate limited. Logs retry attempts."""
     retries = 0
     while True:
         try:
@@ -56,6 +56,28 @@ with open(LOCK_FILE, 'w') as lock_file:
     )
     cur = conn.cursor()
 
+    # OPTIONAL: Ensure ON DELETE CASCADE is applied to track_availability table
+    cur.execute("""
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.table_constraints
+                WHERE constraint_name = 'fk_track'
+                AND table_name = 'track_availability'
+            ) THEN
+                ALTER TABLE track_availability DROP CONSTRAINT fk_track;
+            END IF;
+        END
+        $$;
+
+        ALTER TABLE track_availability
+        ADD CONSTRAINT fk_track
+        FOREIGN KEY (track_id)
+        REFERENCES tracks(id)
+        ON DELETE CASCADE;
+    """)
+
     # Reset all liked flags before re-syncing
     cur.execute("UPDATE tracks SET is_liked = FALSE")
 
@@ -77,15 +99,23 @@ with open(LOCK_FILE, 'w') as lock_file:
             name = track['name']
             artist = track['artists'][0]['name']
             album = track['album']['name']
-            added_at = item['added_at']
+            album_id = track['album']['id']
+            liked_added_at = item['added_at']
+
+            cur.execute("SELECT added_at FROM albums WHERE id = %s", (album_id,))
+            album_row = cur.fetchone()
+            album_added_at = album_row[0] if album_row else None
+
+            final_added_at = album_added_at if album_added_at else liked_added_at
 
             cur.execute("""
-                INSERT INTO tracks (id, name, artist, album, is_liked, added_at)
-                VALUES (%s, %s, %s, %s, TRUE, %s)
+                INSERT INTO tracks (id, name, artist, album, album_id, is_liked, added_at)
+                VALUES (%s, %s, %s, %s, %s, TRUE, %s)
                 ON CONFLICT (id) DO UPDATE 
-                SET is_liked = TRUE, 
+                SET is_liked = TRUE,
+                    album_id = EXCLUDED.album_id,
                     added_at = COALESCE(tracks.added_at, EXCLUDED.added_at);
-            """, (track_id, name, artist, album, added_at))
+            """, (track_id, name, artist, album, album_id, final_added_at))
 
             counter += 1
             if counter % batch_size == 0:
