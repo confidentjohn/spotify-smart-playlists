@@ -2,8 +2,7 @@ name: Track Spotify Plays
 
 on:
   schedule:
-    - cron: '0 11-23 * * *'  # 7am–11pm NYC → 11am–3am UTC
-    - cron: '0 0-4 * * *'    # Midnight–1am NYC → 4am–5am UTC
+    - cron: '*/10 * * * *'  # Every 10 minutes, UTC
   workflow_dispatch:
 
 jobs:
