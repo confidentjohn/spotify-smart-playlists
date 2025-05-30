@@ -56,35 +56,38 @@ with open(LOCK_FILE, 'w') as lock_file:
     )
     cur = conn.cursor()
 
-    # Reset all liked flags before re-syncing
-    cur.execute("UPDATE tracks SET is_liked = FALSE")
-
     limit = 50
     offset = 0
     batch_size = 50
     counter = 0
+    liked_track_ids = set()
+
+    print("🎧 Syncing liked tracks...", flush=True)
 
     while True:
         results = safe_spotify_call(sp.current_user_saved_tracks, limit=limit, offset=offset)
-        tracks = results['items']
+        items = results['items']
 
-        if not tracks:
+        if not items:
             break
 
-        for item in tracks:
+        for item in items:
             track = item['track']
+            if not track:  # Sometimes Spotify returns None tracks
+                continue
+
             track_id = track['id']
             name = track['name']
             artist = track['artists'][0]['name']
             album = track['album']['name']
             album_id = track['album']['id']
             liked_added_at = item['added_at']
+            liked_track_ids.add(track_id)
 
-            # Get album's added_at from albums table, prefer it over liked date
+            # Prefer album's added_at if available
             cur.execute("SELECT added_at FROM albums WHERE id = %s", (album_id,))
             album_row = cur.fetchone()
             album_added_at = album_row[0] if album_row else None
-            # Album date has priority if it exists
             final_added_at = album_added_at if album_added_at else liked_added_at
 
             cur.execute("""
@@ -103,11 +106,26 @@ with open(LOCK_FILE, 'w') as lock_file:
             if counter % batch_size == 0:
                 conn.commit()
 
-        offset += len(tracks)
-        if len(tracks) < limit:
+        offset += len(items)
+        if len(items) < limit:
             break
+
+    # Set is_liked = FALSE for tracks that were not in the liked list
+    print("🔄 Updating unliked tracks...", flush=True)
+    cur.execute("""
+        UPDATE tracks
+        SET is_liked = FALSE
+        WHERE id NOT IN %s
+    """, (tuple(liked_track_ids),))
+
+    # Final cleanup: delete orphaned tracks (not liked, not from album)
+    print("🧽 Removing orphaned tracks (not liked, not from album)...", flush=True)
+    cur.execute("""
+        DELETE FROM tracks
+        WHERE is_liked = FALSE AND from_album = FALSE
+    """)
 
     conn.commit()
     cur.close()
     conn.close()
-    print("✅ Synced saved tracks from library.")
+    print("✅ Synced liked tracks and cleaned up orphaned ones.")
