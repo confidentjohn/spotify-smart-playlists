@@ -1,10 +1,16 @@
 import os
+import sys
 import time
 import requests
 import psycopg2
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from datetime import datetime
+
+# ─────────────────────────────────────────────
+# Ensure utils is in path
+# ─────────────────────────────────────────────
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.logger import log_event
 
 # ─────────────────────────────────────────────

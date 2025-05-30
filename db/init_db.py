@@ -84,6 +84,20 @@ CREATE TABLE IF NOT EXISTS track_availability (
 );
 """)
 
+# ─────────────────────────────────────────────
+# Logging table
+# ─────────────────────────────────────────────
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS logs (
+        id SERIAL PRIMARY KEY,
+        script_name TEXT NOT NULL,
+        message TEXT NOT NULL,
+        level TEXT DEFAULT 'info',
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+""")
+
+
 conn.commit()
 cur.close()
 conn.close()

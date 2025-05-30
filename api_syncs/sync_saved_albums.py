@@ -1,10 +1,20 @@
 import os
+import sys
 import psycopg2
 import requests
 import time
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 
+# ─────────────────────────────────────────────
+# Fix import path for utils
+# ─────────────────────────────────────────────
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.logger import log_event
+
+# ─────────────────────────────────────────────
+# Get Access Token
+# ─────────────────────────────────────────────
 def get_access_token():
     auth_response = requests.post(
         'https://accounts.spotify.com/api/token',
@@ -17,6 +27,9 @@ def get_access_token():
     )
     return auth_response.json()['access_token']
 
+# ─────────────────────────────────────────────
+# Safe Spotify API Wrapper
+# ─────────────────────────────────────────────
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0
     while True:
@@ -26,12 +39,15 @@ def safe_spotify_call(func, *args, **kwargs):
             if e.http_status == 429:
                 retry_after = int(e.headers.get("Retry-After", 5))
                 retries += 1
-                print(f"⚠️ Rate limit hit. Retry #{retries} in {retry_after}s...", flush=True)
+                log_event("sync_saved_albums", f"Rate limit hit. Retry #{retries} in {retry_after}s")
                 time.sleep(retry_after)
             else:
-                print(f"❌ Spotify error: {e}", flush=True)
+                log_event("sync_saved_albums", f"Spotify error: {e}", level="error")
                 raise
 
+# ─────────────────────────────────────────────
+# Setup Spotify + DB connections
+# ─────────────────────────────────────────────
 access_token = get_access_token()
 sp = Spotify(auth=access_token)
 
@@ -48,8 +64,11 @@ limit = 20
 offset = 0
 current_album_ids = set()
 
-print("📀 Starting saved albums sync...", flush=True)
+log_event("sync_saved_albums", "Starting saved albums sync")
 
+# ─────────────────────────────────────────────
+# Sync saved albums from Spotify
+# ─────────────────────────────────────────────
 while True:
     results = safe_spotify_call(sp.current_user_saved_albums, limit=limit, offset=offset)
     items = results['items']
@@ -80,15 +99,18 @@ while True:
     if len(items) < limit:
         break
 
-# 🚫 Mark albums no longer saved
+log_event("sync_saved_albums", f"{len(current_album_ids)} saved albums synced")
+
+# ─────────────────────────────────────────────
+# Mark removed albums & cleanup
+# ─────────────────────────────────────────────
 cur.execute("""
     UPDATE albums 
     SET is_saved = FALSE, tracks_synced = FALSE 
     WHERE id NOT IN %s
 """, (tuple(current_album_ids),))
 
-# 🗑️ Clean up ALL removed albums with no valid tracks left
-print("🗑️ Cleaning up all removed albums with no valid tracks...", flush=True)
+log_event("sync_saved_albums", "Cleaning up removed albums with no valid tracks")
 cur.execute("""
     SELECT id FROM albums
     WHERE is_saved = FALSE
@@ -97,15 +119,11 @@ cur.execute("""
 albums_to_remove = cur.fetchall()
 
 for (album_id,) in albums_to_remove:
-    print(f"🗑️ Removing album and orphaned tracks: {album_id}", flush=True)
-
-    # Delete any orphaned tracks that were from the album and not liked
+    log_event("sync_saved_albums", f"Removing album and orphaned tracks: {album_id}")
     cur.execute("""
         DELETE FROM tracks
         WHERE album_id = %s AND from_album = TRUE AND is_liked = FALSE
     """, (album_id,))
-
-    # Then delete the album itself
     cur.execute("""
         DELETE FROM albums
         WHERE id = %s
@@ -115,4 +133,4 @@ conn.commit()
 cur.close()
 conn.close()
 
-print("✅ Saved albums updated.", flush=True)
+log_event("sync_saved_albums", "Saved albums sync complete")
