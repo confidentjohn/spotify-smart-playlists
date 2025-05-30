@@ -1,9 +1,8 @@
 name: Sync Liked Tracks
 
 on:
-  workflow_dispatch:
-    schedule:
-    - cron: '0 7 * * *'  # Runs every day at 5:00 AM EST
+  workflow_dispatch:       # Allows manual trigger from GitHub UI
+  workflow_call:           # Allows reuse from another workflow
 
 jobs:
   sync-liked:

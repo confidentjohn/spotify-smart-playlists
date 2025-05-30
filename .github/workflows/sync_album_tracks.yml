@@ -1,9 +1,8 @@
-name: Sync Spotify Album tracks
+name: Sync Spotify Album Tracks
 
 on:
   workflow_dispatch:
-    schedule:
-    - cron: '0 6 * * *'  # Runs every day at 5:00 AM EST
+  workflow_call:
 
 jobs:
   sync-albums:
