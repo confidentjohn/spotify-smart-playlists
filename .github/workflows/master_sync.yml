@@ -20,3 +20,4 @@ jobs:
   check-availability:
     needs: sync-liked-tracks
     uses: ./.github/workflows/check_track_availability.yml
+# 💡 Force Git to detect change
