@@ -2,6 +2,7 @@ name: Sync Spotify Album tracks
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   sync-albums:

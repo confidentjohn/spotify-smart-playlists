@@ -2,6 +2,7 @@ name: Check Track Availability
 
 on:
   workflow_dispatch:      # Allows manual trigger from GitHub UI
+  workflow_call:
 
 jobs:
   check-availability:
