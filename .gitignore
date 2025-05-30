@@ -1,0 +1,10 @@
+echo ".DS_Store" >> .gitignore
+# macOS system files
+.DS_Store
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# VS Code settings
+.vscode/
