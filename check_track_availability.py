@@ -73,7 +73,6 @@ cur.execute("""
     LEFT JOIN track_availability a ON t.id = a.track_id
     WHERE a.checked_at IS NULL
        OR a.checked_at < NOW() - INTERVAL '60 days'
-       OR a.is_playable = FALSE
 """)
 track_ids = [row[0] for row in cur.fetchall()]
 total = len(track_ids)
