@@ -53,7 +53,6 @@ with open(LOCK_FILE, 'w') as lock_file:
         host=os.environ['DB_HOST'],
         port=os.environ.get('DB_PORT', 5432),
         sslmode='require'
-
     )
     cur = conn.cursor()
 
@@ -81,10 +80,11 @@ with open(LOCK_FILE, 'w') as lock_file:
             album_id = track['album']['id']
             liked_added_at = item['added_at']
 
-            # Prefer album's added_at if available
+            # Get album's added_at from albums table, prefer it over liked date
             cur.execute("SELECT added_at FROM albums WHERE id = %s", (album_id,))
             album_row = cur.fetchone()
             album_added_at = album_row[0] if album_row else None
+            # Album date has priority if it exists
             final_added_at = album_added_at if album_added_at else liked_added_at
 
             cur.execute("""
@@ -93,7 +93,10 @@ with open(LOCK_FILE, 'w') as lock_file:
                 ON CONFLICT (id) DO UPDATE 
                 SET is_liked = TRUE,
                     album_id = EXCLUDED.album_id,
-                    added_at = COALESCE(tracks.added_at, EXCLUDED.added_at);
+                    added_at = COALESCE(
+                        (SELECT added_at FROM albums WHERE id = EXCLUDED.album_id),
+                        EXCLUDED.added_at
+                    );
             """, (track_id, name, artist, album, album_id, final_added_at))
 
             counter += 1
