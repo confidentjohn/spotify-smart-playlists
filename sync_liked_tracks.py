@@ -84,7 +84,7 @@ with open(LOCK_FILE, 'w') as lock_file:
                 VALUES (%s, %s, %s, %s, TRUE, %s)
                 ON CONFLICT (id) DO UPDATE 
                 SET is_liked = TRUE, 
-                    added_at = EXCLUDED.added_at;
+                    added_at = COALESCE(tracks.added_at, EXCLUDED.added_at);
             """, (track_id, name, artist, album, added_at))
 
             counter += 1

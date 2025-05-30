@@ -50,12 +50,12 @@ print("🎼 Syncing album tracks for unsynced albums...", flush=True)
 
 # 1️⃣ Sync tracks for still-saved albums
 cur.execute("""
-    SELECT id, name FROM albums
+    SELECT id, name, added_at FROM albums
     WHERE is_saved = TRUE AND (tracks_synced = FALSE OR tracks_synced IS NULL)
 """)
 saved_albums = cur.fetchall()
 
-for album_id, album_name in saved_albums:
+for album_id, album_name, album_added_at in saved_albums:
     print(f"🎵 Syncing tracks for: {album_name} ({album_id})", flush=True)
     album_tracks = safe_spotify_call(sp.album, album_id)['tracks']['items']
 
@@ -65,14 +65,16 @@ for album_id, album_name in saved_albums:
         track_artist = track['artists'][0]['name']
         track_number = track.get('track_number') or 1
 
+        # Insert with album_added_at (this is the key logic)
         cur.execute("""
-            INSERT INTO tracks (id, name, artist, album, album_id, is_liked, from_album, track_number)
-            VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s)
+            INSERT INTO tracks (id, name, artist, album, album_id, is_liked, from_album, track_number, added_at)
+            VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s, %s)
             ON CONFLICT (id) DO UPDATE SET
                 from_album = TRUE,
                 track_number = EXCLUDED.track_number,
-                album_id = EXCLUDED.album_id;
-        """, (track_id, track_name, track_artist, album_name, album_id, track_number))
+                album_id = EXCLUDED.album_id,
+                added_at = COALESCE(tracks.added_at, EXCLUDED.added_at)
+        """, (track_id, track_name, track_artist, album_name, album_id, track_number, album_added_at))
 
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
 
