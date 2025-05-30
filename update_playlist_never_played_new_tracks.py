@@ -55,16 +55,16 @@ print(f"🎯 Using playlist ID: {playlist_id}")
 # ─────────────────────────────────────────────
 cur.execute("""
     SELECT 'spotify:track:' || t.id
-FROM tracks t
-LEFT JOIN plays p ON t.id = p.track_id
-LEFT JOIN albums a ON t.album_id = a.id
-WHERE
-    p.track_id IS NULL
-    AND (a.is_saved IS NULL OR a.is_saved = TRUE)
-    AND t.added_at >= DATE '2025-05-29'
-ORDER BY t.album_id, t.track_number NULLS LAST
-LIMIT 9000;
-
+    FROM tracks t
+    LEFT JOIN plays p ON t.id = p.track_id
+    LEFT JOIN albums a ON t.album_id = a.id
+    LEFT JOIN track_availability ta ON t.id = ta.track_id
+    WHERE p.track_id IS NULL
+      AND (a.is_saved IS NULL OR a.is_saved = TRUE)
+      AND (ta.is_playable IS DISTINCT FROM FALSE OR ta.is_playable IS NULL)
+      AND t.added_at >= DATE '2025-05-29'
+    ORDER BY t.album_id, t.track_number NULLS LAST
+    LIMIT 9000;
 """)
 rows = cur.fetchall()
 track_uris = [row[0] for row in rows]

@@ -56,6 +56,9 @@ print(f"🎯 Using playlist ID: {playlist_id}")
 cur.execute("""
     SELECT 'spotify:track:' || p.track_id
     FROM plays p
+    JOIN tracks t ON p.track_id = t.id
+    LEFT JOIN track_availability ta ON t.id = ta.track_id
+    WHERE ta.is_playable IS DISTINCT FROM FALSE OR ta.is_playable IS NULL
     GROUP BY p.track_id
     ORDER BY MIN(p.played_at) ASC
     LIMIT 9000;
