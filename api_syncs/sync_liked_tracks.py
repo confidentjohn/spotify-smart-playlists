@@ -5,6 +5,7 @@ import fcntl
 import time
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
+from utils.logger import log_event
 
 LOCK_FILE = "/tmp/sync_library.lock"
 
@@ -29,10 +30,10 @@ def safe_spotify_call(func, *args, **kwargs):
             if e.http_status == 429:
                 retry_after = int(e.headers.get("Retry-After", 5))
                 retries += 1
-                print(f"⚠️ Spotify rate limited. Retry #{retries} in {retry_after} seconds...", flush=True)
+                log_event("sync_liked_tracks", f"Rate limit hit. Retry #{retries} in {retry_after}s")
                 time.sleep(retry_after)
             else:
-                print(f"❌ Spotify API error: {e}", flush=True)
+                log_event("sync_liked_tracks", f"Spotify error: {e}", level="error")
                 raise
 
 # Acquire exclusive lock to avoid overlap with album sync
@@ -40,7 +41,7 @@ with open(LOCK_FILE, 'w') as lock_file:
     try:
         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
-        print("❌ Another sync is already running.")
+        log_event("sync_liked_tracks", "Another sync is already running", level="warning")
         exit(1)
 
     access_token = get_access_token()
@@ -62,7 +63,7 @@ with open(LOCK_FILE, 'w') as lock_file:
     counter = 0
     liked_track_ids = set()
 
-    print("🎧 Syncing liked tracks...", flush=True)
+    log_event("sync_liked_tracks", "Starting liked tracks sync")
 
     while True:
         results = safe_spotify_call(sp.current_user_saved_tracks, limit=limit, offset=offset)
@@ -73,7 +74,7 @@ with open(LOCK_FILE, 'w') as lock_file:
 
         for item in items:
             track = item['track']
-            if not track:  # Sometimes Spotify returns None tracks
+            if not track:
                 continue
 
             track_id = track['id']
@@ -84,7 +85,6 @@ with open(LOCK_FILE, 'w') as lock_file:
             liked_added_at = item['added_at']
             liked_track_ids.add(track_id)
 
-            # Prefer album's added_at if available
             cur.execute("SELECT added_at FROM albums WHERE id = %s", (album_id,))
             album_row = cur.fetchone()
             album_added_at = album_row[0] if album_row else None
@@ -110,16 +110,18 @@ with open(LOCK_FILE, 'w') as lock_file:
         if len(items) < limit:
             break
 
-    # Set is_liked = FALSE for tracks that were not in the liked list
-    print("🔄 Updating unliked tracks...", flush=True)
+    log_event("sync_liked_tracks", f"{len(liked_track_ids)} liked tracks synced")
+
+    # Update unliked tracks
+    log_event("sync_liked_tracks", "Updating unliked tracks")
     cur.execute("""
         UPDATE tracks
         SET is_liked = FALSE
         WHERE id NOT IN %s
     """, (tuple(liked_track_ids),))
 
-    # Final cleanup: delete orphaned tracks (not liked, not from album)
-    print("🧽 Removing orphaned tracks (not liked, not from album)...", flush=True)
+    # Final cleanup
+    log_event("sync_liked_tracks", "Removing orphaned tracks")
     cur.execute("""
         DELETE FROM tracks
         WHERE is_liked = FALSE AND from_album = FALSE
@@ -128,4 +130,4 @@ with open(LOCK_FILE, 'w') as lock_file:
     conn.commit()
     cur.close()
     conn.close()
-    print("✅ Synced liked tracks and cleaned up orphaned ones.")
+    log_event("sync_liked_tracks", "Liked tracks sync complete")

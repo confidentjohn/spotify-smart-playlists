@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS plays (
 );
 """)
 
-# Explicitly create a named unique index (optional but helpful for tuning/visibility)
+# Explicitly create a named unique index
 cur.execute("""
 CREATE UNIQUE INDEX IF NOT EXISTS idx_plays_unique ON plays (track_id, played_at);
 """)
@@ -85,18 +85,18 @@ CREATE TABLE IF NOT EXISTS track_availability (
 """)
 
 # ─────────────────────────────────────────────
-# Logging table
+# Logging table (MATCHES logger.py)
 # ─────────────────────────────────────────────
 cur.execute("""
-    CREATE TABLE IF NOT EXISTS logs (
-        id SERIAL PRIMARY KEY,
-        script_name TEXT NOT NULL,
-        message TEXT NOT NULL,
-        level TEXT DEFAULT 'info',
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-    );
+CREATE TABLE IF NOT EXISTS logs (
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    source TEXT NOT NULL,
+    level TEXT DEFAULT 'info',
+    message TEXT NOT NULL,
+    extra JSONB
+);
 """)
-
 
 conn.commit()
 cur.close()

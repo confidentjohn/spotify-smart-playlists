@@ -4,8 +4,8 @@ import requests
 import time
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
+from utils.logger import log_event
 
-# ─────────────────────────────────────────────
 def get_access_token():
     auth_response = requests.post(
         'https://accounts.spotify.com/api/token',
@@ -27,13 +27,12 @@ def safe_spotify_call(func, *args, **kwargs):
             if e.http_status == 429:
                 retry_after = int(e.headers.get("Retry-After", 5))
                 retries += 1
-                print(f"⚠️ Rate limit hit. Retry #{retries} in {retry_after}s...", flush=True)
+                log_event("sync_album_tracks", f"Rate limit hit. Retry #{retries} in {retry_after}s")
                 time.sleep(retry_after)
             else:
-                print(f"❌ Spotify error: {e}", flush=True)
+                log_event("sync_album_tracks", f"Spotify error: {e}", level="error")
                 raise
 
-# ─────────────────────────────────────────────
 access_token = get_access_token()
 sp = Spotify(auth=access_token)
 
@@ -46,7 +45,7 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor()
 
-print("🎼 Syncing album tracks for unsynced albums...", flush=True)
+log_event("sync_album_tracks", "Syncing album tracks for unsynced albums")
 
 # 1️⃣ Sync tracks for still-saved albums
 cur.execute("""
@@ -56,7 +55,7 @@ cur.execute("""
 saved_albums = cur.fetchall()
 
 for album_id, album_name, album_added_at in saved_albums:
-    print(f"🎵 Syncing tracks for: {album_name} ({album_id})", flush=True)
+    log_event("sync_album_tracks", f"Syncing tracks for: {album_name} ({album_id})")
     album_tracks = safe_spotify_call(sp.album, album_id)['tracks']['items']
 
     for track in album_tracks:
@@ -85,7 +84,7 @@ cur.execute("""
 removed_albums = cur.fetchall()
 
 for album_id, in removed_albums:
-    print(f"🧹 Marking tracks from removed album as not from_album: {album_id}", flush=True)
+    log_event("sync_album_tracks", f"Marking tracks from removed album as not from_album: {album_id}")
     cur.execute("""
         UPDATE tracks
         SET from_album = FALSE
@@ -94,21 +93,20 @@ for album_id, in removed_albums:
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
 
 # 3️⃣ Remove orphaned tracks (not liked + not from album)
-print("🧽 Removing orphaned tracks (not liked, not from album)...", flush=True)
+log_event("sync_album_tracks", "Removing orphaned tracks")
 cur.execute("""
     DELETE FROM tracks
     WHERE is_liked = FALSE AND from_album = FALSE
 """)
 
 # 4️⃣ Clean up availability data for deleted tracks
-print("🧹 Cleaning orphaned availability data...", flush=True)
+log_event("sync_album_tracks", "Cleaning orphaned availability data")
 cur.execute("""
     DELETE FROM track_availability
     WHERE track_id NOT IN (SELECT id FROM tracks)
 """)
 
-# ✅ Done
 conn.commit()
 cur.close()
 conn.close()
-print("✅ Album tracks synced.", flush=True)
+log_event("sync_album_tracks", "Album tracks sync complete")

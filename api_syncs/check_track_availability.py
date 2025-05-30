@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
+from utils.logger import log_event
 
 # ─────────────────────────────────────────────
 def get_access_token():
@@ -29,17 +30,17 @@ def safe_spotify_call(func, *args, **kwargs):
             if e.http_status == 429:
                 retry_after = int(e.headers.get("Retry-After", 5))
                 retries += 1
-                print(f"⚠️ Rate limit hit. Retry #{retries} in {retry_after}s...", flush=True)
+                log_event("check_track_availability", f"Rate limit hit. Retry #{retries} in {retry_after}s")
                 time.sleep(retry_after)
             else:
-                print(f"❌ Spotify error: {e}", flush=True)
+                log_event("check_track_availability", f"Spotify error: {e}", level="error")
                 raise
         except requests.exceptions.ReadTimeout as e:
             retries += 1
-            print(f"⏳ Timeout hit. Retry #{retries} in 5s... ({e})", flush=True)
+            log_event("check_track_availability", f"Timeout hit. Retry #{retries} in 5s... ({e})")
             time.sleep(5)
         except Exception as e:
-            print(f"❌ Unexpected error: {e}", flush=True)
+            log_event("check_track_availability", f"Unexpected error: {e}", level="error")
             raise
 
 # ─────────────────────────────────────────────
@@ -50,12 +51,11 @@ sp = Spotify(auth=access_token)
 try:
     user_profile = safe_spotify_call(sp.current_user)
     user_country = user_profile.get("country", "US")
-    print(f"🌍 User country detected: {user_country}", flush=True)
+    log_event("check_track_availability", f"User country detected: {user_country}")
 except Exception as e:
-    print(f"⚠️ Could not retrieve user country, defaulting to 'US': {e}", flush=True)
+    log_event("check_track_availability", f"Could not retrieve user country, defaulting to 'US': {e}", level="warning")
     user_country = "US"
 
-# ─────────────────────────────────────────────
 conn = psycopg2.connect(
     dbname=os.environ['DB_NAME'],
     user=os.environ['DB_USER'],
@@ -65,7 +65,7 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor()
 
-print("🔍 Checking track availability for outdated or missing records...", flush=True)
+log_event("check_track_availability", "Checking track availability for outdated or missing records")
 
 cur.execute("""
     SELECT t.id
@@ -76,27 +76,25 @@ cur.execute("""
 """)
 track_ids = [row[0] for row in cur.fetchall()]
 total = len(track_ids)
-print(f"📦 Found {total} track(s) to check", flush=True)
+log_event("check_track_availability", f"Found {total} track(s) to check")
 
 now = datetime.utcnow()
 
 for i, track_id in enumerate(track_ids, start=1):
-    print(f"🎯 [{i}/{total}] Checking track: {track_id}", flush=True)
+    log_event("check_track_availability", f"[{i}/{total}] Checking track: {track_id}")
     try:
-        # Now using market param based on user country
         track = safe_spotify_call(sp.track, track_id, market=user_country)
-        print(json.dumps(track, indent=2), flush=True)
 
         is_playable = track.get('is_playable')
         if is_playable is None:
             available_markets = track.get('available_markets', [])
             is_playable = user_country in available_markets
-            print(f"📌 Fallback: Available in user's country ({user_country}): {is_playable}", flush=True)
+            log_event("check_track_availability", f"Fallback check: available in {user_country}? {is_playable}")
 
-        print(f"✅ Track {track_id} → is_playable: {is_playable}", flush=True)
+        log_event("check_track_availability", f"Track {track_id} → is_playable: {is_playable}")
 
     except Exception as e:
-        print(f"⚠️ Error retrieving track {track_id}: {e}", flush=True)
+        log_event("check_track_availability", f"Error retrieving track {track_id}: {e}", level="error")
         is_playable = False
 
     try:
@@ -108,12 +106,12 @@ for i, track_id in enumerate(track_ids, start=1):
                 checked_at = EXCLUDED.checked_at;
         """, (track_id, is_playable, now))
     except Exception as db_err:
-        print(f"❌ Database error for track {track_id}: {db_err}", flush=True)
+        log_event("check_track_availability", f"Database error for track {track_id}: {db_err}", level="error")
 
     if i % 50 == 0 or i == total:
         conn.commit()
-        print(f"💾 Committed batch up to track #{i}", flush=True)
+        log_event("check_track_availability", f"Committed batch up to track #{i}")
 
 cur.close()
 conn.close()
-print("✅ Finished checking availability.", flush=True)
+log_event("check_track_availability", "Finished checking availability")
