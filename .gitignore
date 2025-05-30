@@ -1,4 +1,6 @@
 echo ".DS_Store" >> .gitignore
+**/.DS_Store
+
 # macOS system files
 .DS_Store
 
