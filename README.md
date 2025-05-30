@@ -170,21 +170,21 @@ Visit any of the following:
 
 ```mermaid
 graph TD
-    subgraph GitHub Actions
-        A[Track Plays (track_plays.py)]
-        B[Sync Saved Albums]
-        C[Sync Liked Tracks]
-        D[Sync Album Tracks]
-        F[Check Track Availability]
-        G[Playlist Generators]
+    subgraph GitHub_Actions
+        A["track_plays.py"]
+        B["sync_saved_albums.py"]
+        C["sync_liked_tracks.py"]
+        D["sync_album_tracks.py"]
+        F["check_track_availability.py"]
+        G["playlist updates"]
     end
 
-    subgraph Flask Web UI
-        H[Web (app/app.py)]
+    subgraph Flask_Web_UI
+        H["app.py"]
     end
 
-    subgraph Database
-        DB[(PostgreSQL)]
+    subgraph PostgreSQL_DB
+        DB[(Database)]
     end
 
     A --> DB
@@ -196,6 +196,7 @@ graph TD
     G --> Spotify[(Spotify API)]
     H --> DB
     H --> Spotify
+
 ```
 
 ---
