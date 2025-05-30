@@ -87,13 +87,29 @@ cur.execute("""
     WHERE id NOT IN %s
 """, (tuple(current_album_ids),))
 
-# 🗑️ Delete albums that are no longer saved AND have no associated tracks
-print("🗑️ Cleaning up removed albums with no remaining tracks...", flush=True)
+# 🗑️ Clean up ALL removed albums with no valid tracks left
+print("🗑️ Cleaning up all removed albums with no valid tracks...", flush=True)
 cur.execute("""
-    DELETE FROM albums
+    SELECT id FROM albums
     WHERE is_saved = FALSE
-      AND id NOT IN (SELECT DISTINCT album_id FROM tracks)
+      AND id NOT IN (SELECT DISTINCT album_id FROM tracks WHERE from_album = TRUE)
 """)
+albums_to_remove = cur.fetchall()
+
+for (album_id,) in albums_to_remove:
+    print(f"🗑️ Removing album and orphaned tracks: {album_id}", flush=True)
+
+    # Delete any orphaned tracks that were from the album and not liked
+    cur.execute("""
+        DELETE FROM tracks
+        WHERE album_id = %s AND from_album = TRUE AND is_liked = FALSE
+    """, (album_id,))
+
+    # Then delete the album itself
+    cur.execute("""
+        DELETE FROM albums
+        WHERE id = %s
+    """, (album_id,))
 
 conn.commit()
 cur.close()
