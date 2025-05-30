@@ -1,28 +1,28 @@
 name: Check Track Availability
 
 on:
-  workflow_dispatch:  # allows manual trigger
   schedule:
-    - cron: '0 1 * * 1'  # every Monday at 01:00 UTC
+    - cron: '0 6 * * *'  # Runs every day at 6 AM UTC
+  workflow_dispatch:      # Allows manual trigger from GitHub UI
 
 jobs:
   check-availability:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run check_track_availability.py
-        run: python -u check_track_availability.py  # 👈 forces unbuffered output
+      - name: 🚀 Run check_track_availability.py
+        run: python -u check_track_availability.py
         env:
-          #PYTHONUNBUFFERED: 1  # 👈 also helps ensure real-time output
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
           SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
