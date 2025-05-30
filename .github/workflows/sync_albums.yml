@@ -1,5 +1,3 @@
-# 🔄 Edited on 2025-05-26 to trigger sync
-
 name: Sync Spotify Albums
 
 on:
@@ -33,3 +31,4 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+# 💡 Force Git to detect change
