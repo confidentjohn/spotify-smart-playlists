@@ -1,9 +1,10 @@
 name: Update All Spotify Playlists
 
 on:
-  workflow_dispatch:  # Allows manual trigger from GitHub Actions tab
   schedule:
-    - cron: '0 */12 * * *'  # Every 12 hours (at 00:00 and 12:00 UTC)
+    - cron: '0 10 * * *'  # Runs every day at 5:00 AM EST
+  workflow_dispatch:       # Allows manual triggering from GitHub UI
+
 
 jobs:
   update-never-played:

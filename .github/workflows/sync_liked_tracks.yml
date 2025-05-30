@@ -1,8 +1,6 @@
 name: Sync Liked Tracks
 
 on:
-  schedule:
-    - cron: '0 4 * * *'  # Every day at 2am UTC
   workflow_dispatch:
 
 jobs:
