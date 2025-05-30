@@ -3,7 +3,7 @@ import psycopg2
 import json
 from datetime import datetime
 
-def log_event(source, level, message, extra=None):
+def log_event(source, message, level="info", extra=None):
     conn = psycopg2.connect(
         host=os.environ["DB_HOST"],
         port=os.environ["DB_PORT"],
@@ -19,3 +19,4 @@ def log_event(source, level, message, extra=None):
     conn.commit()
     cur.close()
     conn.close()
+
