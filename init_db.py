@@ -57,6 +57,11 @@ CREATE TABLE IF NOT EXISTS plays (
 );
 """)
 
+# Explicitly create a named unique index (optional but helpful for tuning/visibility)
+cur.execute("""
+CREATE UNIQUE INDEX IF NOT EXISTS idx_plays_unique ON plays (track_id, played_at);
+""")
+
 # ─────────────────────────────────────────────
 # Playlist mapping table
 # ─────────────────────────────────────────────
@@ -69,7 +74,7 @@ CREATE TABLE IF NOT EXISTS playlist_mappings (
 """)
 
 # ─────────────────────────────────────────────
-# NEW: Track availability table
+# Track availability table
 # ─────────────────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS track_availability (
