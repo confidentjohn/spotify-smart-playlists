@@ -1,8 +1,10 @@
 name: Full Library Sync
+
 on:
   schedule:
-    - cron: '7 7 * * *'  # 2:07 AM EST (to avoid exact hour queueing)
-  workflow_dispatch:     # Allow manual run too
+    - cron: '7 7 * * *'  # 7:07 AM UTC (2:07 AM EST / 3:07 AM EDT)
+  workflow_dispatch:      # Allow manual run too
+
 jobs:
   sync-albums:
     uses: ./.github/workflows/sync_albums.yml
@@ -18,4 +20,3 @@ jobs:
   check-availability:
     needs: sync-liked-tracks
     uses: ./.github/workflows/check_track_availability.yml
- 💡 Force Git to detect change
