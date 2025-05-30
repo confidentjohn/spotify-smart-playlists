@@ -3,8 +3,14 @@ services:
     name: spotify-oauth-tracker
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app.app:app
+    startCommand: flask run --host=0.0.0.0 --port=5000
     envVars:
+      - key: FLASK_APP
+        value: app/app.py
+      - key: FLASK_ENV
+        value: development
+      - key: PORT
+        value: 5000
       - key: SPOTIFY_CLIENT_ID
         sync: false
       - key: SPOTIFY_CLIENT_SECRET
@@ -25,27 +31,3 @@ services:
         sync: false
       - key: FLASK_SECRET
         sync: false
-
-cronjobs:
-  - name: track-spotify-plays
-    schedule: "@hourly"
-    command: "python scripts/track_plays.py"
-    envVars:
-      - key: SPOTIFY_CLIENT_ID
-        fromService: spotify-oauth-tracker
-      - key: SPOTIFY_CLIENT_SECRET
-        fromService: spotify-oauth-tracker
-      - key: SPOTIFY_REDIRECT_URI
-        fromService: spotify-oauth-tracker
-      - key: SPOTIFY_REFRESH_TOKEN
-        fromService: spotify-oauth-tracker
-      - key: DB_HOST
-        fromService: spotify-oauth-tracker
-      - key: DB_PORT
-        fromService: spotify-oauth-tracker
-      - key: DB_NAME
-        fromService: spotify-oauth-tracker
-      - key: DB_USER
-        fromService: spotify-oauth-tracker
-      - key: DB_PASSWORD
-        fromService: spotify-oauth-tracker
