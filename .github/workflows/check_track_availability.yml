@@ -37,7 +37,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: 🚀 Run check_track_availability.py
-        run: python -u api_syncs/check_track_availability.py
+        run: PYTHONPATH=. python -u api_syncs/check_track_availability.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}

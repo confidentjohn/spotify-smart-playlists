@@ -14,8 +14,8 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Run script
-        run: python playlists/update_playlist_never_played.py
+      - name: 🚀 Run update_playlist_never_played.py
+        run: PYTHONPATH=. python playlists/update_playlist_never_played.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -34,8 +34,8 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Run script
-        run: python playlists/update_playlist_played_once.py
+      - name: 🚀 Run update_playlist_played_once.py
+        run: PYTHONPATH=. python playlists/update_playlist_played_once.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -54,8 +54,8 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Run script
-        run: python playlists/update_playlist_oldest_played.py
+      - name: 🚀 Run update_playlist_oldest_played.py
+        run: PYTHONPATH=. python playlists/update_playlist_oldest_played.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -74,8 +74,8 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Run script
-        run: python playlists/update_playlist_most_played.py
+      - name: 🚀 Run update_playlist_most_played.py
+        run: PYTHONPATH=. python playlists/update_playlist_most_played.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -94,8 +94,8 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Run script
-        run: python playlists/update_playlist_loved_added_last_30_days.py
+      - name: 🚀 Run update_playlist_loved_added_last_30_days.py
+        run: PYTHONPATH=. python playlists/update_playlist_loved_added_last_30_days.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -114,8 +114,8 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - name: Run script
-        run: python playlists/update_playlist_never_played_new_tracks.py
+      - name: 🚀 Run update_playlist_never_played_new_tracks.py
+        run: PYTHONPATH=. python playlists/update_playlist_never_played_new_tracks.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
