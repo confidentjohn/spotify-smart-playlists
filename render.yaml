@@ -3,7 +3,7 @@ services:
     name: spotify-oauth-tracker
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
+    startCommand: gunicorn app.app:app
     envVars:
       - key: SPOTIFY_CLIENT_ID
         sync: false
@@ -29,7 +29,7 @@ services:
 cronjobs:
   - name: track-spotify-plays
     schedule: "@hourly"
-    command: "python track_plays.py"
+    command: "python scripts/track_plays.py"
     envVars:
       - key: SPOTIFY_CLIENT_ID
         fromService: spotify-oauth-tracker
