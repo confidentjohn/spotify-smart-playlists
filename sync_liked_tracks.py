@@ -1,4 +1,3 @@
-
 import os
 import psycopg2
 import requests
@@ -56,28 +55,6 @@ with open(LOCK_FILE, 'w') as lock_file:
     )
     cur = conn.cursor()
 
-    # OPTIONAL: Ensure ON DELETE CASCADE is applied to track_availability table
-    cur.execute("""
-        DO $$
-        BEGIN
-            IF EXISTS (
-                SELECT 1
-                FROM information_schema.table_constraints
-                WHERE constraint_name = 'fk_track'
-                AND table_name = 'track_availability'
-            ) THEN
-                ALTER TABLE track_availability DROP CONSTRAINT fk_track;
-            END IF;
-        END
-        $$;
-
-        ALTER TABLE track_availability
-        ADD CONSTRAINT fk_track
-        FOREIGN KEY (track_id)
-        REFERENCES tracks(id)
-        ON DELETE CASCADE;
-    """)
-
     # Reset all liked flags before re-syncing
     cur.execute("UPDATE tracks SET is_liked = FALSE")
 
@@ -102,10 +79,10 @@ with open(LOCK_FILE, 'w') as lock_file:
             album_id = track['album']['id']
             liked_added_at = item['added_at']
 
+            # Prefer album's added_at if available
             cur.execute("SELECT added_at FROM albums WHERE id = %s", (album_id,))
             album_row = cur.fetchone()
             album_added_at = album_row[0] if album_row else None
-
             final_added_at = album_added_at if album_added_at else liked_added_at
 
             cur.execute("""
