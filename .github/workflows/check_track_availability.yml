@@ -1,8 +1,8 @@
 name: Check Track Availability
 
 on:
-  workflow_dispatch:      # Allows manual trigger from GitHub UI
-  workflow_call:          # Allows reuse from another workflow
+  workflow_dispatch:
+  workflow_call:
     secrets:
       SPOTIFY_CLIENT_ID:
         required: true
@@ -37,7 +37,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: 🚀 Run check_track_availability.py
-        run: python -u check_track_availability.py
+        run: python -u api_syncs/check_track_availability.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}

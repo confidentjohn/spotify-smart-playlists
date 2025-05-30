@@ -2,24 +2,20 @@ name: Update All Spotify Playlists
 
 on:
   schedule:
-    - cron: '0 10 * * *'  # Runs every day at 5:00 AM EST
-  workflow_dispatch:       # Allows manual triggering from GitHub UI
-
+    - cron: '0 10 * * *'  # Runs daily at 5:00 AM EST
+  workflow_dispatch:
 
 jobs:
   update-never-played:
-    name: Update Never Played Playlist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run update_playlist_never_played.py
-        run: python update_playlist_never_played.py
+      - run: pip install -r requirements.txt
+      - name: Run script
+        run: python playlists/update_playlist_never_played.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -31,18 +27,15 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
   update-played-once:
-    name: Update Played Once Playlist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run update_playlist_played_once.py
-        run: python update_playlist_played_once.py
+      - run: pip install -r requirements.txt
+      - name: Run script
+        run: python playlists/update_playlist_played_once.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -54,18 +47,15 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
   update-oldest-played:
-    name: Update Oldest Played Playlist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run update_playlist_oldest_played.py
-        run: python update_playlist_oldest_played.py
+      - run: pip install -r requirements.txt
+      - name: Run script
+        run: python playlists/update_playlist_oldest_played.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -77,18 +67,15 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
   update-most-played:
-    name: Update Most Played Playlist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run update_playlist_most_played.py
-        run: python update_playlist_most_played.py
+      - run: pip install -r requirements.txt
+      - name: Run script
+        run: python playlists/update_playlist_most_played.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -100,18 +87,15 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
   update-liked-last-30-days:
-    name: Update Liked Last 30 Days Playlist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run update_playlist_loved_added_last_30_days.py
-        run: python update_playlist_loved_added_last_30_days.py
+      - run: pip install -r requirements.txt
+      - name: Run script
+        run: python playlists/update_playlist_loved_added_last_30_days.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -123,18 +107,15 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
   update-never-played-new:
-    name: Update Never Played New Playlist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run update_playlist_never_played_new_tracks.py
-        run: python update_playlist_never_played_new_tracks.py
+      - run: pip install -r requirements.txt
+      - name: Run script
+        run: python playlists/update_playlist_never_played_new_tracks.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}

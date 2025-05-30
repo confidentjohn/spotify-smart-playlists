@@ -39,7 +39,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run sync_saved_albums
-        run: python sync_saved_albums.py
+        run: python api_syncs/sync_saved_albums.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
