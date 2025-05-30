@@ -2,7 +2,8 @@ name: Check Track Availability
 
 on:
   workflow_dispatch:      # Allows manual trigger from GitHub UI
-  workflow_call:
+    schedule:
+    - cron: '0 8 * * *'  # Runs every day at 5:00 AM EST
 
 jobs:
   check-availability:

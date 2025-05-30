@@ -2,7 +2,8 @@ name: Sync Liked Tracks
 
 on:
   workflow_dispatch:
-  workflow_call:
+    schedule:
+    - cron: '0 7 * * *'  # Runs every day at 5:00 AM EST
 
 jobs:
   sync-liked:
@@ -30,5 +31,4 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}# 💡 Force Git to detect change
-# 💡 Force Git to detect change
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}

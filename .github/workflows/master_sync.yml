@@ -1,23 +1,23 @@
-name: Full Library Sync
+#name: Full Library Sync
 
-on:
-  schedule:
-    - cron: '7 7 * * *'  # 2:07 AM EST (to avoid exact hour queueing)
-  workflow_dispatch:     # Allow manual run too
+#on:
+#  schedule:
+#    - cron: '7 7 * * *'  # 2:07 AM EST (to avoid exact hour queueing)
+#  workflow_dispatch:     # Allow manual run too
 
-jobs:
-  sync-albums:
-    uses: ./.github/workflows/sync_albums.yml
-
-  sync-album-tracks:
-    needs: sync-albums
-    uses: ./.github/workflows/sync_album_tracks.yml
-
-  sync-liked-tracks:
-    needs: sync-album-tracks
-    uses: ./.github/workflows/sync_liked_tracks.yml
-
-  check-availability:
-    needs: sync-liked-tracks
-    uses: ./.github/workflows/check_track_availability.yml
+#jobs:
+#  sync-albums:
+#    uses: ./.github/workflows/sync_albums.yml
+#
+#  sync-album-tracks:
+#    needs: sync-albums
+#    uses: ./.github/workflows/sync_album_tracks.yml
+#
+#  sync-liked-tracks:
+#    needs: sync-album-tracks
+#    uses: ./.github/workflows/sync_liked_tracks.yml
+#
+#  check-availability:
+#    needs: sync-liked-tracks
+#    uses: ./.github/workflows/check_track_availability.yml
 # 💡 Force Git to detect change

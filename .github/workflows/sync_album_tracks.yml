@@ -2,7 +2,8 @@ name: Sync Spotify Album tracks
 
 on:
   workflow_dispatch:
-  workflow_call:
+    schedule:
+    - cron: '0 6 * * *'  # Runs every day at 5:00 AM EST
 
 jobs:
   sync-albums:
@@ -31,5 +32,3 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-# 💡 Force Git to detect change
-# 💡 Force Git to detect change
