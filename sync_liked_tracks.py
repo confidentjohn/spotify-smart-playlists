@@ -52,6 +52,8 @@ with open(LOCK_FILE, 'w') as lock_file:
         password=os.environ['DB_PASSWORD'],
         host=os.environ['DB_HOST'],
         port=os.environ.get('DB_PORT', 5432),
+        sslmode='require'
+
     )
     cur = conn.cursor()
 
