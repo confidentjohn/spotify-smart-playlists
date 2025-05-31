@@ -60,7 +60,7 @@ def view_logs():
             port=os.environ.get('DB_PORT', 5432)
         )
         cur = conn.cursor()
-        cur.execute("SELECT created_at, script_name, level, message FROM logs ORDER BY created_at DESC LIMIT 100")
+        cur.execute("SELECT timestamp, source AS script_name, level, message FROM logs ORDER BY timestamp DESC LIMIT 100")
         rows = cur.fetchall()
         cur.close()
         conn.close()
