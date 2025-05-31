@@ -85,6 +85,9 @@ with open(LOCK_FILE, 'w') as lock_file:
 
             track_id = track['id']
             liked_added_at = parser.isoparse(item['added_at'])
+            if liked_added_at.tzinfo is None:
+                from datetime import timezone
+                liked_added_at = liked_added_at.replace(tzinfo=timezone.utc)
             liked_track_ids.add(track_id)
 
             # Skip if not recently added or due for recheck
