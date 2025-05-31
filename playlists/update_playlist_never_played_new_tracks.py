@@ -62,7 +62,7 @@ cur.execute("""
     WHERE p.track_id IS NULL
       AND (a.is_saved IS NULL OR a.is_saved = TRUE)
       AND (ta.is_playable IS DISTINCT FROM FALSE OR ta.is_playable IS NULL)
-      AND t.added_at >= DATE '2025-05-29'
+      AND t.added_at >= DATE '2025-05-30'
     ORDER BY t.album_id, t.track_number NULLS LAST
     LIMIT 9000;
 """)
