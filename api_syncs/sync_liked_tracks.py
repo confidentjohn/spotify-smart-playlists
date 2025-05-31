@@ -99,9 +99,13 @@ with open(LOCK_FILE, 'w') as lock_file:
                     SELECT date_liked_checked FROM tracks WHERE id = %s
                 """, (track_id,))
                 row = cur.fetchone()
-                if row and row[0] and row[0] > stale_cutoff:
-                    skipped_due_to_freshness += 1
-                    continue
+                if row and row[0]:
+                    last_checked = row[0]
+                    if last_checked.tzinfo is None:
+                        last_checked = last_checked.replace(tzinfo=timezone.utc)
+                    if last_checked > stale_cutoff:
+                        skipped_due_to_freshness += 1
+                        continue
 
             name = track['name']
             artist = track['artists'][0]['name']
