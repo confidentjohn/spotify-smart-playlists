@@ -54,6 +54,9 @@ def view_logs():
     # Parse query parameters
     script = request.args.get("script")
     level = request.args.get("level")
+    sort = request.args.get("sort", "desc").lower()
+    if sort not in ("asc", "desc"):
+        sort = "desc"
     page = int(request.args.get("page", 1))
     page_size = 50
     offset = (page - 1) * page_size
@@ -84,7 +87,7 @@ def view_logs():
             SELECT timestamp, source, level, message
             FROM logs
             {where_sql}
-            ORDER BY timestamp DESC
+            ORDER BY timestamp {sort.upper()}
             LIMIT {page_size} OFFSET {offset}
         """
 
@@ -96,7 +99,22 @@ def view_logs():
         return f"<pre>❌ DB Error: {e}</pre>"
 
     # Build HTML response
-    html = f"<h2>📜 Recent Logs</h2><p>Page {page}</p>"
+    html = f"""
+    <h2>📜 Recent Logs</h2>
+    <form method='get' action='/logs'>
+      <label>Script: <input name='script' value='{escape(script or "")}'></label>
+      <label>Level: <input name='level' value='{escape(level or "")}'></label>
+      <label>Sort:
+        <select name='sort'>
+          <option value='desc' {"selected" if sort=="desc" else ""}>Newest first</option>
+          <option value='asc' {"selected" if sort=="asc" else ""}>Oldest first</option>
+        </select>
+      </label>
+      <input type='hidden' name='page' value='1'>
+      <button type='submit'>Filter</button>
+    </form>
+    <p>Page {page}</p>
+    """
     html += "<table border='1' cellpadding='5'><tr><th>Time</th><th>Script</th><th>Level</th><th>Message</th></tr>"
     for row in rows:
         html += "<tr>" + "".join(f"<td>{escape(str(col))}</td>" for col in row) + "</tr>"
@@ -108,6 +126,8 @@ def view_logs():
         base_url += f"script={script}&"
     if level:
         base_url += f"level={level}&"
+    if sort:
+        base_url += f"sort={sort}&"
     
     html += f"<p><a href='{base_url}page={page + 1}'>▶️ Next</a>"
     if page > 1:
