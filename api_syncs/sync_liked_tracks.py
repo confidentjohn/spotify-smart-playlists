@@ -72,6 +72,8 @@ with open(LOCK_FILE, 'w') as lock_file:
     skipped_due_to_freshness = 0
     updated_liked_tracks = 0
 
+    stop_fetching = False
+
     log_event("sync_liked_tracks", "Starting liked tracks sync")
 
     while True:
@@ -93,6 +95,10 @@ with open(LOCK_FILE, 'w') as lock_file:
                 from datetime import timezone
                 liked_added_at = liked_added_at.replace(tzinfo=timezone.utc)
             liked_track_ids.add(track_id)
+
+            if liked_added_at < fresh_cutoff:
+                stop_fetching = True
+                break
 
             # Skip if not recently added or due for recheck
             if liked_added_at < fresh_cutoff:
@@ -140,12 +146,42 @@ with open(LOCK_FILE, 'w') as lock_file:
             if counter % batch_size == 0:
                 conn.commit()
 
+        if stop_fetching:
+            break
+
         offset += len(items)
         if len(items) < limit:
             break
 
+    if stop_fetching:
+        log_event("sync_liked_tracks", "Stopping fetch early: reached tracks older than fresh_cutoff")
+
     log_event("sync_liked_tracks", f"{len(liked_track_ids)} liked tracks synced")
     log_event("sync_liked_tracks", f"Finished scanning liked tracks. Total fetched: {counter}")
+
+    # ─────────────────────────────────────────────
+    # Recheck stale tracks in DB not updated in 60+ days
+    # ─────────────────────────────────────────────
+    log_event("sync_liked_tracks", "Checking stale tracks from local DB")
+    cur.execute("""
+        SELECT id FROM tracks
+        WHERE is_liked = FALSE AND (date_liked_checked IS NULL OR date_liked_checked < %s)
+    """, (stale_cutoff,))
+    stale_rows = cur.fetchall()
+
+    for (track_id,) in stale_rows:
+        try:
+            track_data = safe_spotify_call(sp.track, track_id)
+            # If we get here, the track still exists and is playable
+            log_event("sync_liked_tracks", f"Checked stale track {track_id} from DB — not liked")
+            cur.execute("""
+                UPDATE tracks SET date_liked_checked = %s WHERE id = %s
+            """, (now, track_id))
+        except SpotifyException as e:
+            if e.http_status == 404:
+                log_event("sync_liked_tracks", f"Track {track_id} no longer available", level="warning")
+            else:
+                raise
 
     # Update unliked tracks
     log_event("sync_liked_tracks", "Updating unliked tracks")
