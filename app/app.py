@@ -1,4 +1,5 @@
-from flask import Flask, request, redirect, escape
+from flask import Flask, request, redirect
+from markupsafe import escape
 import os
 import subprocess
 import psycopg2
