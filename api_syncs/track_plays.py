@@ -80,7 +80,8 @@ for item in recent_plays:
     track = item["track"]
     track_id = track["id"]
     played_at = item["played_at"]
-    played_at_dt = datetime.strptime(played_at, "%Y-%m-%dT%H:%M:%S.%fZ")
+    from dateutil import parser
+    played_at_dt = parser.isoparse(played_at)
 
     cur.execute("SELECT 1 FROM plays WHERE track_id = %s AND played_at = %s", (track_id, played_at_dt))
     if cur.fetchone():
