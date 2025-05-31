@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
+from dateutil import parser
 
 LOCK_FILE = "/tmp/sync_library.lock"
 
@@ -83,7 +84,7 @@ with open(LOCK_FILE, 'w') as lock_file:
                 continue
 
             track_id = track['id']
-            liked_added_at = datetime.fromisoformat(item['added_at'].replace("Z", "+00:00"))
+            liked_added_at = parser.isoparse(item['added_at'])
             liked_track_ids.add(track_id)
 
             # Skip if not recently added or due for recheck
