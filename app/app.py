@@ -11,8 +11,10 @@ app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
 # ─────────────────────────────────────────────────────
 def check_auth(request):
-    secret = request.args.get("key")
     expected = os.environ.get("ADMIN_KEY")
+    if not expected:
+        return False
+    secret = request.args.get("key")
     return secret == expected
 
 def run_script(script_name):
