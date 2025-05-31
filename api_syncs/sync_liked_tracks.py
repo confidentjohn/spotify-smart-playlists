@@ -174,14 +174,15 @@ with open(LOCK_FILE, 'w') as lock_file:
             track_data = safe_spotify_call(sp.track, track_id)
             # If we get here, the track still exists and is playable
             log_event("sync_liked_tracks", f"Checked stale track {track_id} from DB — not liked")
-            cur.execute("""
-                UPDATE tracks SET date_liked_checked = %s WHERE id = %s
-            """, (now, track_id))
         except SpotifyException as e:
             if e.http_status == 404:
                 log_event("sync_liked_tracks", f"Track {track_id} no longer available", level="warning")
             else:
                 raise
+        finally:
+            cur.execute("""
+                UPDATE tracks SET date_liked_checked = %s WHERE id = %s
+            """, (now, track_id))
 
     # Update unliked tracks
     log_event("sync_liked_tracks", "Updating unliked tracks")
