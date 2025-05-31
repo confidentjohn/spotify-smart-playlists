@@ -3,6 +3,7 @@ import psycopg2
 import requests
 import fcntl
 import time
+from datetime import datetime, timedelta
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
@@ -36,7 +37,7 @@ def safe_spotify_call(func, *args, **kwargs):
                 log_event("sync_liked_tracks", f"Spotify error: {e}", level="error")
                 raise
 
-# Acquire exclusive lock to avoid overlap with album sync
+# Acquire lock to avoid overlap
 with open(LOCK_FILE, 'w') as lock_file:
     try:
         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -56,6 +57,10 @@ with open(LOCK_FILE, 'w') as lock_file:
         sslmode='require'
     )
     cur = conn.cursor()
+
+    now = datetime.utcnow()
+    stale_cutoff = now - timedelta(days=60)
+    fresh_cutoff = now - timedelta(days=30)
 
     limit = 50
     offset = 0
@@ -78,12 +83,22 @@ with open(LOCK_FILE, 'w') as lock_file:
                 continue
 
             track_id = track['id']
+            liked_added_at = datetime.fromisoformat(item['added_at'].replace("Z", "+00:00"))
+            liked_track_ids.add(track_id)
+
+            # Skip if not recently added or due for recheck
+            if liked_added_at < fresh_cutoff:
+                cur.execute("""
+                    SELECT date_liked_checked FROM tracks WHERE id = %s
+                """, (track_id,))
+                row = cur.fetchone()
+                if row and row[0] and row[0] > stale_cutoff:
+                    continue  # Recently checked, skip
+
             name = track['name']
             artist = track['artists'][0]['name']
             album = track['album']['name']
             album_id = track['album']['id']
-            liked_added_at = item['added_at']
-            liked_track_ids.add(track_id)
 
             cur.execute("SELECT added_at FROM albums WHERE id = %s", (album_id,))
             album_row = cur.fetchone()
@@ -91,16 +106,18 @@ with open(LOCK_FILE, 'w') as lock_file:
             final_added_at = album_added_at if album_added_at else liked_added_at
 
             cur.execute("""
-                INSERT INTO tracks (id, name, artist, album, album_id, is_liked, added_at)
-                VALUES (%s, %s, %s, %s, %s, TRUE, %s)
+                INSERT INTO tracks (id, name, artist, album, album_id, is_liked, added_at, date_liked_at, date_liked_checked)
+                VALUES (%s, %s, %s, %s, %s, TRUE, %s, %s, %s)
                 ON CONFLICT (id) DO UPDATE 
                 SET is_liked = TRUE,
                     album_id = EXCLUDED.album_id,
                     added_at = COALESCE(
                         (SELECT added_at FROM albums WHERE id = EXCLUDED.album_id),
                         EXCLUDED.added_at
-                    );
-            """, (track_id, name, artist, album, album_id, final_added_at))
+                    ),
+                    date_liked_at = EXCLUDED.date_liked_at,
+                    date_liked_checked = EXCLUDED.date_liked_checked;
+            """, (track_id, name, artist, album, album_id, final_added_at, liked_added_at, now))
 
             counter += 1
             if counter % batch_size == 0:
@@ -120,7 +137,7 @@ with open(LOCK_FILE, 'w') as lock_file:
         WHERE id NOT IN %s
     """, (tuple(liked_track_ids),))
 
-    # Final cleanup
+    # Remove orphaned unliked tracks
     log_event("sync_liked_tracks", "Removing orphaned tracks")
     cur.execute("""
         DELETE FROM tracks

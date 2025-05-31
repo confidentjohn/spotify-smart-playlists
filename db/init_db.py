@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS albums (
 """)
 
 # ─────────────────────────────────────────────
-# Tracks table
+# Tracks table (UPDATED)
 # ─────────────────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS tracks (
@@ -41,7 +41,9 @@ CREATE TABLE IF NOT EXISTS tracks (
     is_liked BOOLEAN DEFAULT FALSE,
     from_album BOOLEAN DEFAULT FALSE,
     track_number INTEGER,
-    added_at TIMESTAMP
+    added_at TIMESTAMP,
+    date_liked_at TIMESTAMP,
+    date_liked_checked TIMESTAMP
 );
 """)
 
