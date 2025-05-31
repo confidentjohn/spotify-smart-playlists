@@ -69,6 +69,8 @@ with open(LOCK_FILE, 'w') as lock_file:
     batch_size = 50
     counter = 0
     liked_track_ids = set()
+    skipped_due_to_freshness = 0
+    updated_liked_tracks = 0
 
     log_event("sync_liked_tracks", "Starting liked tracks sync")
 
@@ -98,7 +100,8 @@ with open(LOCK_FILE, 'w') as lock_file:
                 """, (track_id,))
                 row = cur.fetchone()
                 if row and row[0] and row[0] > stale_cutoff:
-                    continue  # Recently checked, skip
+                    skipped_due_to_freshness += 1
+                    continue
 
             name = track['name']
             artist = track['artists'][0]['name']
@@ -124,6 +127,7 @@ with open(LOCK_FILE, 'w') as lock_file:
                     date_liked_checked = EXCLUDED.date_liked_checked;
             """, (track_id, name, artist, album, album_id, final_added_at, liked_added_at, now))
 
+            updated_liked_tracks += 1
             counter += 1
             if counter % batch_size == 0:
                 conn.commit()
@@ -150,6 +154,8 @@ with open(LOCK_FILE, 'w') as lock_file:
     """)
 
     conn.commit()
+    log_event("sync_liked_tracks", f"✅ {updated_liked_tracks} tracks updated")
+    log_event("sync_liked_tracks", f"⏭️ {skipped_due_to_freshness} tracks skipped due to recent check")
     cur.close()
     conn.close()
     log_event("sync_liked_tracks", "Liked tracks sync complete")
