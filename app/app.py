@@ -51,6 +51,13 @@ def callback():
 def view_logs():
     if not check_auth(request): return "❌ Unauthorized", 403
 
+    # Parse query parameters
+    script = request.args.get("script")
+    level = request.args.get("level")
+    page = int(request.args.get("page", 1))
+    page_size = 50
+    offset = (page - 1) * page_size
+
     try:
         conn = psycopg2.connect(
             dbname=os.environ['DB_NAME'],
@@ -60,17 +67,53 @@ def view_logs():
             port=os.environ.get('DB_PORT', 5432)
         )
         cur = conn.cursor()
-        cur.execute("SELECT timestamp, source AS script_name, level, message FROM logs ORDER BY timestamp DESC LIMIT 100")
+
+        # Build dynamic query
+        where_clauses = []
+        params = []
+
+        if script:
+            where_clauses.append("source = %s")
+            params.append(script)
+        if level:
+            where_clauses.append("level = %s")
+            params.append(level)
+
+        where_sql = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+        query = f"""
+            SELECT timestamp, source, level, message
+            FROM logs
+            {where_sql}
+            ORDER BY timestamp DESC
+            LIMIT {page_size} OFFSET {offset}
+        """
+
+        cur.execute(query, tuple(params))
         rows = cur.fetchall()
         cur.close()
         conn.close()
     except Exception as e:
         return f"<pre>❌ DB Error: {e}</pre>"
 
-    html = "<h2>📜 Recent Logs</h2><table border='1' cellpadding='5'><tr><th>Time</th><th>Script</th><th>Level</th><th>Message</th></tr>"
+    # Build HTML response
+    html = f"<h2>📜 Recent Logs</h2><p>Page {page}</p>"
+    html += "<table border='1' cellpadding='5'><tr><th>Time</th><th>Script</th><th>Level</th><th>Message</th></tr>"
     for row in rows:
         html += "<tr>" + "".join(f"<td>{escape(str(col))}</td>" for col in row) + "</tr>"
     html += "</table>"
+
+    # Navigation
+    base_url = "/logs?"
+    if script:
+        base_url += f"script={script}&"
+    if level:
+        base_url += f"level={level}&"
+    
+    html += f"<p><a href='{base_url}page={page + 1}'>▶️ Next</a>"
+    if page > 1:
+        html += f" | <a href='{base_url}page={page - 1}'>◀️ Prev</a>"
+    html += "</p>"
+
     return html
 
 # ─────────────────────────────────────────────────────
