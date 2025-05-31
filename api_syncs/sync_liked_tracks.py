@@ -61,8 +61,8 @@ with open(LOCK_FILE, 'w') as lock_file:
 
     from datetime import timezone
     now = datetime.now(timezone.utc)
-    stale_cutoff = now - timedelta(days=60)
-    fresh_cutoff = now - timedelta(days=2)
+    stale_cutoff = now - timedelta(days=88)
+    fresh_cutoff = now - timedelta(days=15)
 
     limit = 50
     offset = 0
