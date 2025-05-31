@@ -183,6 +183,7 @@ with open(LOCK_FILE, 'w') as lock_file:
             cur.execute("""
                 UPDATE tracks SET date_liked_checked = %s WHERE id = %s
             """, (now, track_id))
+            conn.commit()  # Commit immediately to persist progress in case of failure
 
     # Update unliked tracks
     log_event("sync_liked_tracks", "Updating unliked tracks")
