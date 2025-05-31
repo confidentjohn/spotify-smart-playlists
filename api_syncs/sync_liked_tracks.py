@@ -3,7 +3,7 @@ import psycopg2
 import requests
 import fcntl
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
@@ -59,7 +59,8 @@ with open(LOCK_FILE, 'w') as lock_file:
     )
     cur = conn.cursor()
 
-    now = datetime.utcnow()
+    from datetime import timezone
+    now = datetime.now(timezone.utc)
     stale_cutoff = now - timedelta(days=60)
     fresh_cutoff = now - timedelta(days=30)
 
