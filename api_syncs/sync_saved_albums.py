@@ -5,6 +5,8 @@ import requests
 import time
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
+from dateutil import parser
+import datetime
 
 # ─────────────────────────────────────────────
 # Fix import path for utils
