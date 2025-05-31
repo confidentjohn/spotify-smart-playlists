@@ -62,7 +62,7 @@ with open(LOCK_FILE, 'w') as lock_file:
     from datetime import timezone
     now = datetime.now(timezone.utc)
     stale_cutoff = now - timedelta(days=60)
-    fresh_cutoff = now - timedelta(days=30)
+    fresh_cutoff = now - timedelta(days=2)
 
     limit = 50
     offset = 0
@@ -77,6 +77,7 @@ with open(LOCK_FILE, 'w') as lock_file:
     while True:
         results = safe_spotify_call(sp.current_user_saved_tracks, limit=limit, offset=offset)
         items = results['items']
+        log_event("sync_liked_tracks", f"Processing batch: offset={offset}, size={len(items)}")
 
         if not items:
             break
@@ -104,6 +105,7 @@ with open(LOCK_FILE, 'w') as lock_file:
                     if last_checked.tzinfo is None:
                         last_checked = last_checked.replace(tzinfo=timezone.utc)
                     if last_checked > stale_cutoff:
+                        log_event("sync_liked_tracks", f"Skipping track {track_id} — checked recently on {last_checked.date()}")
                         skipped_due_to_freshness += 1
                         continue
 
@@ -133,6 +135,8 @@ with open(LOCK_FILE, 'w') as lock_file:
 
             updated_liked_tracks += 1
             counter += 1
+            if counter % 500 == 0:
+                log_event("sync_liked_tracks", f"Updated {counter} tracks so far")
             if counter % batch_size == 0:
                 conn.commit()
 
@@ -141,6 +145,7 @@ with open(LOCK_FILE, 'w') as lock_file:
             break
 
     log_event("sync_liked_tracks", f"{len(liked_track_ids)} liked tracks synced")
+    log_event("sync_liked_tracks", f"Finished scanning liked tracks. Total fetched: {counter}")
 
     # Update unliked tracks
     log_event("sync_liked_tracks", "Updating unliked tracks")
@@ -156,6 +161,9 @@ with open(LOCK_FILE, 'w') as lock_file:
         DELETE FROM tracks
         WHERE is_liked = FALSE AND from_album = FALSE
     """)
+    cur.execute("SELECT COUNT(*) FROM tracks WHERE is_liked = FALSE AND from_album = FALSE")
+    count = cur.fetchone()[0]
+    log_event("sync_liked_tracks", f"Found {count} orphaned tracks to remove")
 
     conn.commit()
     log_event("sync_liked_tracks", f"✅ {updated_liked_tracks} tracks updated")
