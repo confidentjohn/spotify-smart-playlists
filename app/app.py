@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, session
 from markupsafe import escape
 import os
 import subprocess
@@ -14,8 +14,18 @@ def check_auth(request):
     expected = os.environ.get("ADMIN_KEY")
     if not expected:
         return False
+
+    # Check session
+    if session.get("is_admin"):
+        return True
+
+    # Allow initial access via ?key=
     secret = request.args.get("key")
-    return secret == expected
+    if secret == expected:
+        session["is_admin"] = True
+        return True
+
+    return False
 
 def run_script(script_name):
     print(f"🔧 Running {script_name}", flush=True)
@@ -198,6 +208,11 @@ def update_playlist_loved_added_last_30_days():
 def update_playlist_never_played_new_tracks():
     if not check_auth(request): return "❌ Unauthorized", 403
     return run_script('playlists/update_playlist_never_played_new_tracks.py')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
 
 # ─────────────────────────────────────────────────────
 if __name__ == "__main__":
