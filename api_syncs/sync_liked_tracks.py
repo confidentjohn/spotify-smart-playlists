@@ -62,7 +62,7 @@ with open(LOCK_FILE, 'w') as lock_file:
     from datetime import timezone
     now = datetime.now(timezone.utc)
     stale_cutoff = now - timedelta(days=88)
-    fresh_cutoff = now - timedelta(days=15)
+    fresh_cutoff = now - timedelta(days=2)
 
     limit = 50
     offset = 0
@@ -169,6 +169,8 @@ with open(LOCK_FILE, 'w') as lock_file:
     """, (stale_cutoff,))
     stale_rows = cur.fetchall()
 
+    stale_checked_and_updated = 0
+
     for (track_id,) in stale_rows:
         try:
             track_data = safe_spotify_call(sp.track, track_id)
@@ -183,7 +185,10 @@ with open(LOCK_FILE, 'w') as lock_file:
             cur.execute("""
                 UPDATE tracks SET date_liked_checked = %s WHERE id = %s
             """, (now, track_id))
+            stale_checked_and_updated += 1
             conn.commit()  # Commit immediately to persist progress in case of failure
+
+    log_event("sync_liked_tracks", f"🔄 {stale_checked_and_updated} stale tracks rechecked and updated")
 
     # Update unliked tracks
     log_event("sync_liked_tracks", "Updating unliked tracks")
