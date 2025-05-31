@@ -1,6 +1,7 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, escape
 import os
 import subprocess
+import psycopg2
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -8,16 +9,11 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
 # ─────────────────────────────────────────────────────
-# 🔐 Simple secret key check for endpoint protection
-# ─────────────────────────────────────────────────────
 def check_auth(request):
     secret = request.args.get("key")
     expected = os.environ.get("ADMIN_KEY")
     return secret == expected
 
-# ─────────────────────────────────────────────────────
-# 🛠 Script runner with optional auth
-# ─────────────────────────────────────────────────────
 def run_script(script_name):
     print(f"🔧 Running {script_name}", flush=True)
     try:
@@ -26,9 +22,6 @@ def run_script(script_name):
     except Exception as e:
         return f"<pre>Error: {str(e)}</pre>"
 
-# ─────────────────────────────────────────────────────
-# 🎧 Spotify OAuth Setup
-# ─────────────────────────────────────────────────────
 def get_spotify_oauth():
     return SpotifyOAuth(
         client_id=os.environ['SPOTIFY_CLIENT_ID'],
@@ -37,6 +30,7 @@ def get_spotify_oauth():
         scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public"
     )
 
+# ─────────────────────────────────────────────────────
 @app.route('/')
 def index():
     return '<a href="/login">Login with Spotify</a>'
@@ -52,9 +46,33 @@ def callback():
     return f"✅ Refresh Token: <code>{token_info['refresh_token']}</code>"
 
 # ─────────────────────────────────────────────────────
-# 🔁 Script Endpoints (with auth)
-# ─────────────────────────────────────────────────────
+@app.route('/logs')
+def view_logs():
+    if not check_auth(request): return "❌ Unauthorized", 403
 
+    try:
+        conn = psycopg2.connect(
+            dbname=os.environ['DB_NAME'],
+            user=os.environ['DB_USER'],
+            password=os.environ['DB_PASSWORD'],
+            host=os.environ['DB_HOST'],
+            port=os.environ.get('DB_PORT', 5432)
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT created_at, script_name, level, message FROM logs ORDER BY created_at DESC LIMIT 100")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        return f"<pre>❌ DB Error: {e}</pre>"
+
+    html = "<h2>📜 Recent Logs</h2><table border='1' cellpadding='5'><tr><th>Time</th><th>Script</th><th>Level</th><th>Message</th></tr>"
+    for row in rows:
+        html += "<tr>" + "".join(f"<td>{escape(str(col))}</td>" for col in row) + "</tr>"
+    html += "</table>"
+    return html
+
+# ─────────────────────────────────────────────────────
 @app.route('/init-db')
 def init_db():
     if not check_auth(request): return "❌ Unauthorized", 403
