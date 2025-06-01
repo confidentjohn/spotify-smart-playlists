@@ -73,7 +73,8 @@ CREATE TABLE IF NOT EXISTS playlist_mappings (
     name TEXT,
     playlist_id TEXT,
     last_synced_at TIMESTAMP,
-    status TEXT DEFAULT 'active'
+    status TEXT DEFAULT 'active',
+    track_count INTEGER DEFAULT 0
 );
 """)
 

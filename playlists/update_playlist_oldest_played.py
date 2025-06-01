@@ -86,6 +86,17 @@ except SpotifyException as e:
     print(f"❌ Spotify API error: {e.http_status} - {e.msg}")
     exit(1)
 
+# ─────────────────────────────────────────────
+# Update playlist_mappings with new track count and last_synced_at
+# ─────────────────────────────────────────────
+cur.execute("""
+    UPDATE playlist_mappings
+    SET track_count = %s,
+        last_synced_at = NOW()
+    WHERE name = %s
+""", (len(track_uris), "Oldest Played"))
+conn.commit()
+
 cur.close()
 conn.close()
 print("✅ Playlist updated successfully.")

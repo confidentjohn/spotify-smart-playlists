@@ -85,6 +85,16 @@ try:
     print("➕ Adding tracks in batches of 100...")
     for i in range(0, len(track_uris), 100):
         sp.playlist_add_items(playlist_id, track_uris[i:i + 100])
+
+    # Update playlist_mappings with track_count and last_synced_at
+    cur.execute("""
+        UPDATE playlist_mappings
+        SET track_count = %s,
+            last_synced_at = NOW()
+        WHERE name = %s;
+    """, (len(track_uris), "Never Played New"))
+    conn.commit()
+    print("📝 Updated playlist_mappings with track count and timestamp.")
 except SpotifyException as e:
     print(f"❌ Spotify API error: {e.http_status} - {e.msg}")
     exit(1)
