@@ -51,7 +51,13 @@ def dashboard_playlists():
         html += f"<tr><td>{escape(name)}</td><td>{size}</td><td>{last_run_display}</td><td>{escape(status)}</td>"
         html += f"<td><a href='/dashboard/playlists/{escape(name)}'>View</a> | "
         html += f"<a href='/dashboard/playlists/{escape(name)}/edit'>Edit</a> | "
-        html += f"<a href='/dashboard/playlists/{escape(name)}/sync'>Sync Now</a></td></tr>"
+        html += f"<a href='/dashboard/playlists/{escape(name)}/sync'>Sync Now</a> | "
+        html += (
+            f"<form method='post' action='/dashboard/playlists/{escape(name)}/delete' style='display:inline;' "
+            f"onsubmit=\"return confirm('Are you sure?')\">"
+            f"<button type='submit'>🗑️ Delete</button></form>"
+        )
+        html += "</td></tr>"
 
     html += "</table>"
     html += "<p><a href='/dashboard/playlists/new'>➕ Create New Playlist</a></p>"
@@ -312,7 +318,7 @@ def create_playlist():
                 INSERT INTO playlist_mappings (slug, name, playlist_id, status)
                 VALUES (%s, %s, %s, %s)
             """, (
-                name.lower().replace(" ", "-"),
+                name.lower().replace(" ", "_"),
                 name,
                 playlist_url,
                 'active'
@@ -331,3 +337,54 @@ def create_playlist():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+# ─────────────────────────────────────────────────────
+# Delete a playlist
+@app.route('/dashboard/playlists/<slug>/delete', methods=['POST'])
+def delete_playlist(slug):
+    if not check_auth(request): return "❌ Unauthorized", 403
+
+    import requests
+    from spotipy import Spotify
+    try:
+        # Look up playlist_id from DB
+        conn = psycopg2.connect(
+            dbname=os.environ["DB_NAME"],
+            user=os.environ["DB_USER"],
+            password=os.environ["DB_PASSWORD"],
+            host=os.environ["DB_HOST"],
+            port=os.environ.get("DB_PORT", 5432),
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT playlist_id FROM playlist_mappings WHERE slug = %s", (slug,))
+        row = cur.fetchone()
+        if not row:
+            cur.close()
+            conn.close()
+            return "❌ Playlist not found", 404
+        playlist_url = row[0]
+        playlist_id = playlist_url.split("/")[-1].split("?")[0]
+
+        # Delete from Spotify
+        token_response = requests.post(
+            "https://accounts.spotify.com/api/token",
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": os.environ["SPOTIFY_REFRESH_TOKEN"],
+                "client_id": os.environ["SPOTIFY_CLIENT_ID"],
+                "client_secret": os.environ["SPOTIFY_CLIENT_SECRET"],
+            }
+        )
+        token_response.raise_for_status()
+        access_token = token_response.json()["access_token"]
+        sp = Spotify(auth=access_token)
+        sp.current_user_unfollow_playlist(playlist_id)
+
+        # Delete from DB
+        cur.execute("DELETE FROM playlist_mappings WHERE slug = %s", (slug,))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        return f"<pre>❌ Error: {e}</pre>"
+
+    return redirect("/dashboard/playlists")
