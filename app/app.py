@@ -54,6 +54,7 @@ def dashboard_playlists():
         html += f"<a href='/dashboard/playlists/{escape(name)}/sync'>Sync Now</a></td></tr>"
 
     html += "</table>"
+    html += "<p><a href='/dashboard/playlists/new'>➕ Create New Playlist</a></p>"
     html += "<p><a href='/'>⬅️ Back to Home</a></p>"
     return html
 
@@ -262,6 +263,76 @@ def update_playlist_never_played_new_tracks():
 def logout():
     session.clear()
     return redirect('/')
+
+# ─────────────────────────────────────────────────────
+# Create a new playlist (form and POST)
+import requests
+from spotipy import Spotify
+
+@app.route('/dashboard/playlists/new', methods=['GET', 'POST'])
+def create_playlist():
+    if not check_auth(request): return "❌ Unauthorized", 403
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        if not name:
+            return "❌ Playlist name is required", 400
+
+        # Create Spotify playlist
+        token_response = requests.post(
+            "https://accounts.spotify.com/api/token",
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": os.environ["SPOTIFY_REFRESH_TOKEN"],
+                "client_id": os.environ["SPOTIFY_CLIENT_ID"],
+                "client_secret": os.environ["SPOTIFY_CLIENT_SECRET"],
+            }
+        )
+        token_response.raise_for_status()
+        access_token = token_response.json()["access_token"]
+
+        sp = Spotify(auth=access_token)
+        user = sp.current_user()
+        playlist = sp.user_playlist_create(user['id'], name)
+
+        playlist_url = playlist["external_urls"]["spotify"]
+        playlist_id = playlist["id"]
+
+        # Store in DB
+        try:
+            conn = psycopg2.connect(
+                dbname=os.environ["DB_NAME"],
+                user=os.environ["DB_USER"],
+                password=os.environ["DB_PASSWORD"],
+                host=os.environ["DB_HOST"],
+                port=os.environ.get("DB_PORT", 5432),
+            )
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO playlist_mappings (slug, name, playlist_id, status)
+                VALUES (%s, %s, %s, %s)
+            """, (
+                name.lower().replace(" ", "-"),
+                name,
+                playlist_url,
+                'active'
+            ))
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            return f"&lt;pre&gt;❌ DB Error: {e}&lt;/pre&gt;"
+
+        return redirect("/dashboard/playlists")
+
+    return """
+    &lt;h2&gt;➕ Create New Smart Playlist&lt;/h2&gt;
+    &lt;form method='post'&gt;
+      &lt;label&gt;Playlist Name: &lt;input name='name' required&gt;&lt;/label&gt;&lt;br&gt;&lt;br&gt;
+      &lt;button type='submit'&gt;Create Playlist&lt;/button&gt;
+    &lt;/form&gt;
+    &lt;p&gt;&lt;a href='/dashboard/playlists'&gt;⬅️ Back to Playlists&lt;/a&gt;&lt;/p&gt;
+    """
 
 # ─────────────────────────────────────────────────────
 if __name__ == "__main__":
