@@ -321,7 +321,7 @@ def create_playlist():
             cur.close()
             conn.close()
         except Exception as e:
-            return f"&lt;pre&gt;❌ DB Error: {e}&lt;/pre&gt;"
+            return f"<pre>❌ DB Error: {e}</pre>"
 
         return redirect("/dashboard/playlists")
 
