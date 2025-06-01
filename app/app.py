@@ -28,12 +28,12 @@ def dashboard_playlists():
 
         cur.execute("""
             SELECT
-                playlist_name,
-                (SELECT COUNT(*) FROM playlist_tracks WHERE playlist_id = playlists.id) AS track_count,
-                last_synced_at,
-                status
-            FROM playlists
-            ORDER BY playlist_name;
+                name,
+                (SELECT COUNT(*) FROM playlist_tracks WHERE playlist_id = playlist_mappings.playlist_id) AS track_count,
+                NULL AS last_synced_at,  -- Placeholder
+                'active' AS status        -- Placeholder
+            FROM playlist_mappings
+            ORDER BY name;
         """)
         rows = cur.fetchall()
         cur.close()
