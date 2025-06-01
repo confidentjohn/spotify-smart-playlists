@@ -339,7 +339,7 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
 # ─────────────────────────────────────────────────────
 # Delete a playlist
-@app.route('/dashboard/playlists/<slug>/delete', methods=['POST'])
+@app.route('/dashboard/playlists/<path:slug>/delete', methods=['POST'])
 def delete_playlist(slug):
     if not check_auth(request): return "❌ Unauthorized", 403
 
