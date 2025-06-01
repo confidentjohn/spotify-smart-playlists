@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Playlists</title>
+</head>
+<body>
+  <h1>Smart Playlists</h1>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Size</th>
+        <th>Last Run</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in playlists %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td>{{ p.size }}</td>
+          <td>{{ p.last_run }}</td>
+          <td>{{ p.status }}</td>
+          <td>
+            <a href="/dashboard/playlists/{{ p.name }}">View</a> |
+            <a href="/dashboard/playlists/{{ p.name }}/edit">Edit</a> |
+            <a href="/dashboard/playlists/{{ p.name }}/sync">Sync Now</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

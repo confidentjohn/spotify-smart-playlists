@@ -1,4 +1,5 @@
 from flask import Flask, request, redirect, session
+from flask import render_template
 from markupsafe import escape
 import os
 import subprocess
@@ -8,6 +9,53 @@ from spotipy.oauth2 import SpotifyOAuth
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
+
+# ─────────────────────────────────────────────────────
+# Smart Playlist Dashboard Overview
+@app.route('/dashboard/playlists')
+def dashboard_playlists():
+    if not check_auth(request): return "❌ Unauthorized", 403
+
+    try:
+        conn = psycopg2.connect(
+            dbname=os.environ['DB_NAME'],
+            user=os.environ['DB_USER'],
+            password=os.environ['DB_PASSWORD'],
+            host=os.environ['DB_HOST'],
+            port=os.environ.get('DB_PORT', 5432)
+        )
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT
+                playlist_name,
+                (SELECT COUNT(*) FROM playlist_tracks WHERE playlist_id = playlists.id) AS track_count,
+                last_synced_at,
+                status
+            FROM playlists
+            ORDER BY playlist_name;
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        return f"<pre>❌ DB Error: {e}</pre>"
+
+    html = "<h2>🎵 Smart Playlists Dashboard</h2>"
+    html += "<table border='1' cellpadding='5'>"
+    html += "<tr><th>Name</th><th>Size</th><th>Last Run</th><th>Status</th><th>Actions</th></tr>"
+
+    for row in rows:
+        name, size, last_run, status = row
+        last_run_display = last_run.strftime('%Y-%m-%d %H:%M') if last_run else "Never"
+        html += f"<tr><td>{escape(name)}</td><td>{size}</td><td>{last_run_display}</td><td>{escape(status)}</td>"
+        html += f"<td><a href='/dashboard/playlists/{escape(name)}'>View</a> | "
+        html += f"<a href='/dashboard/playlists/{escape(name)}/edit'>Edit</a> | "
+        html += f"<a href='/dashboard/playlists/{escape(name)}/sync'>Sync Now</a></td></tr>"
+
+    html += "</table>"
+    html += "<p><a href='/'>⬅️ Back to Home</a></p>"
+    return html
 
 # ─────────────────────────────────────────────────────
 def check_auth(request):
