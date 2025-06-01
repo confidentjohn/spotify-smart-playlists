@@ -325,14 +325,7 @@ def create_playlist():
 
         return redirect("/dashboard/playlists")
 
-    return """
-    &lt;h2&gt;➕ Create New Smart Playlist&lt;/h2&gt;
-    &lt;form method='post'&gt;
-      &lt;label&gt;Playlist Name: &lt;input name='name' required&gt;&lt;/label&gt;&lt;br&gt;&lt;br&gt;
-      &lt;button type='submit'&gt;Create Playlist&lt;/button&gt;
-    &lt;/form&gt;
-    &lt;p&gt;&lt;a href='/dashboard/playlists'&gt;⬅️ Back to Playlists&lt;/a&gt;&lt;/p&gt;
-    """
+    return render_template("create_playlist.html")
 
 # ─────────────────────────────────────────────────────
 if __name__ == "__main__":
