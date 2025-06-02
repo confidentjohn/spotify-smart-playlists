@@ -76,6 +76,9 @@ if __name__ == "__main__":
     cur.execute("DROP MATERIALIZED VIEW IF EXISTS unified_tracks;")
     cur.execute(UNIFIED_TRACKS_VIEW)
     conn.commit()
+    cur.execute("SELECT COUNT(*) FROM unified_tracks;")
+    row_count = cur.fetchone()[0]
+    log_event("build_unified_tracks", f"✅ unified_tracks view built successfully with {row_count} rows.")
     cur.close()
     conn.close()
-    log_event("build_unified_tracks", "✅ unified_tracks view built successfully.")
+    # log_event("build_unified_tracks", "✅ unified_tracks view built successfully.")
