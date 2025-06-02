@@ -38,8 +38,8 @@ spotify-oauth-tracker/
 │   └── update_playlist_played_once.py
 ├── db/                      # Database initialization
 │   └── init_db.py
-├── reports/                 # (Planned) Usage reporting, analytics, graphs
-├── utils/                   # (Planned) Shared helper functions/modules
+├── reports/                 # Usage reports and analytics visualizations
+├── utils/                   # Shared logger and database helpers
 ├── .github/workflows/       # GitHub Actions
 │   ├── check_track_availability.yml
 │   ├── master_sync.yml
@@ -63,7 +63,7 @@ spotify-oauth-tracker/
 | `tracks`             | All tracks (liked or from albums)  |
 | `plays`              | Full history of Spotify plays      |
 | `playlist_mappings`  | Maps playlist slugs to Spotify IDs |
-| `track_availability` | Tracks removed from Spotify        |
+| `track_availability` | Track availability status and last checked date |
 | `logs`               | Output logs from syncs to debug    |
 
 Tracks can be orphaned (not liked, not from albums) and are cleaned automatically.
@@ -144,7 +144,7 @@ Set your redirect URI to `https://<your-app>.onrender.com/callback`
 
 Visit `/init-db` to create tables:
 
-* `albums`, `tracks`, `plays`, `playlist_mappings`, `track_availability`
+* `albums`, `tracks`, `plays`, `playlist_mappings`, `track_availability`, `liked_tracks`, `logs`
 
 ### 6. Add Playlist Mappings
 
@@ -174,8 +174,8 @@ graph TD
     subgraph GitHub_Actions
         A["track_plays.py"]
         B["sync_saved_albums.py"]
-        C["sync_liked_tracks.py"]
         D["sync_album_tracks.py"]
+        E["sync_liked_tracks.py"]
         F["check_track_availability.py"]
         G["playlist updates"]
     end
@@ -190,8 +190,8 @@ graph TD
 
     A --> DB
     B --> DB
-    C --> DB
     D --> DB
+    E --> DB
     F --> DB
     G --> DB
     G --> Spotify[(Spotify API)]
