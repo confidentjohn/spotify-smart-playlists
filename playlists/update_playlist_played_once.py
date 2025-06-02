@@ -57,8 +57,10 @@ cur.execute("""
     SELECT 'spotify:track:' || p.track_id
     FROM plays p
     JOIN tracks t ON p.track_id = t.id
+    LEFT JOIN albums a ON t.album_id = a.id
     LEFT JOIN track_availability ta ON t.id = ta.track_id
-    WHERE ta.is_playable IS DISTINCT FROM FALSE OR ta.is_playable IS NULL
+    WHERE (ta.is_playable IS DISTINCT FROM FALSE OR ta.is_playable IS NULL)
+      AND (t.is_liked = TRUE OR a.is_saved = TRUE OR a.is_saved IS NULL)
     GROUP BY p.track_id, t.album_id, t.track_number
     HAVING COUNT(*) = 1
     ORDER BY t.album_id, t.track_number NULLS LAST

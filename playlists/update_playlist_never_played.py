@@ -60,10 +60,12 @@ cur.execute("""
     LEFT JOIN albums a ON t.album_id = a.id
     LEFT JOIN track_availability ta ON t.id = ta.track_id
     WHERE p.track_id IS NULL
-      AND (a.is_saved IS NULL OR a.is_saved = TRUE)
+      AND (t.is_liked = TRUE OR a.is_saved = TRUE)
       AND (ta.is_playable IS DISTINCT FROM FALSE OR ta.is_playable IS NULL)
-    ORDER BY t.album_id, t.track_number NULLS LAST
-    LIMIT 9000
+    ORDER BY 
+      t.album_id, 
+      t.track_number NULLS LAST
+    LIMIT 9000;
 """)
 rows = cur.fetchall()
 track_uris = [row[0] for row in rows]
