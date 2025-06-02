@@ -125,19 +125,15 @@ with open(LOCK_FILE, 'w') as lock_file:
             album_added_at = album_row[0] if album_row else None
             final_added_at = album_added_at if album_added_at else liked_added_at
 
+            # Removed insertion into tracks table as per instructions
+
+            # Insert into liked_tracks table
             cur.execute("""
-                INSERT INTO tracks (id, name, artist, album, album_id, is_liked, added_at, date_liked_at, date_liked_checked)
-                VALUES (%s, %s, %s, %s, %s, TRUE, %s, %s, %s)
-                ON CONFLICT (id) DO UPDATE 
-                SET is_liked = TRUE,
-                    album_id = EXCLUDED.album_id,
-                    added_at = COALESCE(
-                        (SELECT added_at FROM albums WHERE id = EXCLUDED.album_id),
-                        EXCLUDED.added_at
-                    ),
-                    date_liked_at = EXCLUDED.date_liked_at,
-                    date_liked_checked = EXCLUDED.date_liked_checked;
-            """, (track_id, name, artist, album, album_id, final_added_at, liked_added_at, now))
+                INSERT INTO liked_tracks (track_id, added_at)
+                VALUES (%s, %s)
+                ON CONFLICT (track_id) DO UPDATE 
+                SET added_at = EXCLUDED.added_at
+            """, (track_id, liked_added_at))
 
             updated_liked_tracks += 1
             counter += 1
@@ -159,87 +155,11 @@ with open(LOCK_FILE, 'w') as lock_file:
     log_event("sync_liked_tracks", f"{len(liked_track_ids)} liked tracks synced")
     log_event("sync_liked_tracks", f"Finished scanning liked tracks. Total fetched: {counter}")
 
-    # ─────────────────────────────────────────────
-    # Recheck orphaned liked tracks not in any saved album
-    # ─────────────────────────────────────────────
-    log_event("sync_liked_tracks", "Checking orphaned liked tracks")
-    cur.execute("""
-        SELECT id FROM tracks
-        WHERE is_liked = TRUE
-          AND (album_id IS NULL OR album_id NOT IN (SELECT id FROM albums WHERE is_saved = TRUE))
-          AND (date_liked_checked IS NULL OR date_liked_checked < %s)
-    """, (stale_cutoff,))
-    orphan_rows = cur.fetchall()
+    # Removed "Recheck orphaned liked tracks not in any saved album" block as per instructions
 
-    orphan_checked_and_updated = 0
-    for (track_id,) in orphan_rows:
-        try:
-            result = safe_spotify_call(sp.current_user_saved_tracks_contains, [track_id])
-            if not result[0]:
-                log_event("sync_liked_tracks", f"Track {track_id} is no longer liked (orphaned) — removing")
-                cur.execute("DELETE FROM tracks WHERE id = %s", (track_id,))
-            else:
-                cur.execute("""
-                    UPDATE tracks SET date_liked_checked = %s WHERE id = %s
-                """, (now, track_id))
-            orphan_checked_and_updated += 1
-            conn.commit()
-        except SpotifyException as e:
-            if e.http_status == 404:
-                log_event("sync_liked_tracks", f"Orphaned track {track_id} no longer exists", level="warning")
-            else:
-                raise
+    # Removed "Recheck stale tracks in DB not updated in 60+ days" block as per instructions
 
-    log_event("sync_liked_tracks", f"🔄 {orphan_checked_and_updated} orphaned liked tracks rechecked and updated")
-
-    # ─────────────────────────────────────────────
-    # Recheck stale tracks in DB not updated in 60+ days
-    # ─────────────────────────────────────────────
-    log_event("sync_liked_tracks", "Checking stale tracks from local DB")
-    cur.execute("""
-        SELECT id FROM tracks
-        WHERE is_liked = FALSE AND (date_liked_checked IS NULL OR date_liked_checked < %s)
-    """, (stale_cutoff,))
-    stale_rows = cur.fetchall()
-
-    stale_checked_and_updated = 0
-
-    for (track_id,) in stale_rows:
-        try:
-            track_data = safe_spotify_call(sp.track, track_id)
-            # If we get here, the track still exists and is playable
-            log_event("sync_liked_tracks", f"Checked stale track {track_id} from DB — not liked")
-        except SpotifyException as e:
-            if e.http_status == 404:
-                log_event("sync_liked_tracks", f"Track {track_id} no longer available", level="warning")
-            else:
-                raise
-        finally:
-            cur.execute("""
-                UPDATE tracks SET date_liked_checked = %s WHERE id = %s
-            """, (now, track_id))
-            stale_checked_and_updated += 1
-            conn.commit()  # Commit immediately to persist progress in case of failure
-
-    log_event("sync_liked_tracks", f"🔄 {stale_checked_and_updated} stale tracks rechecked and updated")
-
-    # Update unliked tracks
-    log_event("sync_liked_tracks", "Updating unliked tracks")
-    cur.execute("""
-        UPDATE tracks
-        SET is_liked = FALSE
-        WHERE id NOT IN %s
-    """, (tuple(liked_track_ids),))
-
-    # Remove orphaned unliked tracks
-    log_event("sync_liked_tracks", "Removing orphaned tracks")
-    cur.execute("""
-        DELETE FROM tracks
-        WHERE is_liked = FALSE AND from_album = FALSE
-    """)
-    cur.execute("SELECT COUNT(*) FROM tracks WHERE is_liked = FALSE AND from_album = FALSE")
-    count = cur.fetchone()[0]
-    log_event("sync_liked_tracks", f"Found {count} orphaned tracks to remove")
+    # Removed "Update unliked tracks" and "Remove orphaned unliked tracks" blocks as per instructions
 
     conn.commit()
     log_event("sync_liked_tracks", f"✅ {updated_liked_tracks} tracks updated")
