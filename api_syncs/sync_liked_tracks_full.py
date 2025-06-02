@@ -32,10 +32,10 @@ def safe_spotify_call(func, *args, **kwargs):
             if e.http_status == 429:
                 retry_after = int(e.headers.get("Retry-After", 5))
                 retries += 1
-                log_event("sync_liked_tracks", f"Rate limit hit. Retry #{retries} in {retry_after}s")
+                log_event("sync_liked_tracks_full", f"Rate limit hit. Retry #{retries} in {retry_after}s")
                 time.sleep(retry_after)
             else:
-                log_event("sync_liked_tracks", f"Spotify error: {e}", level="error")
+                log_event("sync_liked_tracks_full", f"Spotify error: {e}", level="error")
                 raise
 
 # Acquire lock to avoid overlap
@@ -43,7 +43,7 @@ with open(LOCK_FILE, 'w') as lock_file:
     try:
         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
-        log_event("sync_liked_tracks", "Another sync is already running", level="warning")
+        log_event("sync_liked_tracks_full", "Another sync is already running", level="warning")
         exit(1)
 
     access_token = get_access_token()
@@ -60,8 +60,6 @@ with open(LOCK_FILE, 'w') as lock_file:
     cur = conn.cursor()
 
     now = datetime.now(tz=None).astimezone()  # keep UTC-awareness
-    FRESH_LIKED_CUTOFF_DAYS = int(os.environ.get("FRESH_LIKED_CUTOFF_DAYS", "2"))
-    fresh_cutoff = now - timedelta(days=FRESH_LIKED_CUTOFF_DAYS)
 
     limit = 50
     offset = 0
@@ -73,18 +71,15 @@ with open(LOCK_FILE, 'w') as lock_file:
 
     stop_fetching = False
 
-    log_event("sync_liked_tracks", "Starting liked tracks sync")
+    log_event("sync_liked_tracks_full", "Starting liked tracks sync")
 
     while True:
         results = safe_spotify_call(sp.current_user_saved_tracks, limit=limit, offset=offset)
         items = results['items']
-        log_event("sync_liked_tracks", f"Processing batch: offset={offset}, size={len(items)}")
+        log_event("sync_liked_tracks_full", f"Processing batch: offset={offset}, size={len(items)}")
 
         if not items:
             break
-
-        if items and parser.isoparse(items[-1]['added_at']) < fresh_cutoff:
-            stop_fetching = True
 
         for item in items:
             track = item['track']
@@ -96,9 +91,7 @@ with open(LOCK_FILE, 'w') as lock_file:
             if liked_added_at.tzinfo is None:
                 from datetime import timezone
                 liked_added_at = liked_added_at.replace(tzinfo=timezone.utc)
-            # Only skip tracks older than fresh_cutoff
-            if liked_added_at < fresh_cutoff:
-                continue
+
             liked_track_ids.add(track_id)
 
             name = track['name']
@@ -126,7 +119,7 @@ with open(LOCK_FILE, 'w') as lock_file:
             updated_liked_tracks += 1
             counter += 1
             if counter % 500 == 0:
-                log_event("sync_liked_tracks", f"Updated {counter} tracks so far")
+                log_event("sync_liked_tracks_full", f"Updated {counter} tracks so far")
             if counter % batch_size == 0:
                 conn.commit()
 
@@ -137,11 +130,9 @@ with open(LOCK_FILE, 'w') as lock_file:
         if len(items) < limit:
             break
 
-    if stop_fetching:
-        log_event("sync_liked_tracks", "Stopping fetch early: reached tracks older than fresh_cutoff")
 
-    log_event("sync_liked_tracks", f"{len(liked_track_ids)} liked tracks synced")
-    log_event("sync_liked_tracks", f"Finished scanning liked tracks. Total fetched: {counter}")
+    log_event("sync_liked_tracks_full", f"{len(liked_track_ids)} liked tracks synced")
+    log_event("sync_liked_tracks_full", f"Finished scanning liked tracks. Total fetched: {counter}")
 
     # Removed "Recheck orphaned liked tracks not in any saved album" block as per instructions
 
@@ -150,8 +141,8 @@ with open(LOCK_FILE, 'w') as lock_file:
     # Removed "Update unliked tracks" and "Remove orphaned unliked tracks" blocks as per instructions
 
     conn.commit()
-    log_event("sync_liked_tracks", f"✅ {updated_liked_tracks} tracks updated")
-    log_event("sync_liked_tracks", f"⏭️ {skipped_due_to_freshness} tracks skipped due to recent check")
+    log_event("sync_liked_tracks_full", f"✅ {updated_liked_tracks} tracks updated")
+    log_event("sync_liked_tracks_full", f"⏭️ {skipped_due_to_freshness} tracks skipped due to recent check")
     cur.close()
     conn.close()
-    log_event("sync_liked_tracks", "Liked tracks sync complete")
+    log_event("sync_liked_tracks_full", "Liked tracks sync complete")
