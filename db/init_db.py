@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS playlist_mappings (
 );
 """)
 
+
 # ─────────────────────────────────────────────
 # Track availability table
 # ─────────────────────────────────────────────
@@ -87,6 +88,17 @@ CREATE TABLE IF NOT EXISTS track_availability (
     track_id TEXT PRIMARY KEY REFERENCES tracks(id),
     is_playable BOOLEAN,
     checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+""")
+
+# ─────────────────────────────────────────────
+# Liked tracks table
+# ─────────────────────────────────────────────
+cur.execute("""
+CREATE TABLE IF NOT EXISTS liked_tracks (
+    track_id TEXT PRIMARY KEY REFERENCES tracks(id),
+    liked_at TIMESTAMP,
+    last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 """)
 
