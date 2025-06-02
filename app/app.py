@@ -326,8 +326,8 @@ def create_playlist():
             )
             cur = conn.cursor()
             cur.execute("""
-                INSERT INTO playlist_mappings (slug, name, playlist_id, status, track_limit, rules_json)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO playlist_mappings (slug, name, playlist_id, status, rules_json)
+                VALUES (%s, %s, %s, %s, %s)
             """, (
                 name.lower().replace(" ", "_"),
                 name,
