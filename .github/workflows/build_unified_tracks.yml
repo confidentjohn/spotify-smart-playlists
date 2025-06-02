@@ -31,7 +31,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: 🛠️ Build unified_tracks view
-        run: PYTHONPATH=. python build/materialized_views.py
+        run: PYTHONPATH=. python api_syncs/materialized_views.py
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}

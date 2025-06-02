@@ -68,11 +68,19 @@ cur = conn.cursor()
 log_event("check_track_availability", "Checking track availability for outdated or missing records")
 
 cur.execute("""
-    SELECT t.id
-    FROM tracks t
-    LEFT JOIN track_availability a ON t.id = a.track_id
-    WHERE a.checked_at IS NULL
-       OR a.checked_at < NOW() - INTERVAL '60 days'
+    SELECT DISTINCT track_id FROM (
+        SELECT t.id AS track_id, a.checked_at
+        FROM tracks t
+        LEFT JOIN track_availability a ON t.id = a.track_id
+        WHERE a.checked_at IS NULL OR a.checked_at < NOW() - INTERVAL '60 days'
+
+        UNION
+
+        SELECT lt.track_id, a.checked_at
+        FROM liked_tracks lt
+        LEFT JOIN track_availability a ON lt.track_id = a.track_id
+        WHERE a.checked_at IS NULL OR a.checked_at < NOW() - INTERVAL '60 days'
+    ) sub
 """)
 track_ids = [row[0] for row in cur.fetchall()]
 total = len(track_ids)
