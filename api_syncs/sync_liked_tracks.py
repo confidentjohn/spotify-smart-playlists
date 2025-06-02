@@ -176,10 +176,8 @@ with open(LOCK_FILE, 'w') as lock_file:
         try:
             result = safe_spotify_call(sp.current_user_saved_tracks_contains, [track_id])
             if not result[0]:
-                log_event("sync_liked_tracks", f"Track {track_id} is no longer liked (orphaned)")
-                cur.execute("""
-                    UPDATE tracks SET is_liked = FALSE, date_liked_checked = %s WHERE id = %s
-                """, (now, track_id))
+                log_event("sync_liked_tracks", f"Track {track_id} is no longer liked (orphaned) — removing")
+                cur.execute("DELETE FROM tracks WHERE id = %s", (track_id,))
             else:
                 cur.execute("""
                     UPDATE tracks SET date_liked_checked = %s WHERE id = %s

@@ -1,17 +1,30 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Create New Playlist</title>
-</head>
-<body>
-  <h2>➕ Create New Smart Playlist</h2>
-  <form method="post">
-    <label>Playlist Name:
-      <input name="name" required>
-    </label>
-    <br><br>
-    <button type="submit">Create Playlist</button>
-  </form>
-  <p><a href="/dashboard/playlists">⬅️ Back to Playlists</a></p>
-</body>
-</html>
+<h2>➕ Create New Smart Playlist</h2>
+<form method="post">
+  <label>
+    Playlist Name:
+    <input type="text" name="name" required>
+  </label>
+  <br><br>
+
+  <label>
+    Type:
+    <select name="type" required>
+      <option value="most_played">Most Played</option>
+      <option value="never_played">Never Played</option>
+      <option value="recently_liked">Recently Liked</option>
+      <option value="played_once">Played Once</option>
+      <option value="oldest_played">Oldest Played</option>
+    </select>
+  </label>
+  <br><br>
+
+  <label>
+    Track Limit:
+    <input type="number" name="limit" min="1" max="9000" value="50" required>
+  </label>
+  <br><br>
+
+  <button type="submit">🎶 Create Playlist</button>
+</form>
+
+<p><a href="/dashboard/playlists">⬅️ Back to Playlists</a></p>

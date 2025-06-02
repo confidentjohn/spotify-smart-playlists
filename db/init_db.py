@@ -74,7 +74,8 @@ CREATE TABLE IF NOT EXISTS playlist_mappings (
     playlist_id TEXT,
     last_synced_at TIMESTAMP,
     status TEXT DEFAULT 'active',
-    track_count INTEGER DEFAULT 0
+    track_count INTEGER DEFAULT 0,
+    rules JSONB
 );
 """)
 
