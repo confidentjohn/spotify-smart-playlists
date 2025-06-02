@@ -1,5 +1,5 @@
 <h2>➕ Create New Smart Playlist</h2>
-<form method="post">
+<form method="post" onsubmit="return serializeRules()">
   <label>
     Playlist Name:
     <input type="text" name="name" required>
@@ -73,6 +73,20 @@
       if (container.children.length > 1) {
         button.parentElement.remove();
       }
+    }
+    function serializeRules() {
+      const rules = [];
+      const rows = document.querySelectorAll(".rule-row");
+      rows.forEach(row => {
+        const field = row.querySelector('[name="field"]').value;
+        const operator = row.querySelector('[name="operator"]').value;
+        const value = row.querySelector('[name="value"]').value;
+        if (field && operator && value) {
+          rules.push({ field, operator, value });
+        }
+      });
+      document.getElementById("rules_json").value = JSON.stringify(rules);
+      return true;
     }
   </script>
 
