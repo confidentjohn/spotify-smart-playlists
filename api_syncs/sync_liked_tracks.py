@@ -96,25 +96,6 @@ with open(LOCK_FILE, 'w') as lock_file:
                 liked_added_at = liked_added_at.replace(tzinfo=timezone.utc)
             liked_track_ids.add(track_id)
 
-            if liked_added_at < fresh_cutoff:
-                stop_fetching = True
-                break
-
-            # Skip if not recently added or due for recheck
-            if liked_added_at < fresh_cutoff:
-                cur.execute("""
-                    SELECT date_liked_checked FROM tracks WHERE id = %s
-                """, (track_id,))
-                row = cur.fetchone()
-                if row and row[0]:
-                    last_checked = row[0]
-                    if last_checked.tzinfo is None:
-                        last_checked = last_checked.replace(tzinfo=timezone.utc)
-                    if last_checked > stale_cutoff:
-                        log_event("sync_liked_tracks", f"Skipping track {track_id} — checked recently on {last_checked.date()}")
-                        skipped_due_to_freshness += 1
-                        continue
-
             name = track['name']
             artist = track['artists'][0]['name']
             album = track['album']['name']
