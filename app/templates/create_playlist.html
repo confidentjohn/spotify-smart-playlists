@@ -75,14 +75,17 @@
       }
     }
     function serializeRules() {
-      const rules = [];
+      const rules = {
+        match: document.getElementById("match").value,
+        conditions: []
+      };
       const rows = document.querySelectorAll(".rule-row");
       rows.forEach(row => {
         const field = row.querySelector('[name="field"]').value;
         const operator = row.querySelector('[name="operator"]').value;
         const value = row.querySelector('[name="value"]').value;
         if (field && operator && value) {
-          rules.push({ field, operator, value });
+          rules.conditions.push({ field, operator, value });
         }
       });
       document.getElementById("rules_json").value = JSON.stringify(rules);
