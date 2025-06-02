@@ -129,11 +129,13 @@ with open(LOCK_FILE, 'w') as lock_file:
 
             # Insert into liked_tracks table
             cur.execute("""
-                INSERT INTO liked_tracks (track_id, added_at)
-                VALUES (%s, %s)
+                INSERT INTO liked_tracks (track_id, liked_at, added_at, last_checked_at)
+                VALUES (%s, %s, %s, %s)
                 ON CONFLICT (track_id) DO UPDATE 
-                SET added_at = EXCLUDED.added_at
-            """, (track_id, liked_added_at))
+                SET liked_at = EXCLUDED.liked_at,
+                    added_at = EXCLUDED.added_at,
+                    last_checked_at = EXCLUDED.last_checked_at;
+            """, (track_id, liked_added_at, final_added_at, now))
 
             updated_liked_tracks += 1
             counter += 1

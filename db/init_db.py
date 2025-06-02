@@ -98,6 +98,7 @@ cur.execute("""
 CREATE TABLE IF NOT EXISTS liked_tracks (
     track_id TEXT PRIMARY KEY REFERENCES tracks(id),
     liked_at TIMESTAMP,
+    added_at TIMESTAMP,
     last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 """)
