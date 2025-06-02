@@ -69,7 +69,11 @@ cutoff = now - timedelta(days=60)
 
 # ─────────────────────────────────────────────
 # Step 1: Get all known track_ids
-cur.execute("SELECT track_id FROM tracks UNION SELECT track_id FROM liked_tracks")
+cur.execute("""
+    SELECT id FROM tracks
+    UNION
+    SELECT track_id FROM liked_tracks
+""")
 known_ids = {row[0] for row in cur.fetchall()}
 log_event("check_track_availability", f"Total unique known track IDs: {len(known_ids)}")
 
@@ -80,7 +84,15 @@ availability = dict(cur.fetchall())
 # Step 3: Compute new, stale, and removed track IDs
 new_ids = known_ids - availability.keys()
 stale_ids = {tid for tid, dt in availability.items() if dt is None or dt < cutoff}
-removed_ids = availability.keys() - known_ids
+
+# We recompute known_ids here to include only truly known current items
+cur.execute("""
+    SELECT id FROM tracks
+    UNION
+    SELECT track_id FROM liked_tracks
+""")
+current_known_ids = {row[0] for row in cur.fetchall()}
+removed_ids = availability.keys() - current_known_ids
 
 log_event("check_track_availability", f"New: {len(new_ids)}, Stale: {len(stale_ids)}, Removed: {len(removed_ids)}")
 
