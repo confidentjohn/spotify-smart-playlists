@@ -33,7 +33,7 @@
 
   <div id="rules-container">
     <div class="rule-row">
-      <select name="field">
+      <select name="field[]">
         <option value="artist">Artist</option>
         <option value="album">Album</option>
         <option value="track">Track</option>
@@ -44,7 +44,7 @@
         <option value="first_played">First Played</option>
       </select>
 
-      <select name="operator">
+      <select name="operator[]">
         <option value="is">is</option>
         <option value="is_not">is not</option>
         <option value="contains">contains</option>
@@ -53,7 +53,7 @@
         <option value="lt">less than</option>
       </select>
 
-      <input type="text" name="value">
+      <input type="text" name="value[]">
       <button type="button" onclick="removeRule(this)">−</button>
     </div>
   </div>
@@ -81,9 +81,9 @@
       };
       const rows = document.querySelectorAll(".rule-row");
       rows.forEach(row => {
-        const field = row.querySelector('[name="field"]').value;
-        const operator = row.querySelector('[name="operator"]').value;
-        const value = row.querySelector('[name="value"]').value;
+        const field = row.querySelector('[name="field[]"]').value;
+        const operator = row.querySelector('[name="operator[]"]').value;
+        const value = row.querySelector('[name="value[]"]').value;
         if (field && operator && value) {
           rules.conditions.push({ field, operator, value });
         }
