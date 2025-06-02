@@ -77,8 +77,17 @@
     function serializeRules() {
       const rules = {
         match: document.getElementById("match").value,
-        conditions: []
+        limit: document.querySelector('[name="limit"]').value === 'no_limit' ? 9000 : parseInt(document.querySelector('[name="limit"]').value),
+        sort: {
+          by: "album",
+          direction: "asc"
+        },
+        conditions: [
+          { field: "is_playable", operator: "is_not", value: "FALSE" },
+          { field: "library_source", operator: "in", value: ["liked", "saved_album"] }
+        ]
       };
+
       const rows = document.querySelectorAll(".rule-row");
       rows.forEach(row => {
         const field = row.querySelector('[name="field[]"]').value;
@@ -88,6 +97,7 @@
           rules.conditions.push({ field, operator, value });
         }
       });
+
       document.getElementById("rules_json").value = JSON.stringify(rules);
       return true;
     }
