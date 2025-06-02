@@ -280,6 +280,10 @@ def create_playlist():
     if not check_auth(request): return "❌ Unauthorized", 403
 
     if request.method == 'POST':
+        print("📝 Form submission received")
+        print(f"Name: {request.form.get('name')}")
+        print(f"Limit: {request.form.get('limit')}")
+        print(f"Rules JSON: {request.form.get('rules_json')}")
         name = request.form.get('name')
         if not name:
             return "❌ Playlist name is required", 400
@@ -304,6 +308,13 @@ def create_playlist():
         playlist_url = playlist["external_urls"]["spotify"]
         playlist_id = playlist["id"]
 
+        limit_raw = request.form.get("limit")
+        limit = 9000 if limit_raw == "no_limit" else int(limit_raw)
+        rules_json = request.form.get("rules_json") or "{}"
+
+        print(f"📤 Inserting playlist: slug={name.lower().replace(' ', '_')}, name={name}, playlist_id={playlist_url}, status=active, limit={limit}")
+        print(f"📄 Rules JSON: {rules_json}")
+
         # Store in DB
         try:
             conn = psycopg2.connect(
@@ -315,13 +326,15 @@ def create_playlist():
             )
             cur = conn.cursor()
             cur.execute("""
-                INSERT INTO playlist_mappings (slug, name, playlist_id, status)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO playlist_mappings (slug, name, playlist_id, status, track_limit, rules_json)
+                VALUES (%s, %s, %s, %s, %s, %s)
             """, (
                 name.lower().replace(" ", "_"),
                 name,
                 playlist_url,
-                'active'
+                'active',
+                limit,
+                rules_json
             ))
             conn.commit()
             cur.close()
