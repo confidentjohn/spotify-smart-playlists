@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS track_availability (
 # ─────────────────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS liked_tracks (
-    track_id TEXT PRIMARY KEY REFERENCES tracks(id),
+    track_id TEXT PRIMARY KEY,
     liked_at TIMESTAMP,
     added_at TIMESTAMP,
     last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
