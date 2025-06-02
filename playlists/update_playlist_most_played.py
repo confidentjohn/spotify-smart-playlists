@@ -54,12 +54,10 @@ print(f"🎯 Using playlist ID: {playlist_id}")
 # Fetch tracks (excluding unplayable)
 # ─────────────────────────────────────────────
 cur.execute("""
-    SELECT 'spotify:track:' || p.track_id
-    FROM plays p
-    LEFT JOIN track_availability ta ON p.track_id = ta.track_id
-    WHERE ta.is_playable IS DISTINCT FROM FALSE OR ta.is_playable IS NULL
-    GROUP BY p.track_id
-    ORDER BY COUNT(*) DESC
+    SELECT 'spotify:track:' || track_id
+    FROM unified_tracks
+    WHERE is_playable IS DISTINCT FROM FALSE OR is_playable IS NULL
+    ORDER BY play_count DESC NULLS LAST
     LIMIT 50;
 """)
 rows = cur.fetchall()

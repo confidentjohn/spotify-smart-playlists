@@ -51,22 +51,16 @@ playlist_id = playlist_url.split("/")[-1].split("?")[0]
 print(f"🎯 Using playlist ID: {playlist_id}")
 
 # ─────────────────────────────────────────────
-# Fetch tracks (excluding unplayable)
+# Fetch tracks from unified_tracks (excluding unplayable)
 # ─────────────────────────────────────────────
 cur.execute("""
-    SELECT 'spotify:track:' || t.id
-    FROM tracks t
-    LEFT JOIN track_availability ta ON t.id = ta.track_id
-    JOIN (
-        SELECT track_id
-        FROM plays
-        GROUP BY track_id
-        HAVING COUNT(*) > 1
-    ) p ON t.id = p.track_id
-    WHERE t.is_liked = TRUE
-      AND t.added_at >= NOW() - INTERVAL '30 days'
-      AND (ta.is_playable IS DISTINCT FROM FALSE OR ta.is_playable IS NULL)
-    ORDER BY t.added_at DESC
+    SELECT 'spotify:track:' || track_id
+    FROM unified_tracks
+    WHERE is_liked = TRUE
+      AND added_at >= NOW() - INTERVAL '30 days'
+      AND (is_playable IS DISTINCT FROM FALSE OR is_playable IS NULL)
+      AND play_count > 1
+    ORDER BY added_at DESC
     LIMIT 9000;
 """)
 rows = cur.fetchall()

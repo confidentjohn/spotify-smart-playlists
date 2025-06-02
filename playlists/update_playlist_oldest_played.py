@@ -54,15 +54,11 @@ print(f"🎯 Using playlist ID: {playlist_id}")
 # Fetch tracks
 # ─────────────────────────────────────────────
 cur.execute("""
-    SELECT 'spotify:track:' || p.track_id
-    FROM plays p
-    JOIN tracks t ON p.track_id = t.id
-    LEFT JOIN albums a ON t.album_id = a.id
-    LEFT JOIN track_availability ta ON t.id = ta.track_id
-    WHERE (t.is_liked = TRUE OR a.is_saved = TRUE)
-      AND (ta.is_playable IS DISTINCT FROM FALSE OR ta.is_playable IS NULL)
-    GROUP BY p.track_id
-    ORDER BY MIN(p.played_at) ASC
+    SELECT 'spotify:track:' || track_id
+    FROM unified_tracks
+    WHERE first_played_at IS NOT NULL
+      AND (is_playable IS DISTINCT FROM FALSE OR is_playable IS NULL)
+    ORDER BY first_played_at ASC
     LIMIT 9000;
 """)
 rows = cur.fetchall()
