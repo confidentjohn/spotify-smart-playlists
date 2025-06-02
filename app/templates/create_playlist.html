@@ -18,7 +18,28 @@
       <option value="no_limit">No Limit</option>
     </select>
   </label>
+
   <br><br>
+  <label>
+    Sort By:
+    <select name="sort_by" id="sort_by">
+      <option value="album" selected>Album</option>
+      <option value="artist">Artist</option>
+      <option value="track">Track</option>
+      <option value="date_added">Date Added</option>
+      <option value="plays">Number of Plays</option>
+      <option value="last_played">Last Played</option>
+      <option value="first_played">First Played</option>
+    </select>
+  </label>
+
+  <label>
+    Direction:
+    <select name="sort_direction" id="sort_direction">
+      <option value="asc" selected>Ascending</option>
+      <option value="desc">Descending</option>
+    </select>
+  </label>
 
   <hr>
   <h3>Filter Rules</h3>
@@ -79,8 +100,8 @@
         match: document.getElementById("match").value,
         limit: document.querySelector('[name="limit"]').value === 'no_limit' ? 9000 : parseInt(document.querySelector('[name="limit"]').value),
         sort: {
-          by: "album",
-          direction: "asc"
+          by: document.getElementById("sort_by").value,
+          direction: document.getElementById("sort_direction").value
         },
         conditions: [
           { field: "is_playable", operator: "is_not", value: "FALSE" },
