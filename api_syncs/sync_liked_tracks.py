@@ -160,6 +160,41 @@ with open(LOCK_FILE, 'w') as lock_file:
     log_event("sync_liked_tracks", f"Finished scanning liked tracks. Total fetched: {counter}")
 
     # ─────────────────────────────────────────────
+    # Recheck orphaned liked tracks not in any saved album
+    # ─────────────────────────────────────────────
+    log_event("sync_liked_tracks", "Checking orphaned liked tracks")
+    cur.execute("""
+        SELECT id FROM tracks
+        WHERE is_liked = TRUE
+          AND (album_id IS NULL OR album_id NOT IN (SELECT id FROM albums WHERE is_saved = TRUE))
+          AND (date_liked_checked IS NULL OR date_liked_checked < %s)
+    """, (stale_cutoff,))
+    orphan_rows = cur.fetchall()
+
+    orphan_checked_and_updated = 0
+    for (track_id,) in orphan_rows:
+        try:
+            result = safe_spotify_call(sp.current_user_saved_tracks_contains, [track_id])
+            if not result[0]:
+                log_event("sync_liked_tracks", f"Track {track_id} is no longer liked (orphaned)")
+                cur.execute("""
+                    UPDATE tracks SET is_liked = FALSE, date_liked_checked = %s WHERE id = %s
+                """, (now, track_id))
+            else:
+                cur.execute("""
+                    UPDATE tracks SET date_liked_checked = %s WHERE id = %s
+                """, (now, track_id))
+            orphan_checked_and_updated += 1
+            conn.commit()
+        except SpotifyException as e:
+            if e.http_status == 404:
+                log_event("sync_liked_tracks", f"Orphaned track {track_id} no longer exists", level="warning")
+            else:
+                raise
+
+    log_event("sync_liked_tracks", f"🔄 {orphan_checked_and_updated} orphaned liked tracks rechecked and updated")
+
+    # ─────────────────────────────────────────────
     # Recheck stale tracks in DB not updated in 60+ days
     # ─────────────────────────────────────────────
     log_event("sync_liked_tracks", "Checking stale tracks from local DB")
