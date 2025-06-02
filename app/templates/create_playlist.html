@@ -24,6 +24,62 @@
   </label>
   <br><br>
 
+  <hr>
+  <h3>Filter Rules</h3>
+  <label>
+    Match 
+    <select name="match" id="match" required>
+      <option value="all">all</option>
+      <option value="any">any</option>
+    </select>
+    of the following rules:
+  </label>
+
+  <div id="rules-container">
+    <div class="rule-row">
+      <select name="field">
+        <option value="artist">Artist</option>
+        <option value="album">Album</option>
+        <option value="track">Track</option>
+        <option value="is_liked">Is Liked</option>
+        <option value="date_added">Date Added</option>
+        <option value="plays">Number of Plays</option>
+        <option value="last_played">Last Played</option>
+        <option value="first_played">First Played</option>
+      </select>
+
+      <select name="operator">
+        <option value="is">is</option>
+        <option value="is_not">is not</option>
+        <option value="contains">contains</option>
+        <option value="not_contains">does not contain</option>
+        <option value="gt">greater than</option>
+        <option value="lt">less than</option>
+      </select>
+
+      <input type="text" name="value">
+      <button type="button" onclick="removeRule(this)">−</button>
+    </div>
+  </div>
+
+  <button type="button" onclick="addRule()">➕ Add Rule</button>
+
+  <script>
+    function addRule() {
+      const container = document.getElementById('rules-container');
+      const rule = container.querySelector('.rule-row').cloneNode(true);
+      rule.querySelectorAll('input').forEach(input => input.value = '');
+      container.appendChild(rule);
+    }
+
+    function removeRule(button) {
+      const container = document.getElementById('rules-container');
+      if (container.children.length > 1) {
+        button.parentElement.remove();
+      }
+    }
+  </script>
+
   <button type="submit">🎶 Create Playlist</button>
 </form>
 
