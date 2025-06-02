@@ -333,7 +333,6 @@ def create_playlist():
                 name,
                 playlist_url,
                 'active',
-                limit,
                 rules_json
             ))
             conn.commit()
