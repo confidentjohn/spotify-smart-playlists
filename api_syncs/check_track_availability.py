@@ -2,8 +2,7 @@ import os
 import psycopg2
 import requests
 import time
-import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
@@ -65,42 +64,43 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor()
 
-log_event("check_track_availability", "Checking track availability for outdated or missing records")
-
-cur.execute("""
-    SELECT DISTINCT track_id FROM (
-        SELECT t.id AS track_id, a.checked_at
-        FROM tracks t
-        LEFT JOIN track_availability a ON t.id = a.track_id
-        WHERE a.checked_at IS NULL OR a.checked_at < NOW() - INTERVAL '60 days'
-
-        UNION
-
-        SELECT lt.track_id, a.checked_at
-        FROM liked_tracks lt
-        LEFT JOIN track_availability a ON lt.track_id = a.track_id
-        WHERE a.checked_at IS NULL OR a.checked_at < NOW() - INTERVAL '60 days'
-    ) sub
-""")
-track_ids = [row[0] for row in cur.fetchall()]
-total = len(track_ids)
-log_event("check_track_availability", f"Found {total} track(s) to check")
-
 now = datetime.utcnow()
+cutoff = now - timedelta(days=60)
 
-for i, track_id in enumerate(track_ids, start=1):
-    log_event("check_track_availability", f"[{i}/{total}] Checking track: {track_id}")
+# ─────────────────────────────────────────────
+# Step 1: Get all known track_ids
+cur.execute("SELECT track_id FROM tracks UNION SELECT track_id FROM liked_tracks")
+known_ids = {row[0] for row in cur.fetchall()}
+log_event("check_track_availability", f"Total unique known track IDs: {len(known_ids)}")
+
+# Step 2: Get current track_availability records
+cur.execute("SELECT track_id, checked_at FROM track_availability")
+availability = dict(cur.fetchall())
+
+# Step 3: Compute new, stale, and removed track IDs
+new_ids = known_ids - availability.keys()
+stale_ids = {tid for tid, dt in availability.items() if dt is None or dt < cutoff}
+removed_ids = availability.keys() - known_ids
+
+log_event("check_track_availability", f"New: {len(new_ids)}, Stale: {len(stale_ids)}, Removed: {len(removed_ids)}")
+
+# Step 4: Delete removed IDs
+if removed_ids:
+    cur.execute("DELETE FROM track_availability WHERE track_id = ANY(%s)", (list(removed_ids),))
+    log_event("check_track_availability", f"Deleted {len(removed_ids)} removed tracks from availability table")
+
+# Step 5: Query Spotify and update records
+to_check = list(new_ids | stale_ids)
+log_event("check_track_availability", f"Checking availability for {len(to_check)} tracks")
+
+for i, track_id in enumerate(to_check, start=1):
+    log_event("check_track_availability", f"[{i}/{len(to_check)}] Checking track: {track_id}")
     try:
         track = safe_spotify_call(sp.track, track_id, market=user_country)
-
         is_playable = track.get('is_playable')
         if is_playable is None:
             available_markets = track.get('available_markets', [])
             is_playable = user_country in available_markets
-            log_event("check_track_availability", f"Fallback check: available in {user_country}? {is_playable}")
-
-        log_event("check_track_availability", f"Track {track_id} → is_playable: {is_playable}")
-
     except Exception as e:
         log_event("check_track_availability", f"Error retrieving track {track_id}: {e}", level="error")
         is_playable = False
@@ -116,10 +116,10 @@ for i, track_id in enumerate(track_ids, start=1):
     except Exception as db_err:
         log_event("check_track_availability", f"Database error for track {track_id}: {db_err}", level="error")
 
-    if i % 50 == 0 or i == total:
+    if i % 50 == 0 or i == len(to_check):
         conn.commit()
         log_event("check_track_availability", f"Committed batch up to track #{i}")
 
 cur.close()
 conn.close()
-log_event("check_track_availability", "Finished checking availability")
+log_event("check_track_availability", "✅ Finished checking availability")
