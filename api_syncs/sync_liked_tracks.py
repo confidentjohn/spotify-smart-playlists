@@ -101,7 +101,8 @@ with open(LOCK_FILE, 'w') as lock_file:
                 continue
             liked_track_ids.add(track_id)
 
-            name = track['name']
+            track_name = track['name']
+            track_artist = track['artists'][0]['name']
             artist = track['artists'][0]['name']
             album = track['album']['name']
             album_id = track['album']['id']
@@ -115,13 +116,15 @@ with open(LOCK_FILE, 'w') as lock_file:
 
             # Insert into liked_tracks table
             cur.execute("""
-                INSERT INTO liked_tracks (track_id, liked_at, added_at, last_checked_at)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO liked_tracks (track_id, liked_at, added_at, last_checked_at, track_name, track_artist)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 ON CONFLICT (track_id) DO UPDATE 
                 SET liked_at = EXCLUDED.liked_at,
                     added_at = EXCLUDED.added_at,
-                    last_checked_at = EXCLUDED.last_checked_at;
-            """, (track_id, liked_added_at, final_added_at, now))
+                    last_checked_at = EXCLUDED.last_checked_at,
+                    track_name = EXCLUDED.track_name,
+                    track_artist = EXCLUDED.track_artist;
+            """, (track_id, liked_added_at, final_added_at, now, track_name, track_artist))
 
             updated_liked_tracks += 1
             counter += 1

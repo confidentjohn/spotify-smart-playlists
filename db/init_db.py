@@ -99,7 +99,9 @@ CREATE TABLE IF NOT EXISTS liked_tracks (
     track_id TEXT PRIMARY KEY,
     liked_at TIMESTAMP,
     added_at TIMESTAMP,
-    last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    track_name TEXT,
+    track_artist TEXT
 );
 """)
 
