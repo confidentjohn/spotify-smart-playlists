@@ -124,7 +124,7 @@ for (album_id,) in albums_to_remove:
     log_event("sync_saved_albums", f"Removing album and orphaned tracks: {album_id}")
     cur.execute("""
         DELETE FROM tracks
-        WHERE album_id = %s AND from_album = TRUE AND is_liked = FALSE
+        WHERE album_id = %s AND from_album = TRUE
     """, (album_id,))
     cur.execute("""
         DELETE FROM albums
