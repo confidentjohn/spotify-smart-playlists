@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS tracks (
     is_liked BOOLEAN DEFAULT FALSE,
     from_album BOOLEAN DEFAULT FALSE,
     track_number INTEGER,
+    disc_number INTEGER,
     added_at TIMESTAMP
 );
 """)

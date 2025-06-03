@@ -63,16 +63,21 @@ for album_id, album_name, album_added_at in saved_albums:
         track_name = track['name']
         track_artist = track['artists'][0]['name']
         track_number = track.get('track_number') or 1
+        disc_number = track.get('disc_number') or 1
 
         cur.execute("""
-            INSERT INTO tracks (id, name, artist, album, album_id, is_liked, from_album, track_number, added_at)
-            VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s, %s)
+            INSERT INTO tracks (id, name, artist, album, album_id, is_liked, from_album, track_number, disc_number, added_at)
+            VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                artist = EXCLUDED.artist,
+                album = EXCLUDED.album,
+                album_id = EXCLUDED.album_id,
                 from_album = TRUE,
                 track_number = EXCLUDED.track_number,
-                album_id = EXCLUDED.album_id,
+                disc_number = EXCLUDED.disc_number,
                 added_at = COALESCE(tracks.added_at, EXCLUDED.added_at)
-        """, (track_id, track_name, track_artist, album_name, album_id, track_number, album_added_at))
+        """, (track_id, track_name, track_artist, album_name, album_id, track_number, disc_number, album_added_at))
 
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
 
