@@ -103,6 +103,15 @@ CREATE TABLE IF NOT EXISTS liked_tracks (
 """)
 
 # ─────────────────────────────────────────────
+# Excluded tracks table
+# ─────────────────────────────────────────────
+cur.execute("""
+CREATE TABLE IF NOT EXISTS excluded_tracks (
+    track_id TEXT PRIMARY KEY
+);
+""")
+
+# ─────────────────────────────────────────────
 # Logging table (MATCHES logger.py)
 # ─────────────────────────────────────────────
 cur.execute("""
