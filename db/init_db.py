@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS albums (
 """)
 
 # ─────────────────────────────────────────────
-# Tracks table (UPDATED)
+# Tracks table (UPDATED — is_liked removed)
 # ─────────────────────────────────────────────
 cur.execute("""
 CREATE TABLE IF NOT EXISTS tracks (
@@ -38,7 +38,6 @@ CREATE TABLE IF NOT EXISTS tracks (
     artist TEXT,
     album TEXT,
     album_id TEXT,
-    is_liked BOOLEAN DEFAULT FALSE,
     from_album BOOLEAN DEFAULT FALSE,
     track_number INTEGER,
     disc_number INTEGER,
@@ -77,7 +76,6 @@ CREATE TABLE IF NOT EXISTS playlist_mappings (
     rules JSONB
 );
 """)
-
 
 # ─────────────────────────────────────────────
 # Track availability table

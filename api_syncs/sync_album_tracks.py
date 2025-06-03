@@ -61,8 +61,6 @@ for album_id, album_name, album_added_at in saved_albums:
         log_event("sync_album_tracks", f"No tracks found for album: {album_name} ({album_id})")
         continue
 
-    log_event("sync_album_tracks", f"Found {len(album_tracks)} tracks for album: {album_name}")
-
     for track in album_tracks:
         track_id = track['id']
         track_name = track['name']
@@ -73,9 +71,9 @@ for album_id, album_name, album_added_at in saved_albums:
         cur.execute("""
             INSERT INTO tracks (
                 id, name, artist, album, album_id,
-                is_liked, from_album, track_number, disc_number, added_at
+                from_album, track_number, disc_number, added_at
             )
-            VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, TRUE, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 artist = EXCLUDED.artist,
@@ -87,42 +85,30 @@ for album_id, album_name, album_added_at in saved_albums:
                 added_at = COALESCE(tracks.added_at, EXCLUDED.added_at)
         """, (track_id, track_name, track_artist, album_name, album_id, track_number, disc_number, album_added_at))
 
-    log_event("sync_album_tracks", f"Inserted {len(album_tracks)} tracks for album: {album_name} ({album_id})")
-
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
     conn.commit()
 
-# 2️⃣ Handle removed albums (mark tracks as not from_album)
+# 2️⃣ Remove albums and their tracks if they are no longer saved
 cur.execute("""
     SELECT id FROM albums
-    WHERE is_saved = FALSE AND (tracks_synced = FALSE OR tracks_synced IS NULL)
+    WHERE is_saved = FALSE
 """)
 removed_albums = cur.fetchall()
 
 for album_id, in removed_albums:
-    log_event("sync_album_tracks", f"Marking tracks from removed album as not from_album: {album_id}")
-    cur.execute("""
-        UPDATE tracks
-        SET from_album = FALSE
-        WHERE album_id = %s
-    """, (album_id,))
-    cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
+    log_event("sync_album_tracks", f"Deleting tracks and album: {album_id}")
+    cur.execute("DELETE FROM tracks WHERE album_id = %s", (album_id,))
+    cur.execute("DELETE FROM albums WHERE id = %s", (album_id,))
+    conn.commit()
 
-# 3️⃣ Remove orphaned tracks (not liked + not from album)
-log_event("sync_album_tracks", "Removing orphaned tracks")
-cur.execute("""
-    DELETE FROM tracks
-    WHERE is_liked = FALSE AND from_album = FALSE
-""")
-
-# 4️⃣ Clean up availability data for deleted tracks
+# 3️⃣ Clean up orphaned track availability data
 log_event("sync_album_tracks", "Cleaning orphaned availability data")
 cur.execute("""
     DELETE FROM track_availability
     WHERE track_id NOT IN (SELECT id FROM tracks)
 """)
-
 conn.commit()
+
 cur.close()
 conn.close()
 log_event("sync_album_tracks", "Album tracks sync complete")
