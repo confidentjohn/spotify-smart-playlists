@@ -56,7 +56,7 @@ print(f"🎯 Using playlist ID: {playlist_id}")
 cur.execute("""
     SELECT 'spotify:track:' || track_id
     FROM unified_tracks
-    WHERE play_count IS NULL
+    WHERE play_count = 0
       AND is_playable IS DISTINCT FROM FALSE
       AND added_at >= DATE '2025-05-30'
     ORDER BY album_id, disc_number NULLS LAST, track_number NULLS LAST
