@@ -57,6 +57,11 @@ saved_albums = cur.fetchall()
 for album_id, album_name, album_added_at in saved_albums:
     log_event("sync_album_tracks", f"Syncing tracks for: {album_name} ({album_id})")
     album_tracks = safe_spotify_call(sp.album, album_id)['tracks']['items']
+    if not album_tracks:
+        log_event("sync_album_tracks", f"No tracks found for album: {album_name} ({album_id})")
+        continue
+
+    log_event("sync_album_tracks", f"Found {len(album_tracks)} tracks for album: {album_name}")
 
     for track in album_tracks:
         track_id = track['id']
@@ -82,7 +87,10 @@ for album_id, album_name, album_added_at in saved_albums:
                 added_at = COALESCE(tracks.added_at, EXCLUDED.added_at)
         """, (track_id, track_name, track_artist, album_name, album_id, track_number, disc_number, album_added_at))
 
+    log_event("sync_album_tracks", f"Inserted {len(album_tracks)} tracks for album: {album_name} ({album_id})")
+
     cur.execute("UPDATE albums SET tracks_synced = TRUE WHERE id = %s", (album_id,))
+    conn.commit()
 
 # 2️⃣ Handle removed albums (mark tracks as not from_album)
 cur.execute("""
