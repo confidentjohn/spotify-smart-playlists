@@ -13,6 +13,7 @@ SELECT
     a.name AS album_name,
     a.release_date,
     t.track_number,
+    COALESCE(t.disc_number, 1) AS disc_number,
     t.added_at,
     lt.liked_at AS liked_at,
     lt.last_checked_at AS last_checked_at,
@@ -32,7 +33,7 @@ LEFT JOIN plays p ON p.track_id = t.id
 WHERE a.is_saved = TRUE
 GROUP BY 
     t.id, t.name, a.artist, lt.track_artist, t.album_id, a.name, a.release_date,
-    t.track_number, t.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable
+    t.track_number, COALESCE(t.disc_number, 1), t.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable
 
 UNION ALL
 
@@ -45,6 +46,7 @@ SELECT
     NULL AS album_name,
     NULL AS release_date,
     NULL AS track_number,
+    1 AS disc_number,
     lt.added_at,
     lt.liked_at,
     lt.last_checked_at,
