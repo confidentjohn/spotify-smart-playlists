@@ -80,8 +80,21 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
 
-  build-unified-tracks:
+  sync-exclusions:
     needs: check-availability
+    uses: ./.github/workflows/sync_exclusions.yml
+    secrets:
+      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+      SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+  build-unified-tracks:
+    needs: sync-exclusions
     uses: ./.github/workflows/build_unified_tracks.yml
     secrets:
       DB_HOST: ${{ secrets.DB_HOST }}

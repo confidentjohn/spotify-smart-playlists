@@ -24,7 +24,10 @@ SELECT
     CASE 
         WHEN lt.liked_at IS NOT NULL THEN TRUE
         ELSE FALSE
-    END AS is_liked
+    END AS is_liked,
+    EXISTS (
+        SELECT 1 FROM excluded_tracks et WHERE et.track_id = t.id
+    ) AS excluded
 FROM tracks t
 JOIN albums a ON t.album_id = a.id
 LEFT JOIN liked_tracks lt ON lt.track_id = t.id
@@ -33,7 +36,7 @@ LEFT JOIN plays p ON p.track_id = t.id
 WHERE a.is_saved = TRUE
 GROUP BY 
     t.id, t.name, a.artist, lt.track_artist, t.album_id, a.name, a.release_date,
-    t.track_number, COALESCE(t.disc_number, 1), t.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable
+    t.track_number, COALESCE(t.disc_number, 1), t.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable, excluded
 
 UNION ALL
 
@@ -54,13 +57,16 @@ SELECT
     COUNT(p.played_at) AS play_count,
     MIN(p.played_at) AS first_played_at,
     MAX(p.played_at) AS last_played_at,
-    TRUE AS is_liked
+    TRUE AS is_liked,
+    EXISTS (
+        SELECT 1 FROM excluded_tracks et WHERE et.track_id = lt.track_id
+    ) AS excluded
 FROM liked_tracks lt
 LEFT JOIN tracks t ON lt.track_id = t.id
 LEFT JOIN track_availability ta ON ta.track_id = lt.track_id
 LEFT JOIN plays p ON p.track_id = lt.track_id
 WHERE t.id IS NULL
-GROUP BY lt.track_id, lt.track_name, lt.track_artist, lt.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable;
+GROUP BY lt.track_id, lt.track_name, lt.track_artist, lt.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable, excluded;
 """
 
 if __name__ == "__main__":

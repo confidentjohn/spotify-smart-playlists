@@ -60,6 +60,7 @@ cur.execute("""
       AND added_at >= NOW() - INTERVAL '30 days'
       AND (is_playable IS DISTINCT FROM FALSE OR is_playable IS NULL)
       AND play_count > 1
+      AND excluded IS DISTINCT FROM TRUE
     ORDER BY added_at DESC
     LIMIT 9000;
 """)

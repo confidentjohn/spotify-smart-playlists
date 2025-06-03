@@ -58,6 +58,7 @@ cur.execute("""
     FROM unified_tracks
     WHERE first_played_at IS NOT NULL
       AND (is_playable IS DISTINCT FROM FALSE OR is_playable IS NULL)
+      AND excluded IS DISTINCT FROM TRUE
     ORDER BY first_played_at ASC
     LIMIT 9000;
 """)
