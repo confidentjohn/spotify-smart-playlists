@@ -58,7 +58,7 @@ cur.execute("""
     FROM unified_tracks ut
     WHERE ut.play_count = 1
       AND (ut.is_playable IS DISTINCT FROM FALSE OR ut.is_playable IS NULL)
-    ORDER BY ut.album_id, ut.track_number NULLS LAST
+    ORDER BY ut.album_id, ut.disc_number NULLS LAST, ut.track_number NULLS LAST
     LIMIT 9000;
 """)
 rows = cur.fetchall()

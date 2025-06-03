@@ -60,7 +60,7 @@ cur.execute("""
       AND is_playable IS DISTINCT FROM FALSE
       AND is_liked = TRUE
       AND added_at >= DATE '2025-05-30'
-    ORDER BY album_id, track_number NULLS LAST
+    ORDER BY album_id, disc_number NULLS LAST, track_number NULLS LAST
     LIMIT 9000;
 """)
 rows = cur.fetchall()

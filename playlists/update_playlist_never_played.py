@@ -60,6 +60,7 @@ cur.execute("""
       AND ut.is_playable IS DISTINCT FROM FALSE
     ORDER BY 
       ut.album_id,
+      ut.disc_number NULLS LAST,
       ut.track_number NULLS LAST
     LIMIT 9000;
 """)
