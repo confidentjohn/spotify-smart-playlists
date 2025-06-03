@@ -66,7 +66,10 @@ for album_id, album_name, album_added_at in saved_albums:
         disc_number = track.get('disc_number') or 1
 
         cur.execute("""
-            INSERT INTO tracks (id, name, artist, album, album_id, is_liked, from_album, track_number, disc_number, added_at)
+            INSERT INTO tracks (
+                id, name, artist, album, album_id,
+                is_liked, from_album, track_number, disc_number, added_at
+            )
             VALUES (%s, %s, %s, %s, %s, FALSE, TRUE, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
