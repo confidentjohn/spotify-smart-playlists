@@ -101,12 +101,6 @@ for album_id, in removed_albums:
     cur.execute("DELETE FROM albums WHERE id = %s", (album_id,))
     conn.commit()
 
-# 3️⃣ Clean up orphaned track availability data
-log_event("sync_album_tracks", "Cleaning orphaned availability data")
-cur.execute("""
-    DELETE FROM track_availability
-    WHERE track_id NOT IN (SELECT id FROM tracks)
-""")
 conn.commit()
 
 cur.close()
