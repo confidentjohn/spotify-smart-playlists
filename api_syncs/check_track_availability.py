@@ -68,43 +68,28 @@ now = datetime.utcnow()
 cutoff = now - timedelta(days=60)
 
 # ─────────────────────────────────────────────
-# Step 1: Get all known track_ids
+# Step 1: Build unified view of track IDs with last check timestamp
 cur.execute("""
-    SELECT id FROM tracks
-    UNION
-    SELECT track_id FROM liked_tracks
+    SELECT track_id, COALESCE(last_checked_at, checked_at, '1970-01-01') AS last_check
+    FROM (
+        SELECT lt.track_id, lt.last_checked_at, ta.checked_at
+        FROM liked_tracks lt
+        LEFT JOIN track_availability ta ON lt.track_id = ta.track_id
+
+        UNION
+
+        SELECT t.id AS track_id, NULL AS last_checked_at, ta.checked_at
+        FROM tracks t
+        LEFT JOIN track_availability ta ON t.id = ta.track_id
+    ) AS combined
 """)
-known_ids = {row[0] for row in cur.fetchall()}
-log_event("check_track_availability", f"Total unique known track IDs: {len(known_ids)}")
 
-# Step 2: Get current track_availability records
-cur.execute("SELECT track_id, checked_at FROM track_availability")
-availability = dict(cur.fetchall())
+rows = cur.fetchall()
+to_check = [track_id for track_id, last_check in rows if last_check is None or last_check < cutoff]
 
-# Step 3: Compute new, stale, and removed track IDs
-new_ids = known_ids - availability.keys()
-stale_ids = {tid for tid, dt in availability.items() if dt is None or dt < cutoff}
+log_event("check_track_availability", f"Eligible tracks to check: {len(to_check)}")
 
-# We recompute known_ids here to include only truly known current items
-cur.execute("""
-    SELECT id FROM tracks
-    UNION
-    SELECT track_id FROM liked_tracks
-""")
-current_known_ids = {row[0] for row in cur.fetchall()}
-removed_ids = availability.keys() - current_known_ids
-
-log_event("check_track_availability", f"New: {len(new_ids)}, Stale: {len(stale_ids)}, Removed: {len(removed_ids)}")
-
-# Step 4: Delete removed IDs
-if removed_ids:
-    cur.execute("DELETE FROM track_availability WHERE track_id = ANY(%s)", (list(removed_ids),))
-    log_event("check_track_availability", f"Deleted {len(removed_ids)} removed tracks from availability table")
-
-# Step 5: Query Spotify and update records
-to_check = list(new_ids | stale_ids)
-log_event("check_track_availability", f"Checking availability for {len(to_check)} tracks")
-
+# Step 2: Query Spotify and update records
 for i, track_id in enumerate(to_check, start=1):
     log_event("check_track_availability", f"[{i}/{len(to_check)}] Checking track: {track_id}")
     try:
