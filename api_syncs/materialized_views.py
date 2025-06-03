@@ -14,14 +14,14 @@ SELECT
     a.release_date,
     t.track_number,
     t.added_at,
-    COALESCE(lt.liked_at, t.date_liked_at) AS liked_at,
-    COALESCE(lt.last_checked_at, t.date_liked_checked) AS last_checked_at,
+    lt.liked_at AS liked_at,
+    lt.last_checked_at AS last_checked_at,
     ta.is_playable,
     COUNT(p.played_at) AS play_count,
     MIN(p.played_at) AS first_played_at,
     MAX(p.played_at) AS last_played_at,
     CASE 
-        WHEN COALESCE(lt.liked_at, t.date_liked_at) IS NOT NULL THEN TRUE
+        WHEN lt.liked_at IS NOT NULL THEN TRUE
         ELSE FALSE
     END AS is_liked
 FROM tracks t
@@ -32,8 +32,7 @@ LEFT JOIN plays p ON p.track_id = t.id
 WHERE a.is_saved = TRUE
 GROUP BY 
     t.id, t.name, a.artist, lt.track_artist, t.album_id, a.name, a.release_date,
-    t.track_number, t.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable,
-    t.date_liked_at, t.date_liked_checked
+    t.track_number, t.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable
 
 UNION ALL
 
