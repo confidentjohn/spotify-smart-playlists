@@ -59,7 +59,10 @@ cur.execute("""
     WHERE play_count = 0
       AND is_playable IS DISTINCT FROM FALSE
       AND added_at >= DATE '2025-05-30'
-    ORDER BY album_id, disc_number NULLS LAST, track_number NULLS LAST
+    ORDER BY
+      added_at,
+      CASE WHEN album_id IS NOT NULL THEN disc_number ELSE NULL END NULLS LAST,
+      CASE WHEN album_id IS NOT NULL THEN track_number ELSE NULL END NULLS LAST
     LIMIT 9000;
 """)
 rows = cur.fetchall()
