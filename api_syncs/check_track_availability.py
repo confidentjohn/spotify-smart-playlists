@@ -70,7 +70,7 @@ cutoff = now - timedelta(days=60)
 # ─────────────────────────────────────────────
 # Step 1: Build unified view of track IDs with last check timestamp
 cur.execute("""
-    SELECT DISTINCT track_id, COALESCE(ta.checked_at, '1970-01-01') AS last_check
+    SELECT DISTINCT combined.track_id, COALESCE(ta.checked_at, '1970-01-01') AS last_check
     FROM (
         SELECT track_id FROM liked_tracks
         UNION
