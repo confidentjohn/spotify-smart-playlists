@@ -112,6 +112,20 @@ for i, track_id in enumerate(to_check, start=1):
         conn.commit()
         log_event("check_track_availability", f"Committed batch up to track #{i}")
 
+
+# ─────────────────────────────────────────────
+# Cleanup: remove orphaned entries from track_availability
+cur.execute("""
+    DELETE FROM track_availability
+    WHERE track_id NOT IN (
+        SELECT track_id FROM liked_tracks
+        UNION
+        SELECT id FROM tracks
+    );
+""")
+conn.commit()
+log_event("check_track_availability", "🧹 Removed orphaned rows from track_availability")
+
 cur.close()
 conn.close()
 log_event("check_track_availability", "✅ Finished checking availability")
