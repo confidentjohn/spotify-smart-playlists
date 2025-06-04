@@ -142,6 +142,13 @@ with open(LOCK_FILE, 'w') as lock_file:
 
     # Removed "Update unliked tracks" and "Remove orphaned unliked tracks" blocks as per instructions
 
+    # Remove unliked tracks no longer in Spotify liked list
+    cur.execute("""
+        DELETE FROM liked_tracks
+        WHERE track_id NOT IN %s
+    """, (tuple(liked_track_ids),))
+    log_event("sync_liked_tracks_full", f"🧹 Removed unliked tracks not found in current sync")
+
     conn.commit()
     log_event("sync_liked_tracks_full", f"✅ {updated_liked_tracks} tracks updated")
     log_event("sync_liked_tracks_full", f"⏭️ {skipped_due_to_freshness} tracks skipped due to recent check")
