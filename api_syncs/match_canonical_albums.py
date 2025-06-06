@@ -1,8 +1,10 @@
 import os
 import psycopg2
 import requests
+import time
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
+from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
 
 
@@ -19,13 +21,31 @@ def get_access_token():
     return response.json()['access_token']
 
 
+
+def normalize_name(name):
+    # Replace various apostrophe types with standard apostrophe
+    return name.strip().lower().replace("’", "'").replace("‘", "'").replace("`", "'").replace("´", "'").replace("ʼ", "'")
+
+def safe_artist_albums(sp: Spotify, artist_id, limit=50, offset=0):
+    while True:
+        try:
+            return sp.artist_albums(artist_id, album_type='album', limit=limit, offset=offset)
+        except SpotifyException as e:
+            if e.http_status == 429:
+                retry_after = int(e.headers.get('Retry-After', 5))
+                log_event("match_canonical_albums", f"Rate limited for {retry_after}s on artist {artist_id}")
+                time.sleep(retry_after)
+            else:
+                log_event("match_canonical_albums", f"Spotify error for {artist_id}: {e}", level="error")
+                raise
+
 def fetch_artist_albums(sp: Spotify, artist_id):
     albums = []
     seen_ids = set()
     offset = 0
 
     while True:
-        results = sp.artist_albums(artist_id, album_type='album', limit=50, offset=offset, market='US')
+        results = safe_artist_albums(sp, artist_id, offset=offset)
         items = results.get('items', [])
 
         for album in items:
@@ -33,7 +53,7 @@ def fetch_artist_albums(sp: Spotify, artist_id):
                 seen_ids.add(album['id'])
                 albums.append({
                     'id': album['id'],
-                    'name': album['name'].strip().lower()
+                    'name': normalize_name(album['name'])
                 })
 
         if len(items) < 50:
@@ -63,9 +83,10 @@ def main():
 
     matched_count = 0
     for album_id, album_name, artist_id in albums:
-        our_album_name = album_name.strip().lower()
+        our_album_name = normalize_name(album_name)
         try:
             artist_albums = fetch_artist_albums(sp, artist_id)
+            log_event("match_canonical_albums", f"Fetched {len(artist_albums)} albums for artist {artist_id}")
         except Exception as e:
             log_event("match_canonical_albums", f"Error fetching albums for {artist_id}: {e}", level="error")
             continue

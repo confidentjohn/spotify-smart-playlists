@@ -1,9 +1,7 @@
-
-
 name: Match Canonical Albums
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
   workflow_call:
     secrets:
       SPOTIFY_CLIENT_ID:
