@@ -82,14 +82,19 @@ def main():
     albums = cur.fetchall()
 
     matched_count = 0
+    artist_album_cache = {}
     for album_id, album_name, artist_id in albums:
         our_album_name = normalize_name(album_name)
-        try:
-            artist_albums = fetch_artist_albums(sp, artist_id)
-            log_event("match_canonical_albums", f"Fetched {len(artist_albums)} albums for artist {artist_id}")
-        except Exception as e:
-            log_event("match_canonical_albums", f"Error fetching albums for {artist_id}: {e}", level="error")
-            continue
+        if artist_id in artist_album_cache:
+            artist_albums = artist_album_cache[artist_id]
+        else:
+            try:
+                artist_albums = fetch_artist_albums(sp, artist_id)
+                artist_album_cache[artist_id] = artist_albums
+                log_event("match_canonical_albums", f"Fetched {len(artist_albums)} albums for artist {artist_id}")
+            except Exception as e:
+                log_event("match_canonical_albums", f"Error fetching albums for {artist_id}: {e}", level="error")
+                continue
 
         match = next((a for a in artist_albums if a['name'] == our_album_name), None)
         if match and match['id'] != album_id:
@@ -104,6 +109,7 @@ def main():
             """, (album_id, artist_id, album_name, match['id'], match['name'], 'matched'))
 
             matched_count += 1
+            conn.commit()
             log_event("match_canonical_albums", f"Matched: {album_name} → {match['id']}")
 
     conn.commit()
