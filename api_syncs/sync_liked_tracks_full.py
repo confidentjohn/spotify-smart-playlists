@@ -104,6 +104,9 @@ with open(LOCK_FILE, 'w') as lock_file:
             album_added_at = album_row[0] if album_row else None
             final_added_at = album_added_at if album_added_at else liked_added_at
 
+            cur.execute("SELECT 1 FROM albums WHERE id = %s", (album_id,))
+            album_in_library = cur.fetchone() is not None
+
             # Removed insertion into tracks table as per instructions
 
             # Insert into liked_tracks table
@@ -118,7 +121,7 @@ with open(LOCK_FILE, 'w') as lock_file:
                     track_artist = EXCLUDED.track_artist,
                     album_id = EXCLUDED.album_id,
                     album_in_library = EXCLUDED.album_in_library;
-            """, (track_id, liked_added_at, final_added_at, now, name, artist, album_id, album_row is not None))
+            """, (track_id, liked_added_at, final_added_at, now, name, artist, album_id, album_in_library))
 
             updated_liked_tracks += 1
             counter += 1
