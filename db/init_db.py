@@ -98,7 +98,9 @@ CREATE TABLE IF NOT EXISTS liked_tracks (
     added_at TIMESTAMP,
     last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     track_name TEXT,
-    track_artist TEXT
+    track_artist TEXT,
+    album_id TEXT,
+    album_in_library BOOLEAN DEFAULT FALSE
 );
 """)
 
