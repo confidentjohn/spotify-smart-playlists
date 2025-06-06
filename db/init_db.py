@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS albums (
     id TEXT PRIMARY KEY,
     name TEXT,
     artist TEXT,
+    artist_id TEXT,
     release_date TEXT,
     total_tracks INTEGER,
     is_saved BOOLEAN DEFAULT TRUE,
@@ -113,6 +114,7 @@ CREATE TABLE IF NOT EXISTS excluded_tracks (
 );
 """)
 
+
 # ─────────────────────────────────────────────
 # Logging table (MATCHES logger.py)
 # ─────────────────────────────────────────────
@@ -124,6 +126,20 @@ CREATE TABLE IF NOT EXISTS logs (
     level TEXT DEFAULT 'info',
     message TEXT NOT NULL,
     extra JSONB
+);
+""")
+
+# ─────────────────────────────────────────────
+# Canonical album matches table
+# ─────────────────────────────────────────────
+cur.execute("""
+CREATE TABLE IF NOT EXISTS canonical_album_matches (
+    album_id TEXT PRIMARY KEY,
+    artist_id TEXT NOT NULL,
+    album_name TEXT NOT NULL,
+    matched_canonical_id TEXT,
+    matched_album_name TEXT,
+    match_status TEXT NOT NULL
 );
 """)
 

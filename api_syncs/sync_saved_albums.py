@@ -84,14 +84,15 @@ while True:
         added_at = item.get('added_at')
 
         cur.execute("""
-            INSERT INTO albums (id, name, artist, release_date, total_tracks, is_saved, added_at, tracks_synced)
-            VALUES (%s, %s, %s, %s, %s, TRUE, %s, FALSE)
+            INSERT INTO albums (id, name, artist, artist_id, release_date, total_tracks, is_saved, added_at, tracks_synced)
+            VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, FALSE)
             ON CONFLICT (id) DO UPDATE
-            SET is_saved = TRUE, added_at = EXCLUDED.added_at;
+            SET is_saved = TRUE, added_at = EXCLUDED.added_at, artist_id = EXCLUDED.artist_id;
         """, (
             album_id,
             album['name'],
             album['artists'][0]['name'],
+            album['artists'][0]['id'],
             album.get('release_date'),
             album.get('total_tracks'),
             added_at
