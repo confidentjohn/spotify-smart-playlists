@@ -111,17 +111,20 @@ with open(LOCK_FILE, 'w') as lock_file:
 
             # Insert into liked_tracks table
             cur.execute("""
-                INSERT INTO liked_tracks (track_id, liked_at, added_at, last_checked_at, track_name, track_artist, album_id, album_in_library)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (track_id) DO UPDATE 
-                SET liked_at = EXCLUDED.liked_at,
-                    added_at = EXCLUDED.added_at,
-                    last_checked_at = EXCLUDED.last_checked_at,
-                    track_name = EXCLUDED.track_name,
-                    track_artist = EXCLUDED.track_artist,
-                    album_id = EXCLUDED.album_id,
-                    album_in_library = EXCLUDED.album_in_library;
-            """, (track_id, liked_added_at, final_added_at, now, name, artist, album_id, album_in_library))
+            INSERT INTO liked_tracks (
+                track_id, liked_at, added_at, last_checked_at,
+                track_name, track_artist, album_in_library, album_id
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (track_id) DO UPDATE 
+            SET liked_at = EXCLUDED.liked_at,
+                added_at = EXCLUDED.added_at,
+                last_checked_at = EXCLUDED.last_checked_at,
+                track_name = EXCLUDED.track_name,
+                track_artist = EXCLUDED.track_artist,
+                album_in_library = EXCLUDED.album_in_library,
+                album_id = EXCLUDED.album_id;
+            """, (track_id, liked_added_at, final_added_at, now, name, artist, album_in_library, album_id))
 
             updated_liked_tracks += 1
             counter += 1
