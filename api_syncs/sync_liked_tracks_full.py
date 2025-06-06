@@ -104,8 +104,8 @@ with open(LOCK_FILE, 'w') as lock_file:
             album_added_at = album_row[0] if album_row else None
             final_added_at = album_added_at if album_added_at else liked_added_at
 
-            cur.execute("SELECT 1 FROM albums WHERE id = %s", (album_id,))
-            album_in_library = cur.fetchone() is not None
+            cur.execute("SELECT EXISTS (SELECT 1 FROM albums WHERE id = %s)", (album_id,))
+            album_in_library = cur.fetchone()[0]  # Returns a clean boolean
 
             # Removed insertion into tracks table as per instructions
 
