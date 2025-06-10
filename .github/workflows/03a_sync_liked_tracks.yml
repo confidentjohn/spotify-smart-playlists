@@ -1,4 +1,4 @@
-name: Sync Liked Tracks
+name: 03a - Sync Liked Tracks
 
 on:
   workflow_dispatch:       # Allows manual trigger from GitHub UI
