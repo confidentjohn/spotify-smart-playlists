@@ -1,4 +1,4 @@
-name: Match Canonical Albums
+name: 4 - Match Canonical Albums
 
 on:
   workflow_dispatch: {}

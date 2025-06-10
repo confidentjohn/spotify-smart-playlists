@@ -1,4 +1,4 @@
-name: Track Spotify Plays
+name: 2 - Track Spotify Plays
 
 on:
   schedule:

@@ -1,4 +1,4 @@
-name: Sync Liked Tracks full
+name: 1.3.b - Sync Liked Tracks full
 
 on:
   workflow_dispatch:       # Allows manual trigger from GitHub UI

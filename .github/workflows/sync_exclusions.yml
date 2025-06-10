@@ -1,6 +1,6 @@
 
 
-name: Sync Exclusions Playlist
+name: 1.5 - Sync Exclusions Playlist
 
 on:
   workflow_dispatch:

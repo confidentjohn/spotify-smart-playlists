@@ -1,4 +1,4 @@
-name: Full Library Sync
+name: 1 - Full Library Sync
 
 on:
   schedule:
