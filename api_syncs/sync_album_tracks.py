@@ -2,6 +2,7 @@ import os
 import psycopg2
 import requests
 import time
+import requests.exceptions
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
@@ -20,7 +21,7 @@ def get_access_token():
 
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0
-    while True:
+    while retries < 5:
         try:
             return func(*args, **kwargs)
         except SpotifyException as e:
@@ -32,6 +33,11 @@ def safe_spotify_call(func, *args, **kwargs):
             else:
                 log_event("sync_album_tracks", f"Spotify error: {e}", level="error")
                 raise
+        except requests.exceptions.ConnectionError as e:
+            retries += 1
+            log_event("sync_album_tracks", f"Connection error: {e}. Retry #{retries} in 5s", level="warning")
+            time.sleep(5)
+    raise Exception("safe_spotify_call failed after 5 retries")
 
 access_token = get_access_token()
 sp = Spotify(auth=access_token)
