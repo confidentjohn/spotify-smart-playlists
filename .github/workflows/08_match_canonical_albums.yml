@@ -1,12 +1,14 @@
-name: 1.4 - Check Track Availability
+name: Match Canonical Albums
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
   workflow_call:
     secrets:
       SPOTIFY_CLIENT_ID:
         required: true
       SPOTIFY_CLIENT_SECRET:
+        required: true
+      SPOTIFY_REDIRECT_URI:
         required: true
       SPOTIFY_REFRESH_TOKEN:
         required: true
@@ -22,10 +24,10 @@ on:
         required: true
 
 jobs:
-  check-availability:
+  match-canonical-albums:
     runs-on: ubuntu-latest
     steps:
-      - name: ⬇️ Checkout code
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
 
       - name: 🐍 Set up Python
@@ -36,11 +38,12 @@ jobs:
       - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
-      - name: 🚀 Run check_track_availability.py
-        run: PYTHONPATH=. python -u api_syncs/check_track_availability.py
+      - name: 🔍 Run match_canonical_albums.py
+        run: PYTHONPATH=. python api_syncs/match_canonical_albums.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
           SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}

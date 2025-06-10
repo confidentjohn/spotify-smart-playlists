@@ -1,8 +1,8 @@
-name: 1.1 - Sync Spotify Albums
+name: Sync Liked Tracks full
 
 on:
-  workflow_dispatch:
-  workflow_call:
+  workflow_dispatch:       # Allows manual trigger from GitHub UI
+  workflow_call:           # Allows reuse from another workflow
     secrets:
       SPOTIFY_CLIENT_ID:
         required: true
@@ -24,7 +24,7 @@ on:
         required: true
 
 jobs:
-  sync-albums:
+  sync-liked:
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repo
@@ -38,8 +38,8 @@ jobs:
       - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
-      - name: 🚀 Run sync_saved_albums.py
-        run: PYTHONPATH=. python api_syncs/sync_saved_albums.py
+      - name: 🚀 Run sync_liked_tracks.py
+        run: PYTHONPATH=. python api_syncs/sync_liked_tracks_full.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}

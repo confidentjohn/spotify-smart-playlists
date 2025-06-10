@@ -1,20 +1,16 @@
-name: 4 - Match Canonical Albums
+
+
+name: Sync Exclusions Playlist
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
   workflow_call:
     secrets:
       SPOTIFY_CLIENT_ID:
         required: true
       SPOTIFY_CLIENT_SECRET:
         required: true
-      SPOTIFY_REDIRECT_URI:
-        required: true
       SPOTIFY_REFRESH_TOKEN:
-        required: true
-      DB_HOST:
-        required: true
-      DB_PORT:
         required: true
       DB_NAME:
         required: true
@@ -22,9 +18,13 @@ on:
         required: true
       DB_PASSWORD:
         required: true
+      DB_HOST:
+        required: true
+      DB_PORT:
+        required: true
 
 jobs:
-  match-canonical-albums:
+  sync-exclusions:
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repo
@@ -38,15 +38,29 @@ jobs:
       - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
-      - name: 🔍 Run match_canonical_albums.py
-        run: PYTHONPATH=. python api_syncs/match_canonical_albums.py
+      - name: 📝 Log sync start
+        run: echo "🔄 Starting sync_exclusions.py run..."
+
+      - name: 🚫 Sync exclusions playlist
+        run: |
+          PYTHONPATH=. python api_syncs/sync_exclusions.py
+          echo "✅ sync_exclusions.py run completed."
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
           SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+
+      - name: 📊 Log number of excluded tracks
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          PGPASSWORD="${{ secrets.DB_PASSWORD }}" psql -h ${{ secrets.DB_HOST }} -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -c "SELECT COUNT(*) FROM excluded_tracks;"
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_NAME: ${{ secrets.DB_NAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}

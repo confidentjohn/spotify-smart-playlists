@@ -1,4 +1,4 @@
-name: 3 - Update All Spotify Playlists
+name: Update All Spotify Playlists
 
 on:
   schedule:

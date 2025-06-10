@@ -1,4 +1,4 @@
-name: 1.3.b - Sync Liked Tracks full
+name: Sync Liked Tracks
 
 on:
   workflow_dispatch:       # Allows manual trigger from GitHub UI
@@ -39,7 +39,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: 🚀 Run sync_liked_tracks.py
-        run: PYTHONPATH=. python api_syncs/sync_liked_tracks_full.py
+        run: PYTHONPATH=. python api_syncs/sync_liked_tracks.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
