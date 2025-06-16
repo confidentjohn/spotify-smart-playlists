@@ -68,6 +68,24 @@ track_uris = [row[0] for row in rows]
 
 if not track_uris:
     print("⚠️ No tracks to update.")
+    print("🧹 Clearing playlist to remove previous contents...")
+    try:
+        sp.user_playlist_replace_tracks(user["id"], playlist_id, [])
+        cur.execute("""
+            UPDATE playlist_mappings
+            SET last_synced_at = NOW(),
+                track_count = 0
+            WHERE name = %s;
+        """, ("Played Once",))
+        conn.commit()
+        print("📝 Updated playlist_mappings with track count = 0 and timestamp.")
+    except SpotifyException as e:
+        print(f"❌ Spotify API error while clearing: {e.http_status} - {e.msg}")
+        exit(1)
+
+    cur.close()
+    conn.close()
+    print("✅ Playlist cleared successfully.")
     exit()
 
 print(f"🎧 {len(track_uris)} tracks to push to Spotify playlist.")

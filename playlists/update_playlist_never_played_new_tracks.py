@@ -70,7 +70,19 @@ rows = cur.fetchall()
 track_uris = [row[0] for row in rows]
 
 if not track_uris:
-    print("⚠️ No tracks to update.")
+    print("⚠️ No tracks to update. Clearing playlist...")
+    sp.user_playlist_replace_tracks(user["id"], playlist_id, [])
+
+    cur.execute("""
+        UPDATE playlist_mappings
+        SET track_count = 0,
+            last_synced_at = NOW()
+        WHERE name = %s;
+    """, ("Never Played New",))
+    conn.commit()
+    print("📝 Playlist cleared and playlist_mappings updated.")
+    cur.close()
+    conn.close()
     exit()
 
 print(f"🎧 {len(track_uris)} tracks to push to Spotify playlist.")
