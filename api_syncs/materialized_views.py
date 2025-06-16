@@ -4,7 +4,7 @@ from utils.logger import log_event
 
 UNIFIED_TRACKS_VIEW = """
 CREATE MATERIALIZED VIEW IF NOT EXISTS unified_tracks AS
--- Tracks from albums (with enriched metadata)
+-- Step 1: Tracks from albums (with enriched metadata and merged liked info)
 SELECT 
     t.id AS track_id,
     t.name AS track_name,
@@ -40,7 +40,7 @@ GROUP BY
 
 UNION ALL
 
--- Liked tracks not in album-based `tracks` table
+-- Step 2: Liked tracks not in album-based `tracks` table
 SELECT 
     lt.track_id,
     lt.track_name,
