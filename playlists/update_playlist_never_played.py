@@ -58,6 +58,7 @@ cur.execute("""
     FROM unified_tracks ut
     WHERE ut.play_count = 0
       AND ut.is_playable IS DISTINCT FROM FALSE
+      AND added_at >= DATE '2025-06-16'
       AND ut.excluded IS DISTINCT FROM TRUE
     ORDER BY 
       ut.album_id,
