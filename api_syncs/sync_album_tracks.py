@@ -103,6 +103,18 @@ removed_albums = cur.fetchall()
 
 for album_id, in removed_albums:
     log_event("sync_album_tracks", f"Deleting tracks and album: {album_id}")
+
+    cur.execute("SELECT COUNT(*) FROM liked_tracks WHERE track_id IN (SELECT id FROM tracks WHERE album_id = %s)", (album_id,))
+    deleted_liked_count = cur.fetchone()[0]
+    log_event("sync_album_tracks", f"Deleting {deleted_liked_count} liked tracks associated with album: {album_id}")
+
+    cur.execute("""
+        DELETE FROM liked_tracks
+        WHERE track_id IN (
+            SELECT id FROM tracks WHERE album_id = %s
+        )
+    """, (album_id,))
+
     cur.execute("DELETE FROM tracks WHERE album_id = %s", (album_id,))
     cur.execute("DELETE FROM albums WHERE id = %s", (album_id,))
     conn.commit()
