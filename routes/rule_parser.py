@@ -17,7 +17,10 @@ FIELD_MAP = {
 
 def build_track_query(rules_json):
     try:
-        rules = json.loads(rules_json)
+        if isinstance(rules_json, dict):
+            rules = rules_json
+        else:
+            rules = json.loads(rules_json)
         log_event("rule_parser", f"🔍 Raw input to parse: {rules_json}")
         log_event("rule_parser", f"📥 Loaded rules: {rules}")
     except json.JSONDecodeError:
