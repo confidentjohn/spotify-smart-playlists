@@ -13,10 +13,6 @@ CONDITION_MAP = {
     "is_liked": lambda v: f"is_liked = {str(v).upper()}",
     "artist": lambda v: f"LOWER(artist) LIKE LOWER('%{v}%')",
     "is_playable": lambda v: f"is_playable = {str(v).upper()}",
-    "library_source": lambda v: (
-        f"library_source IN ({', '.join([repr(item) for item in v])})"
-        if isinstance(v, list) else f"library_source = '{v}'"
-    ),
 }
 
 def build_track_query(rules_json):
@@ -51,8 +47,8 @@ def build_track_query(rules_json):
         except Exception as e:
             log_event("rule_parser", f"❌ Error parsing rule '{field}': {e}", level="error")
 
-    # Always include available tracks
-    base_conditions.append("is_available = TRUE")
+    # Always include playable tracks
+    base_conditions.append("is_playable = TRUE")
 
     match_type = rules.get("match", "all")
     connector = " AND " if match_type == "all" else " OR "
