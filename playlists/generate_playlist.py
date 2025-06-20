@@ -60,7 +60,7 @@ def sync_playlist(slug):
             return
 
         try:
-            query_result = build_track_query(rules, select_clause="SELECT 'spotify:track:' || track_id")
+            query_result = build_track_query(rules)
             if isinstance(query_result, tuple):
                 query, params = query_result
             else:

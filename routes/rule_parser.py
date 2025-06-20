@@ -73,7 +73,7 @@ def build_track_query(rules_json):
             sort_clause = f"ORDER BY {mapped_sort_by} {direction}"
 
     limit = rules.get("limit", 100)
-    query = f"SELECT track_id FROM unified_tracks WHERE {where_clause} {sort_clause} LIMIT {int(limit)}"
+    query = f"SELECT 'spotify:track:' || track_id FROM unified_tracks WHERE {where_clause} {sort_clause} LIMIT {int(limit)}"
 
     log_event("rule_parser", f"🛠 Built SQL: {query}")
     return query
