@@ -35,7 +35,7 @@ def create_playlist():
     if request.method == "POST":
         name = request.form.get("name")
         limit = request.form.get("limit")
-        rules = request.form.get("rules", "{}")
+        rules = request.form.get("rules_json", "{}")
         try:
             result = create_and_store_playlist(name, rules_json=rules, limit=int(limit) if limit else None)
             return redirect(url_for("playlist_dashboard.dashboard_playlists"))
