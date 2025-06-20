@@ -22,23 +22,27 @@
   <br><br>
   <label>
     Sort By:
-    <select name="sort_by" id="sort_by">
-      <option value="album" selected>Album</option>
-      <option value="artist">Artist</option>
-      <option value="track">Track</option>
-      <option value="date_added">Date Added</option>
-      <option value="plays">Number of Plays</option>
-      <option value="last_played">Last Played</option>
-      <option value="first_played">First Played</option>
-    </select>
-  </label>
-
-  <label>
-    Direction:
-    <select name="sort_direction" id="sort_direction">
-      <option value="asc" selected>Ascending</option>
-      <option value="desc">Descending</option>
-    </select>
+    <div id="sort-container">
+      <div class="sort-row">
+        <select name="sort_by[]">
+          <option value="album_id" selected>Album ID</option>
+          <option value="artist">Artist</option>
+          <option value="track">Track</option>
+          <option value="added_at">Date Added</option>
+          <option value="play_count">Number of Plays</option>
+          <option value="last_played_at">Last Played</option>
+          <option value="first_played_at">First Played</option>
+          <option value="disc_number">Disc Number</option>
+          <option value="track_number">Track Number</option>
+        </select>
+        <select name="sort_direction[]">
+          <option value="asc" selected>Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+        <button type="button" onclick="removeSort(this)">−</button>
+      </div>
+    </div>
+    <button type="button" onclick="addSort()">➕ Add Sort Rule</button>
   </label>
 
   <hr>
@@ -95,14 +99,28 @@
         button.parentElement.remove();
       }
     }
+
+    function addSort() {
+      const container = document.getElementById('sort-container');
+      const sortRow = container.querySelector('.sort-row').cloneNode(true);
+      container.appendChild(sortRow);
+    }
+
+    function removeSort(button) {
+      const container = document.getElementById('sort-container');
+      if (container.children.length > 1) {
+        button.parentElement.remove();
+      }
+    }
+
     function serializeRules() {
       const rules = {
         match: document.getElementById("match").value,
         limit: document.querySelector('[name="limit"]').value === 'no_limit' ? 9000 : parseInt(document.querySelector('[name="limit"]').value),
-        sort: {
-          by: document.getElementById("sort_by").value,
-          direction: document.getElementById("sort_direction").value
-        },
+        sort: Array.from(document.querySelectorAll('#sort-container .sort-row')).map(row => ({
+          by: row.querySelector('[name="sort_by[]"]').value,
+          direction: row.querySelector('[name="sort_direction[]"]').value
+        })),
         conditions: []
       };
 
