@@ -103,10 +103,7 @@
           by: document.getElementById("sort_by").value,
           direction: document.getElementById("sort_direction").value
         },
-        conditions: [
-          { field: "is_playable", operator: "is_not", value: "FALSE" },
-          { field: "library_source", operator: "in", value: ["liked", "saved_album"] }
-        ]
+        conditions: []
       };
 
       const rows = document.querySelectorAll(".rule-row");
