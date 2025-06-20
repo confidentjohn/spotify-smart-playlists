@@ -8,7 +8,14 @@ CONDITION_MAP = {
     "max_plays": lambda v: f"play_count <= {int(v)}",
     "added_after": lambda v: f"added_at >= '{v}'",
     "added_before": lambda v: f"added_at <= '{v}'",
-    "plays": lambda v: f"play_count = {int(v)}",
+    "plays": {
+        "is": lambda v: f"play_count = {int(v)}",
+        "gt": lambda v: f"play_count > {int(v)}",
+        "lt": lambda v: f"play_count < {int(v)}",
+        "gte": lambda v: f"play_count >= {int(v)}",
+        "lte": lambda v: f"play_count <= {int(v)}",
+        "is_not": lambda v: f"play_count != {int(v)}"
+    },
     "is_liked": lambda v: f"is_liked = {str(v).upper()}",
     "artist": lambda v: f"LOWER(artist) LIKE LOWER('%{v}%')",
     "is_playable": lambda v: f"is_playable = {str(v).upper()}",
