@@ -12,6 +12,13 @@ CONDITION_MAP = {
     "is_liked": lambda v: f"is_liked = {str(v).upper()}",
     "artist": lambda v: f"LOWER(artist) LIKE LOWER('%{v}%')",
     "is_playable": lambda v: f"is_playable = {str(v).upper()}",
+    "date_added": {
+        "gt": lambda v: f"added_at > '{v}'",
+        "lt": lambda v: f"added_at < '{v}'",
+        "gte": lambda v: f"added_at >= '{v}'",
+        "lte": lambda v: f"added_at <= '{v}'",
+        "eq": lambda v: f"added_at = '{v}'"
+    },
 }
 
 def build_track_query(rules_json):
@@ -40,7 +47,13 @@ def build_track_query(rules_json):
             continue
 
         try:
-            condition_sql = CONDITION_MAP[field](value)
+            map_entry = CONDITION_MAP[field]
+            if isinstance(map_entry, dict):
+                if operator not in map_entry:
+                    raise ValueError(f"Unsupported operator '{operator}' for field '{field}'")
+                condition_sql = map_entry[operator](value)
+            else:
+                condition_sql = map_entry(value)
             base_conditions.append(condition_sql)
             log_event("rule_parser", f"✅ Parsed rule '{field}' -> {condition_sql}")
         except Exception as e:
