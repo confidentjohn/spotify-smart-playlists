@@ -72,7 +72,11 @@ def sync_playlist(slug):
             try:
                 rows = cur.fetchall()
                 log_event("generate_playlist", f"📊 Fetched rows: {len(rows)} | Sample: {rows[:5]}")
-                track_ids = [row[0] for row in rows]
+                try:
+                    track_ids = [row[0] for row in rows if isinstance(row, (list, tuple)) and len(row) > 0]
+                except Exception as e:
+                    log_event("generate_playlist", f"❌ Error extracting track IDs: {e}", level="error")
+                    return
             except Exception as fetch_err:
                 log_event("generate_playlist", f"❌ Failed to fetch rows or unpack results: {fetch_err}", level="error")
                 return
