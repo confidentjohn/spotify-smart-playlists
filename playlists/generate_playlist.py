@@ -48,15 +48,23 @@ def sync_playlist(slug):
             return
 
         playlist_id = playlist_url.split("/")[-1]
-        rules = json.loads(rules_json or "{}")
+        try:
+            rules = json.loads(rules_json or "{}")
+        except json.JSONDecodeError:
+            log_event("generate_playlist", f"❌ Invalid JSON in rules for '{slug}'", level="error")
+            return
         log_event("generate_playlist", f"📋 Loaded rules for '{slug}': {rules}")
 
         query, params = build_track_query(rules)
         cur.execute(query, params)
         track_ids = [row[0] for row in cur.fetchall()]
+        if not track_ids:
+            log_event("generate_playlist", f"⚠️ No tracks found for '{slug}' — skipping playlist update.")
+            return
         log_event("generate_playlist", f"🎧 Retrieved {len(track_ids)} tracks for '{slug}'")
 
         sp = get_spotify_client()
+        # TODO: Support syncing more than 100 tracks by batching
         log_event("generate_playlist", f"📤 Sending {min(len(track_ids), 100)} tracks to Spotify for '{slug}'")
         sp.playlist_replace_items(playlist_id, track_ids[:100])  # truncate to 100 tracks max
 

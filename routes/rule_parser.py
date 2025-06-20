@@ -10,7 +10,7 @@ FIELD_MAP = {
     "added_before": lambda v: f"added_at <= '{v}'",
     "not_played": lambda v: "play_count = 0",
     "played_times": lambda v: f"play_count = {int(v)}",
-    "is_liked": lambda v: "id IN (SELECT track_id FROM liked_tracks)",
+    "is_liked": lambda v: f"is_liked = {str(v).upper()}",
     "artist": lambda v: f"LOWER(artist_name) = LOWER('{v}')",
     "not_in": lambda v: "id NOT IN (SELECT track_id FROM exclusions)" if v == "exclusions" else ""
 }
