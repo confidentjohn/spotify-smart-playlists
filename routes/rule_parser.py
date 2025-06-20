@@ -20,6 +20,10 @@ CONDITION_MAP = {
         "lte": lambda v: f"added_at <= '{v}'",
         "eq": lambda v: f"added_at = '{v}'"
     },
+    "album": lambda v: f"LOWER(album_name) LIKE LOWER('%{v}%')",
+    "track": lambda v: f"LOWER(track_name) LIKE LOWER('%{v}%')",
+    "last_played": lambda v: f"last_played_at >= '{v}'",
+    "first_played": lambda v: f"first_played_at >= '{v}'",
 }
 
 def build_track_query(rules_json):
