@@ -18,6 +18,7 @@ FIELD_MAP = {
 def build_track_query(rules_json):
     try:
         rules = json.loads(rules_json)
+        log_event("rule_parser", f"🔍 Raw input to parse: {rules_json}")
         log_event("rule_parser", f"📥 Loaded rules: {rules}")
     except json.JSONDecodeError:
         raise ValueError("Invalid JSON for rules")
@@ -28,8 +29,11 @@ def build_track_query(rules_json):
         parser = FIELD_MAP.get(key)
         if parser:
             try:
-                conditions.append(parser(value))
+                condition = parser(value)
+                log_event("rule_parser", f"✅ Parsed rule '{key}': {condition}")
+                conditions.append(condition)
             except Exception:
+                log_event("rule_parser", f"❌ Failed to parse rule '{key}' with value '{value}'", level="error")
                 raise ValueError(f"Error parsing rule: {key}")
 
     conditions.append("is_available = TRUE")

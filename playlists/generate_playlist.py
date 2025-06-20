@@ -50,14 +50,21 @@ def sync_playlist(slug):
         playlist_id = playlist_url.split("/")[-1]
         try:
             rules = json.loads(rules_json or "{}")
+            log_event("generate_playlist", f"📋 Loaded rules for '{slug}': {rules} (type: {type(rules)})")
         except json.JSONDecodeError:
             log_event("generate_playlist", f"❌ Invalid JSON in rules for '{slug}'", level="error")
             return
-        log_event("generate_playlist", f"📋 Loaded rules for '{slug}': {rules}")
 
-        query, params = build_track_query(json.dumps(rules))
-        cur.execute(query, params)
-        track_ids = [row[0] for row in cur.fetchall()]
+        try:
+            query, params = build_track_query(rules)
+            log_event("generate_playlist", f"🛠 SQL Query: {query} | Params: {params}")
+            cur.execute(query, params)
+            track_ids = [row[0] for row in cur.fetchall()]
+            log_event("generate_playlist", f"📦 Track IDs fetched: {track_ids}")
+        except Exception as query_error:
+            log_event("generate_playlist", f"❌ Error building/executing track query: {query_error}", level="error")
+            return
+
         if not track_ids:
             log_event("generate_playlist", f"⚠️ No tracks found for '{slug}' — skipping playlist update.")
             return
