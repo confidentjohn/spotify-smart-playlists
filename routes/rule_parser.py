@@ -47,8 +47,9 @@ def build_track_query(rules_json):
         except Exception as e:
             log_event("rule_parser", f"❌ Error parsing rule '{field}': {e}", level="error")
 
-    # Always include playable tracks
-    base_conditions.append("is_playable = TRUE")
+    # Always include playable tracks unless user specifies otherwise
+    if not any(c.get("field") == "is_playable" for c in rules.get("conditions", [])):
+        base_conditions.append("is_playable = TRUE")
 
     match_type = rules.get("match", "all")
     connector = " AND " if match_type == "all" else " OR "
