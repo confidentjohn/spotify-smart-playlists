@@ -60,7 +60,7 @@ def sync_playlist(slug):
             return
 
         try:
-            query_result = build_track_query(rules)
+            query_result = build_track_query(rules, select_clause="SELECT 'spotify:track:' || track_id")
             if isinstance(query_result, tuple):
                 query, params = query_result
             else:
@@ -72,13 +72,12 @@ def sync_playlist(slug):
             try:
                 rows = cur.fetchall()
                 log_event("generate_playlist", f"📊 Fetched rows: {len(rows)} | Sample: {rows[:5]}")
-                try:
-                    track_ids = [row[0] for row in rows if isinstance(row, (list, tuple)) and len(row) > 0]
-                except Exception as e:
-                    log_event("generate_playlist", f"❌ Error extracting track IDs: {e}", level="error")
+                if not rows or not all(isinstance(row, (list, tuple)) and len(row) > 0 for row in rows):
+                    log_event("generate_playlist", f"❌ Fetched rows are empty or malformed: {rows}", level="error")
                     return
-            except Exception as fetch_err:
-                log_event("generate_playlist", f"❌ Failed to fetch rows or unpack results: {fetch_err}", level="error")
+                track_ids = [row[0] for row in rows if row and row[0]]
+            except Exception as e:
+                log_event("generate_playlist", f"❌ Error extracting track IDs: {e}", level="error")
                 return
             log_event("generate_playlist", f"📦 Track IDs fetched: {track_ids}")
         except Exception as query_error:
@@ -91,9 +90,10 @@ def sync_playlist(slug):
         log_event("generate_playlist", f"🎧 Retrieved {len(track_ids)} tracks for '{slug}'")
 
         sp = get_spotify_client()
-        # TODO: Support syncing more than 100 tracks by batching
-        log_event("generate_playlist", f"📤 Sending {min(len(track_ids), 100)} tracks to Spotify for '{slug}'")
-        sp.playlist_replace_items(playlist_id, track_ids[:100])  # truncate to 100 tracks max
+        user = sp.current_user()
+        sp.user_playlist_replace_tracks(user["id"], playlist_id, [])
+        for i in range(0, len(track_ids), 100):
+            sp.playlist_add_items(playlist_id, track_ids[i:i + 100])
 
         cur.execute("UPDATE playlist_mappings SET track_count = %s, last_synced_at = %s WHERE slug = %s", (len(track_ids), datetime.utcnow(), slug))
         conn.commit()
