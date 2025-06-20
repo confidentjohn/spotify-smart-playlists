@@ -59,8 +59,16 @@ def build_track_query(rules_json):
     if "sort" in rules:
         sort_by = rules["sort"].get("by", "play_count")
         direction = rules["sort"].get("direction", "desc").upper()
-        if sort_by and direction in ("ASC", "DESC"):
-            sort_clause = f"ORDER BY {sort_by} {direction}"
+        # Remap friendly sort keys to actual database fields
+        sort_field_map = {
+            "album": "album_name",
+            "artist": "artist",
+            "added": "added_at",
+            "plays": "play_count"
+        }
+        mapped_sort_by = sort_field_map.get(sort_by, sort_by)
+        if mapped_sort_by and direction in ("ASC", "DESC"):
+            sort_clause = f"ORDER BY {mapped_sort_by} {direction}"
 
     limit = rules.get("limit", 100)
     query = f"SELECT track_id FROM unified_tracks WHERE {where_clause} {sort_clause} LIMIT {int(limit)}"
