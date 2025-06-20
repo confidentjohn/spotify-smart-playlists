@@ -55,7 +55,7 @@ def sync_playlist(slug):
             return
         log_event("generate_playlist", f"📋 Loaded rules for '{slug}': {rules}")
 
-        query, params = build_track_query(rules)
+        query, params = build_track_query(json.dumps(rules))
         cur.execute(query, params)
         track_ids = [row[0] for row in cur.fetchall()]
         if not track_ids:
