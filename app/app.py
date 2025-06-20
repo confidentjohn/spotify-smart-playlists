@@ -6,8 +6,11 @@ import subprocess
 import psycopg2
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from utils.playlist_setup import ensure_exclusions_playlist
 
 app = Flask(__name__)
+sp = Spotify(auth=get_access_token())
+ensure_exclusions_playlist(sp)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
 # ─────────────────────────────────────────────────────
