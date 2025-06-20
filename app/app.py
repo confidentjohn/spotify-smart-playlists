@@ -8,6 +8,7 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from utils.playlist_setup import ensure_exclusions_playlist
 import requests
+from playlist_builder import playlist_dashboard
 
 # ─────────────────────────────────────────────────────
 # Retrieve a fresh Spotify access token using the refresh token
@@ -25,6 +26,7 @@ def get_access_token():
     return token_response.json()["access_token"]
 
 app = Flask(__name__)
+app.register_blueprint(playlist_dashboard)
 sp = Spotify(auth=get_access_token())
 ensure_exclusions_playlist(sp)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
