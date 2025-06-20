@@ -5,6 +5,7 @@ import os
 import subprocess
 import psycopg2
 import spotipy
+from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from utils.playlist_setup import ensure_exclusions_playlist
 import requests
