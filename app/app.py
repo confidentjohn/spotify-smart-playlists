@@ -32,22 +32,7 @@ ensure_exclusions_playlist(sp)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
 # ─────────────────────────────────────────────────────
-def check_auth(request):
-    expected = os.environ.get("ADMIN_KEY")
-    if not expected:
-        return False
-
-    # Check session
-    if session.get("is_admin"):
-        return True
-
-    # Allow initial access via ?key=
-    secret = request.args.get("key")
-    if secret == expected:
-        session["is_admin"] = True
-        return True
-
-    return False
+from utils.auth import check_auth
 
 def run_script(script_name):
     print(f"🔧 Running {script_name}", flush=True)

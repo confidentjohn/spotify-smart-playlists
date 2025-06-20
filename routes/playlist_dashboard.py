@@ -4,7 +4,7 @@ import psycopg2
 from flask import Blueprint, render_template, request, redirect, url_for
 from utils.playlist_builder import create_and_store_playlist
 from markupsafe import escape
-from app import check_auth
+from utils.auth import check_auth
 
 playlist_dashboard = Blueprint("playlist_dashboard", __name__)
 
