@@ -23,8 +23,10 @@ def build_track_query(rules_json):
     try:
         if isinstance(rules_json, dict):
             rules = rules_json
-        else:
+        elif isinstance(rules_json, str):
             rules = json.loads(rules_json)
+        else:
+            rules = json.loads(json.dumps(rules_json))
         log_event("rule_parser", f"🔍 Raw input to parse: {rules_json}")
         log_event("rule_parser", f"📥 Loaded rules: {rules}")
     except json.JSONDecodeError:

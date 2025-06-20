@@ -49,10 +49,14 @@ def sync_playlist(slug):
 
         playlist_id = playlist_url.split("/")[-1]
         try:
-            rules = json.loads(rules_json or "{}")
-            log_event("generate_playlist", f"📋 Loaded rules for '{slug}': {rules} (type: {type(rules)})")
-        except json.JSONDecodeError:
-            log_event("generate_playlist", f"❌ Invalid JSON in rules for '{slug}'", level="error")
+            log_event("generate_playlist", f"📥 Raw rules_json for '{slug}': {rules_json} (type: {type(rules_json)})")
+            if isinstance(rules_json, dict):
+                rules = rules_json
+            else:
+                rules = json.loads(rules_json or "{}")
+            log_event("generate_playlist", f"📋 Successfully loaded rules for '{slug}': {rules} (type: {type(rules)})")
+        except Exception as e:
+            log_event("generate_playlist", f"❌ Failed to parse rules for '{slug}': {e} — rules_json was: {rules_json}", level="error")
             return
 
         try:
@@ -62,7 +66,7 @@ def sync_playlist(slug):
             track_ids = [row[0] for row in cur.fetchall()]
             log_event("generate_playlist", f"📦 Track IDs fetched: {track_ids}")
         except Exception as query_error:
-            log_event("generate_playlist", f"❌ Error building/executing track query: {query_error}", level="error")
+            log_event("generate_playlist", f"❌ Error building/executing track query for '{slug}': {query_error} — rules: {rules}", level="error")
             return
 
         if not track_ids:
