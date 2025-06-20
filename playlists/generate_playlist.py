@@ -60,7 +60,12 @@ def sync_playlist(slug):
             return
 
         try:
-            query, params = build_track_query(rules)
+            query_result = build_track_query(rules)
+            if isinstance(query_result, tuple):
+                query, params = query_result
+            else:
+                query = query_result
+                params = []
             log_event("generate_playlist", f"🔍 Running query: {query} with params: {params}")
             log_event("generate_playlist", f"🛠 SQL Query: {query} | Params: {params}")
             cur.execute(query, params)
