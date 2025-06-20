@@ -4,11 +4,14 @@ import psycopg2
 from flask import Blueprint, render_template, request, redirect, url_for
 from utils.playlist_builder import create_and_store_playlist
 from markupsafe import escape
+from app import check_auth
 
 playlist_dashboard = Blueprint("playlist_dashboard", __name__)
 
 @playlist_dashboard.route("/dashboard/playlists")
 def dashboard_playlists():
+    if not check_auth(request):
+        return "❌ Unauthorized", 403
     try:
         conn = psycopg2.connect(
             dbname=os.environ["DB_NAME"],
