@@ -21,6 +21,7 @@ def get_spotify_client():
     return Spotify(auth=token_response.json()["access_token"])
 
 def sync_playlist(slug):
+    log_event("generate_playlist", f"🔁 Starting sync for playlist slug: '{slug}'")
     try:
         conn = psycopg2.connect(
             dbname=os.environ["DB_NAME"],
@@ -48,12 +49,15 @@ def sync_playlist(slug):
 
         playlist_id = playlist_url.split("/")[-1]
         rules = json.loads(rules_json or "{}")
+        log_event("generate_playlist", f"📋 Loaded rules for '{slug}': {rules}")
 
         query, params = build_track_query(rules)
         cur.execute(query, params)
         track_ids = [row[0] for row in cur.fetchall()]
+        log_event("generate_playlist", f"🎧 Retrieved {len(track_ids)} tracks for '{slug}'")
 
         sp = get_spotify_client()
+        log_event("generate_playlist", f"📤 Sending {min(len(track_ids), 100)} tracks to Spotify for '{slug}'")
         sp.playlist_replace_items(playlist_id, track_ids[:100])  # truncate to 100 tracks max
 
         cur.execute("UPDATE playlist_mappings SET track_count = %s, last_synced_at = %s WHERE slug = %s", (len(track_ids), datetime.utcnow(), slug))

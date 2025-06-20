@@ -5,6 +5,8 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from utils.playlist_builder import create_and_store_playlist
 from markupsafe import escape
 from utils.auth import check_auth
+from utils.logger import log_event
+from playlists.generate_playlist import sync_playlist
 
 playlist_dashboard = Blueprint("playlist_dashboard", __name__)
 
@@ -38,8 +40,17 @@ def create_playlist():
         rules = request.form.get("rules_json", "{}")
         try:
             result = create_and_store_playlist(name, rules_json=rules, limit=int(limit) if limit else None)
+            log_event("playlist_dashboard", f"✅ Created playlist: {result['name']}")
+
+            try:
+                sync_playlist(result["slug"])
+                log_event("playlist_dashboard", f"✅ Synced playlist: {result['slug']}")
+            except Exception as sync_error:
+                log_event("playlist_dashboard", f"❌ Failed to sync playlist {result['slug']}: {sync_error}", level="error")
+
             return redirect(url_for("playlist_dashboard.dashboard_playlists"))
         except Exception as e:
+            log_event("playlist_dashboard", f"❌ Error creating playlist: {e}", level="error")
             return f"<pre>❌ Error creating playlist: {e}</pre>"
 
     return render_template("create_playlist.html")
