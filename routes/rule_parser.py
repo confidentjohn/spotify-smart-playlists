@@ -65,7 +65,8 @@ def build_track_query(rules_json):
             "album": "album_name",
             "artist": "artist",
             "added": "added_at",
-            "plays": "play_count"
+            "plays": "play_count",
+            "last_played": "last_played_at"
         }
         mapped_sort_by = sort_field_map.get(sort_by, sort_by)
         if mapped_sort_by and direction in ("ASC", "DESC"):
