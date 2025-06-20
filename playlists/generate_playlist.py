@@ -61,9 +61,16 @@ def sync_playlist(slug):
 
         try:
             query, params = build_track_query(rules)
+            log_event("generate_playlist", f"🔍 Running query: {query} with params: {params}")
             log_event("generate_playlist", f"🛠 SQL Query: {query} | Params: {params}")
             cur.execute(query, params)
-            track_ids = [row[0] for row in cur.fetchall()]
+            try:
+                rows = cur.fetchall()
+                log_event("generate_playlist", f"📊 Fetched rows: {len(rows)} | Sample: {rows[:5]}")
+                track_ids = [row[0] for row in rows]
+            except Exception as fetch_err:
+                log_event("generate_playlist", f"❌ Failed to fetch rows or unpack results: {fetch_err}", level="error")
+                return
             log_event("generate_playlist", f"📦 Track IDs fetched: {track_ids}")
         except Exception as query_error:
             log_event("generate_playlist", f"❌ Error building/executing track query for '{slug}': {query_error} — rules: {rules}", level="error")
