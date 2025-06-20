@@ -7,6 +7,22 @@ import psycopg2
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from utils.playlist_setup import ensure_exclusions_playlist
+import requests
+
+# ─────────────────────────────────────────────────────
+# Retrieve a fresh Spotify access token using the refresh token
+def get_access_token():
+    token_response = requests.post(
+        "https://accounts.spotify.com/api/token",
+        data={
+            "grant_type": "refresh_token",
+            "refresh_token": os.environ["SPOTIFY_REFRESH_TOKEN"],
+            "client_id": os.environ["SPOTIFY_CLIENT_ID"],
+            "client_secret": os.environ["SPOTIFY_CLIENT_SECRET"],
+        }
+    )
+    token_response.raise_for_status()
+    return token_response.json()["access_token"]
 
 app = Flask(__name__)
 sp = Spotify(auth=get_access_token())

@@ -45,4 +45,6 @@ def ensure_exclusions_playlist(sp):
 
         log_event("init", f"🎯 Created exclusions playlist and added to DB: {playlist_url}")
     except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
         log_event("init", f"❌ Error ensuring exclusions playlist: {e}", level="error")
