@@ -47,60 +47,63 @@
 
   <hr>
   <h3>Filter Rules</h3>
-  <label>
-    Match 
-    <select name="match" id="match" required>
-      <option value="all">all</option>
-      <option value="any">any</option>
-    </select>
-    of the following rules:
-  </label>
 
   <div id="rules-container">
-    <div class="rule-row">
-      <select name="field[]">
-        <option value="artist">Artist</option>
-        <option value="album">Album</option>
-        <option value="track">Track</option>
-        <option value="is_liked">Is Liked</option>
-        <option value="added_after">Date Added After</option>
-        <option value="added_before">Date Added Before</option>
-        <option value="added_in_last_days">Date Added In Last X Days</option>
-        <option value="min_plays">Min Plays</option>
-        <option value="max_plays">Max Plays</option>
-        <option value="plays">Plays</option>
-        <option value="last_played">Last Played</option>
-        <option value="first_played">First Played</option>
-      </select>
+    <div class="rule-group" data-match="all">
+      <label>
+        Match
+        <select class="match-selector">
+          <option value="all">all</option>
+          <option value="any">any</option>
+        </select>
+      </label>
+      <div class="rule-conditions">
+        <div class="rule-row">
+          <select name="field[]">
+            <option value="artist">Artist</option>
+            <option value="album">Album</option>
+            <option value="track">Track</option>
+            <option value="is_liked">Is Liked</option>
+            <option value="added_after">Date Added After</option>
+            <option value="added_before">Date Added Before</option>
+            <option value="added_in_last_days">Date Added In Last X Days</option>
+            <option value="min_plays">Min Plays</option>
+            <option value="max_plays">Max Plays</option>
+            <option value="plays">Plays</option>
+            <option value="last_played">Last Played</option>
+            <option value="first_played">First Played</option>
+          </select>
 
-      <select name="operator[]">
-        <option value="eq">is</option>
-        <option value="is_not">is not</option>
-        <option value="contains">contains</option>
-        <option value="not_contains">does not contain</option>
-        <option value="gt">greater than</option>
-        <option value="lt">less than</option>
-        <option value="gte">greater than or equal to</option>
-        <option value="lte">less than or equal to</option>
-      </select>
+          <select name="operator[]">
+            <option value="eq">is</option>
+            <option value="is_not">is not</option>
+            <option value="contains">contains</option>
+            <option value="not_contains">does not contain</option>
+            <option value="gt">greater than</option>
+            <option value="lt">less than</option>
+            <option value="gte">greater than or equal to</option>
+            <option value="lte">less than or equal to</option>
+          </select>
 
-      <input type="text" name="value[]">
-      <button type="button" onclick="removeRule(this)">−</button>
+          <input type="text" name="value[]">
+          <button type="button" onclick="removeRule(this)">−</button>
+        </div>
+      </div>
+      <button type="button" onclick="addRule(this)">➕ Add Rule</button>
+      <button type="button" onclick="addGroup(this)">➕ Add Nested Group</button>
     </div>
   </div>
 
-  <button type="button" onclick="addRule()">➕ Add Rule</button>
-
   <script>
-    function addRule() {
-      const container = document.getElementById('rules-container');
+    function addRule(button) {
+      const container = button.parentElement.querySelector('.rule-conditions');
       const rule = container.querySelector('.rule-row').cloneNode(true);
       rule.querySelectorAll('input').forEach(input => input.value = '');
       container.appendChild(rule);
     }
 
     function removeRule(button) {
-      const container = document.getElementById('rules-container');
+      const container = button.parentElement.parentElement;
       if (container.children.length > 1) {
         button.parentElement.remove();
       }
@@ -119,31 +122,55 @@
       }
     }
 
-    function serializeRules() {
-      const rules = {
-        match: document.getElementById("match").value,
-        limit: document.querySelector('[name="limit"]').value === 'no_limit' ? 9000 : parseInt(document.querySelector('[name="limit"]').value),
-        sort: Array.from(document.querySelectorAll('#sort-container .sort-row')).map(row => ({
-          by: row.querySelector('[name="sort_by[]"]').value,
-          direction: row.querySelector('[name="sort_direction[]"]').value
-        })),
-        conditions: []
+    function addGroup(button) {
+      const newGroup = document.querySelector("#rules-container .rule-group").cloneNode(true);
+      newGroup.querySelectorAll('input').forEach(input => input.value = '');
+      // Reset selects in the new group
+      newGroup.querySelectorAll('select').forEach(select => {
+        if (select.classList.contains('match-selector')) {
+          select.value = 'all';
+        } else {
+          select.selectedIndex = 0;
+        }
+      });
+      button.parentElement.appendChild(newGroup);
+    }
+
+    function serializeGroup(groupElement) {
+      const group = {
+        match: groupElement.querySelector(".match-selector").value,
+        conditions: [],
       };
 
-      const rows = document.querySelectorAll(".rule-row");
+      const rows = groupElement.querySelectorAll(".rule-conditions > .rule-row");
       rows.forEach(row => {
         const field = row.querySelector('[name="field[]"]').value;
         const operator = row.querySelector('[name="operator[]"]').value;
         const value = row.querySelector('[name="value[]"]').value;
         if (field && operator && value) {
-          // For the new "added_in_last_days" field, allow the rule to pass through as long as value is present
-          if (field === 'added_in_last_days') {
-            rules.conditions.push({ field, operator, value });
-          } else {
-            rules.conditions.push({ field, operator, value });
-          }
+          group.conditions.push({ field, operator, value });
         }
       });
+
+      const subgroups = Array.from(groupElement.children).filter(child => child.classList.contains('rule-group'));
+      subgroups.forEach(subgroup => {
+        group.conditions.push(serializeGroup(subgroup));
+      });
+
+      return group;
+    }
+
+    function serializeRules() {
+      const topGroup = document.querySelector("#rules-container .rule-group");
+      const rules = {
+        match: "all",
+        limit: document.querySelector('[name="limit"]').value === 'no_limit' ? 9000 : parseInt(document.querySelector('[name="limit"]').value),
+        sort: Array.from(document.querySelectorAll('#sort-container .sort-row')).map(row => ({
+          by: row.querySelector('[name="sort_by[]"]').value,
+          direction: row.querySelector('[name="sort_direction[]"]').value
+        })),
+        conditions: serializeGroup(topGroup).conditions
+      };
 
       document.getElementById("rules_json").value = JSON.stringify(rules);
       return true;

@@ -46,39 +46,47 @@ def build_track_query(rules_json):
     except json.JSONDecodeError:
         raise ValueError("Invalid JSON for rules")
 
-    base_conditions = []
+    def parse_condition_group(group):
+        connector = " AND " if group.get("match", "all") == "all" else " OR "
+        condition_strings = []
 
-    # Build conditions from rules["conditions"]
-    for condition in rules.get("conditions", []):
-        field = condition.get("field")
-        value = condition.get("value")
-        operator = condition.get("operator")
+        for condition in group.get("conditions", []):
+            if "conditions" in condition:
+                # Nested group
+                sub_clause = parse_condition_group(condition)
+                condition_strings.append(f"({sub_clause})")
+                continue
 
-        if not field or field not in CONDITION_MAP:
-            log_event("rule_parser", f"⚠️ Unsupported or missing field in rule: {condition}", level="error")
-            continue
+            field = condition.get("field")
+            value = condition.get("value")
+            operator = condition.get("operator")
 
-        try:
-            map_entry = CONDITION_MAP[field]
-            if isinstance(map_entry, dict):
-                if operator not in map_entry:
-                    raise ValueError(f"Unsupported operator '{operator}' for field '{field}'")
-                condition_sql = map_entry[operator](value)
-            else:
-                condition_sql = map_entry(value)
-            base_conditions.append(condition_sql)
-            log_event("rule_parser", f"✅ Parsed rule '{field}' -> {condition_sql}")
-        except Exception as e:
-            log_event("rule_parser", f"❌ Error parsing rule '{field}': {e}", level="error")
+            if not field or field not in CONDITION_MAP:
+                log_event("rule_parser", f"⚠️ Unsupported or missing field in rule: {condition}", level="error")
+                continue
 
-    # Always include playable tracks unless user specifies otherwise
-    if not any(c.get("field") == "is_playable" for c in rules.get("conditions", [])):
-        base_conditions.append("is_playable = TRUE")
-    base_conditions.append("excluded = FALSE")
+            try:
+                map_entry = CONDITION_MAP[field]
+                if isinstance(map_entry, dict):
+                    if operator not in map_entry:
+                        raise ValueError(f"Unsupported operator '{operator}' for field '{field}'")
+                    condition_sql = map_entry[operator](value)
+                else:
+                    condition_sql = map_entry(value)
+                condition_strings.append(condition_sql)
+                log_event("rule_parser", f"✅ Parsed rule '{field}' -> {condition_sql}")
+            except Exception as e:
+                log_event("rule_parser", f"❌ Error parsing rule '{field}': {e}", level="error")
 
-    match_type = rules.get("match", "all")
-    connector = " AND " if match_type == "all" else " OR "
-    where_clause = connector.join(base_conditions) if base_conditions else "1=1"
+        return connector.join(condition_strings)
+
+    # Start parsing from top-level group
+    where_clause = parse_condition_group(rules)
+
+    # Always include these
+    if "is_playable" not in [c.get("field") for c in rules.get("conditions", [])]:
+        where_clause += " AND is_playable = TRUE"
+    where_clause += " AND excluded = FALSE"
 
     # Sort clause
     sort_clause = "ORDER BY play_count DESC"
