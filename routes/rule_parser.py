@@ -49,6 +49,7 @@ def build_track_query(rules_json):
     # Always include playable tracks unless user specifies otherwise
     if not any(c.get("field") == "is_playable" for c in rules.get("conditions", [])):
         base_conditions.append("is_playable = TRUE")
+    base_conditions.append("excluded = FALSE")
 
     match_type = rules.get("match", "all")
     connector = " AND " if match_type == "all" else " OR "
