@@ -12,6 +12,7 @@ CONDITION_MAP = {
     "is_liked": lambda v: f"is_liked = {str(v).upper()}",
     "artist": lambda v: f"LOWER(artist) LIKE LOWER('%{v}%')",
     "is_playable": lambda v: f"is_playable = {str(v).upper()}",
+    "added_in_last_days": lambda v: f"added_at >= NOW() - INTERVAL '{int(v)} days'",
     "date_added": {
         "gt": lambda v: f"added_at > '{v}'",
         "lt": lambda v: f"added_at < '{v}'",
