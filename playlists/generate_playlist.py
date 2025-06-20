@@ -5,7 +5,7 @@ from datetime import datetime
 from spotipy import Spotify
 import requests
 from utils.logger import log_event
-from rule_parser import build_track_query
+from routes.rule_parser import build_track_query
 
 def get_spotify_client():
     token_response = requests.post(
