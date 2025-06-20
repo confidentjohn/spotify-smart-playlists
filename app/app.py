@@ -8,7 +8,7 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from utils.playlist_setup import ensure_exclusions_playlist
 import requests
-from playlist_builder import playlist_dashboard
+from utils.playlist_builder import playlist_dashboard
 
 # ─────────────────────────────────────────────────────
 # Retrieve a fresh Spotify access token using the refresh token
