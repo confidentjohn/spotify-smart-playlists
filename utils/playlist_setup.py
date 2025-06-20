@@ -19,8 +19,6 @@ def ensure_exclusions_playlist(sp):
 
         if result:
             log_event("init", "✅ Exclusions playlist already exists in DB.")
-            cur.close()
-            conn.close()
             return
 
         user = sp.current_user()
@@ -40,11 +38,14 @@ def ensure_exclusions_playlist(sp):
             datetime.utcnow()
         ))
         conn.commit()
-        cur.close()
-        conn.close()
 
         log_event("init", f"🎯 Created exclusions playlist and added to DB: {playlist_url}")
     except Exception as e:
         if 'conn' in locals():
             conn.rollback()
         log_event("init", f"❌ Error ensuring exclusions playlist: {e}", level="error")
+    finally:
+        if 'cur' in locals():
+            cur.close()
+        if 'conn' in locals():
+            conn.close()
