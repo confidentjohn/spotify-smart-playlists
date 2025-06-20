@@ -60,45 +60,37 @@ def sync_playlist(slug):
             return
 
         try:
-            query_result = build_track_query(rules)
-            if isinstance(query_result, tuple):
-                query, params = query_result
-            else:
-                query = query_result
-                params = []
-            log_event("generate_playlist", f"🔍 Running query: {query} with params: {params}")
-            log_event("generate_playlist", f"🛠 SQL Query: {query} | Params: {params}")
-            cur.execute(query, params)
-            try:
-                rows = cur.fetchall()
-                log_event("generate_playlist", f"📊 Fetched rows: {len(rows)} | Sample: {rows[:5]}")
-                if not rows or not all(isinstance(row, (list, tuple)) and len(row) > 0 for row in rows):
-                    log_event("generate_playlist", f"❌ Fetched rows are empty or malformed: {rows}", level="error")
-                    return
-                track_ids = [row[0] for row in rows if row and row[0]]
-            except Exception as e:
-                log_event("generate_playlist", f"❌ Error extracting track IDs: {e}", level="error")
+            query = build_track_query(rules)
+            log_event("generate_playlist", f"🔍 Running query: {query}")
+            log_event("generate_playlist", f"🛠 SQL Query: {query} | Params: []")
+            cur.execute(query)
+            rows = cur.fetchall()
+            log_event("generate_playlist", f"📊 Fetched rows: {len(rows)} | Sample: {rows[:5]}")
+            if not rows or not all(isinstance(row, (list, tuple)) and len(row) > 0 for row in rows):
+                log_event("generate_playlist", f"❌ Fetched rows are empty or malformed: {rows}", level="error")
                 return
-            log_event("generate_playlist", f"📦 Track IDs fetched: {track_ids}")
+            track_uris = [row[0] for row in rows if row and row[0]]
+            log_event("generate_playlist", f"📦 Track URIs fetched: {track_uris}")
         except Exception as query_error:
             log_event("generate_playlist", f"❌ Error building/executing track query for '{slug}': {query_error} — rules: {rules}", level="error")
             return
 
-        if not track_ids:
+        if not track_uris:
             log_event("generate_playlist", f"⚠️ No tracks found for '{slug}' — skipping playlist update.")
             return
-        log_event("generate_playlist", f"🎧 Retrieved {len(track_ids)} tracks for '{slug}'")
+
+        log_event("generate_playlist", f"🎧 Retrieved {len(track_uris)} tracks for '{slug}'")
 
         sp = get_spotify_client()
         user = sp.current_user()
         sp.user_playlist_replace_tracks(user["id"], playlist_id, [])
-        for i in range(0, len(track_ids), 100):
-            sp.playlist_add_items(playlist_id, track_ids[i:i + 100])
+        for i in range(0, len(track_uris), 100):
+            sp.playlist_add_items(playlist_id, track_uris[i:i + 100])
 
-        cur.execute("UPDATE playlist_mappings SET track_count = %s, last_synced_at = %s WHERE slug = %s", (len(track_ids), datetime.utcnow(), slug))
+        cur.execute("UPDATE playlist_mappings SET track_count = %s, last_synced_at = %s WHERE slug = %s", (len(track_uris), datetime.utcnow(), slug))
         conn.commit()
 
-        log_event("generate_playlist", f"✅ Synced {len(track_ids)} tracks to playlist '{name}'")
+        log_event("generate_playlist", f"✅ Synced {len(track_uris)} tracks to playlist '{name}'")
 
     except Exception as e:
         log_event("generate_playlist", f"❌ Failed to sync playlist '{slug}': {e}", level="error")
