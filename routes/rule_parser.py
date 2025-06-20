@@ -8,8 +8,7 @@ CONDITION_MAP = {
     "max_plays": lambda v: f"play_count <= {int(v)}",
     "added_after": lambda v: f"added_at >= '{v}'",
     "added_before": lambda v: f"added_at <= '{v}'",
-    "not_played": lambda v: "play_count = 0",
-    "played_times": lambda v: f"play_count = {int(v)}",
+    "plays": lambda v: f"play_count = {int(v)}",
     "is_liked": lambda v: f"is_liked = {str(v).upper()}",
     "artist": lambda v: f"LOWER(artist) LIKE LOWER('%{v}%')",
     "is_playable": lambda v: f"is_playable = {str(v).upper()}",
@@ -57,20 +56,26 @@ def build_track_query(rules_json):
 
     # Sort clause
     sort_clause = "ORDER BY play_count DESC"
-    if "sort" in rules:
-        sort_by = rules["sort"].get("by", "play_count")
-        direction = rules["sort"].get("direction", "desc").upper()
-        # Remap friendly sort keys to actual database fields
+    if isinstance(rules.get("sort"), list):
+        sort_fields = []
         sort_field_map = {
             "album": "album_name",
             "artist": "artist",
             "added": "added_at",
             "plays": "play_count",
-            "last_played": "last_played_at"
+            "last_played": "last_played_at",
+            "album_id": "album_id",
+            "disc_number": "disc_number",
+            "track_number": "track_number"
         }
-        mapped_sort_by = sort_field_map.get(sort_by, sort_by)
-        if mapped_sort_by and direction in ("ASC", "DESC"):
-            sort_clause = f"ORDER BY {mapped_sort_by} {direction}"
+        for sort_rule in rules["sort"]:
+            sort_by = sort_rule.get("by", "play_count")
+            direction = sort_rule.get("direction", "desc").upper()
+            mapped_sort_by = sort_field_map.get(sort_by, sort_by)
+            if direction in ("ASC", "DESC"):
+                sort_fields.append(f"{mapped_sort_by} {direction}")
+        if sort_fields:
+            sort_clause = "ORDER BY " + ", ".join(sort_fields)
 
     limit = rules.get("limit", 100)
     query = f"SELECT 'spotify:track:' || track_id FROM unified_tracks WHERE {where_clause} {sort_clause} LIMIT {int(limit)}"
