@@ -11,7 +11,7 @@ CONDITION_MAP = {
     "not_played": lambda v: "play_count = 0",
     "played_times": lambda v: f"play_count = {int(v)}",
     "is_liked": lambda v: f"is_liked = {str(v).upper()}",
-    "artist": lambda v: f"LOWER(artist_name) LIKE LOWER('%{v}%')",
+    "artist": lambda v: f"LOWER(artist) LIKE LOWER('%{v}%')",
     "is_playable": lambda v: f"is_playable = {str(v).upper()}",
     "library_source": lambda v: (
         f"library_source IN ({', '.join([repr(item) for item in v])})"
@@ -67,7 +67,7 @@ def build_track_query(rules_json):
             sort_clause = f"ORDER BY {sort_by} {direction}"
 
     limit = rules.get("limit", 100)
-    query = f"SELECT id FROM unified_tracks WHERE {where_clause} {sort_clause} LIMIT {int(limit)}"
+    query = f"SELECT track_id FROM unified_tracks WHERE {where_clause} {sort_clause} LIMIT {int(limit)}"
 
     log_event("rule_parser", f"🛠 Built SQL: {query}")
     return query
