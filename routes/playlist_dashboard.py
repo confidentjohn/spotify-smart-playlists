@@ -33,7 +33,7 @@ def dashboard_playlists():
             port=os.environ.get("DB_PORT", 5432)
         )
         cur = conn.cursor()
-        cur.execute("SELECT slug, name, status, track_count, last_synced_at FROM playlist_mappings")
+        cur.execute("SELECT slug, name, status, track_count, last_synced_at, playlist_id, rules FROM playlist_mappings")
         playlists = cur.fetchall()
         playlists = [
             {
@@ -42,6 +42,8 @@ def dashboard_playlists():
                 "status": row[2],
                 "track_count": row[3],
                 "last_synced_at": row[4],
+                "playlist_id": row[5],
+                "rules": row[6],
                 "edit_url": url_for("playlist_dashboard.edit_playlist", slug=row[0])
             }
             for row in playlists
