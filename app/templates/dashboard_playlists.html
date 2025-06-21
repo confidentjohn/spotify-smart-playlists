@@ -24,7 +24,7 @@
           <td>{{ playlist.track_count }}</td>
           <td>{{ playlist.last_synced_at.strftime('%Y-%m-%d %H:%M') if playlist.last_synced_at else 'Never' }}</td>
           <td>{{ playlist.status }}</td>
-          <td><pre>{{ playlist.rules | default({}) | tojson(indent=2) }}</pre></td>
+          <td><pre>{{ playlist.rules | tojson(indent=2) if playlist.rules else '' }}</pre></td>
           <td>
             <a href="/dashboard/playlists/{{ playlist.slug }}/delete" onclick="return confirm('Are you sure you want to delete this playlist?');">🗑️ Delete</a> |
             <a href="/dashboard/playlists/{{ playlist.slug }}/sync">Sync Now</a>
