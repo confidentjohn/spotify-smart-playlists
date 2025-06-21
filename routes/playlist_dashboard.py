@@ -98,6 +98,7 @@ def edit_playlist(slug):
         conditions = []
         i = 0
         group_index = 0
+
         while i < len(fields):
             if i < len(is_group_flags) and is_group_flags[i] == "true":
                 if group_index < len(group_matches):
@@ -105,14 +106,16 @@ def edit_playlist(slug):
                     group_index += 1
                 else:
                     group_match = "any"
+
                 group_conditions = []
-                while i < len(fields) and i < len(is_group_flags) and is_group_flags[i] == "true":
+                while i < len(fields) and is_group_flags[i] == "true":
                     group_conditions.append({
                         "field": fields[i],
                         "operator": operators[i],
                         "value": values[i]
                     })
                     i += 1
+
                 conditions.append({
                     "match": group_match,
                     "conditions": group_conditions
