@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 from spotipy import Spotify
 from utils.logger import log_event
+from utils.spotify_auth import get_spotify_client
 
 def create_and_store_playlist(name, rules_json="{}", limit=None):
     """
@@ -18,21 +19,7 @@ def create_and_store_playlist(name, rules_json="{}", limit=None):
         dict: Playlist metadata including name, id, and URL.
     """
     try:
-        # Get access token
-        token_response = requests.post(
-            "https://accounts.spotify.com/api/token",
-            data={
-                "grant_type": "refresh_token",
-                "refresh_token": os.environ["SPOTIFY_REFRESH_TOKEN"],
-                "client_id": os.environ["SPOTIFY_CLIENT_ID"],
-                "client_secret": os.environ["SPOTIFY_CLIENT_SECRET"],
-            }
-        )
-        token_response.raise_for_status()
-        access_token = token_response.json()["access_token"]
-
-        # Create Spotify playlist
-        sp = Spotify(auth=access_token)
+        sp = get_spotify_client()
         user = sp.current_user()
         playlist = sp.user_playlist_create(user['id'], name)
         playlist_url = playlist["external_urls"]["spotify"]

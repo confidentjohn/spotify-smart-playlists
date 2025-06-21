@@ -3,8 +3,10 @@ import os
 import psycopg2
 from datetime import datetime
 from utils.logger import log_event
+from utils.spotify_auth import get_spotify_client
 
-def ensure_exclusions_playlist(sp):
+def ensure_exclusions_playlist():
+    sp = get_spotify_client()
     try:
         conn = psycopg2.connect(
             dbname=os.environ["DB_NAME"],

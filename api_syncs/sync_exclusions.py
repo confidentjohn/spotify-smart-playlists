@@ -2,29 +2,14 @@
 
 import os
 import psycopg2
-import requests
-from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
+from utils.spotify_auth import get_spotify_client
 
 # ─────────────────────────────────────────────
-# Get access token
+# Get Spotify client
 # ─────────────────────────────────────────────
-def get_access_token():
-    auth_response = requests.post(
-        "https://accounts.spotify.com/api/token",
-        data={
-            "grant_type": "refresh_token",
-            "refresh_token": os.environ["SPOTIFY_REFRESH_TOKEN"],
-            "client_id": os.environ["SPOTIFY_CLIENT_ID"],
-            "client_secret": os.environ["SPOTIFY_CLIENT_SECRET"],
-        }
-    )
-    auth_response.raise_for_status()
-    return auth_response.json()["access_token"]
-
-access_token = get_access_token()
-sp = Spotify(auth=access_token)
+sp = get_spotify_client()
 
 # ─────────────────────────────────────────────
 # Connect to DB

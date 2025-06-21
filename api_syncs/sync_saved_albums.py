@@ -13,21 +13,7 @@ import datetime
 # ─────────────────────────────────────────────
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.logger import log_event
-
-# ─────────────────────────────────────────────
-# Get Access Token
-# ─────────────────────────────────────────────
-def get_access_token():
-    auth_response = requests.post(
-        'https://accounts.spotify.com/api/token',
-        data={
-            'grant_type': 'refresh_token',
-            'refresh_token': os.environ['SPOTIFY_REFRESH_TOKEN'],
-            'client_id': os.environ['SPOTIFY_CLIENT_ID'],
-            'client_secret': os.environ['SPOTIFY_CLIENT_SECRET']
-        }
-    )
-    return auth_response.json()['access_token']
+from utils.spotify_auth import get_spotify_client
 
 # ─────────────────────────────────────────────
 # Safe Spotify API Wrapper
@@ -50,8 +36,7 @@ def safe_spotify_call(func, *args, **kwargs):
 # ─────────────────────────────────────────────
 # Setup Spotify + DB connections
 # ─────────────────────────────────────────────
-access_token = get_access_token()
-sp = Spotify(auth=access_token)
+sp = get_spotify_client()
 
 conn = psycopg2.connect(
     dbname=os.environ['DB_NAME'],

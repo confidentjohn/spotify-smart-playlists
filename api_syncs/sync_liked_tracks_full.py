@@ -8,20 +8,9 @@ from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
 from dateutil import parser
+from utils.spotify_auth import get_spotify_client
 
 LOCK_FILE = "/tmp/sync_library.lock"
-
-def get_access_token():
-    auth_response = requests.post(
-        'https://accounts.spotify.com/api/token',
-        data={
-            'grant_type': 'refresh_token',
-            'refresh_token': os.environ['SPOTIFY_REFRESH_TOKEN'],
-            'client_id': os.environ['SPOTIFY_CLIENT_ID'],
-            'client_secret': os.environ['SPOTIFY_CLIENT_SECRET']
-        }
-    )
-    return auth_response.json()['access_token']
 
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0
@@ -46,8 +35,7 @@ with open(LOCK_FILE, 'w') as lock_file:
         log_event("sync_liked_tracks_full", "Another sync is already running", level="warning")
         exit(1)
 
-    access_token = get_access_token()
-    sp = Spotify(auth=access_token)
+    sp = get_spotify_client()
 
     conn = psycopg2.connect(
         dbname=os.environ['DB_NAME'],
