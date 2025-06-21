@@ -12,23 +12,23 @@
 
     <p><label>Match Type:<br>
       <select name="match">
-        <option value="all" {% if rules_json.get("match") == "all" %}selected{% endif %}>All</option>
-        <option value="any" {% if rules_json.get("match") == "any" %}selected{% endif %}>Any</option>
+        <option value="all" {% if match == "all" %}selected{% endif %}>All</option>
+        <option value="any" {% if match == "any" %}selected{% endif %}>Any</option>
       </select>
     </label></p>
 
     <p><label>Limit:<br>
       <select name="limit">
-        <option value="50" {% if rules_json.get("limit") == 50 %}selected{% endif %}>50</option>
-        <option value="500" {% if rules_json.get("limit") == 500 %}selected{% endif %}>500</option>
-        <option value="1000" {% if rules_json.get("limit") == 1000 %}selected{% endif %}>1000</option>
-        <option value="9000" {% if rules_json.get("limit") == 9000 %}selected{% endif %}>9000</option>
+        <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+        <option value="500" {% if limit == 500 %}selected{% endif %}>500</option>
+        <option value="1000" {% if limit == 1000 %}selected{% endif %}>1000</option>
+        <option value="9000" {% if limit == 9000 %}selected{% endif %}>9000</option>
       </select>
     </label></p>
 
     <h3>Conditions:</h3>
     <div id="rules-container">
-      {% for cond in rules_json.get("conditions", []) %}
+      {% for cond in conditions %}
         <div class="rule-row">
           <select name="field[]">
             <option value="artist" {% if cond.field == "artist" %}selected{% endif %}>Artist</option>
@@ -52,7 +52,7 @@
     </div>
 
     <h3>Sort By:</h3>
-    {% set sort = rules_json.get("sort", []) %}
+    {% set sort = sort_rules %}
     <div class="sort-row">
       <select name="sort_by">
         <option value="last_played_at" {% if sort and sort[0].by == "last_played_at" %}selected{% endif %}>Last Played</option>
