@@ -22,7 +22,7 @@
       {% for playlist in playlists|sort(attribute='name') %}
         <tr>
           <td>{{ playlist.name }}</td>
-          <td><a href="{{ playlist.playlist_id }}" target="_blank">Open in Spotify</a></td>
+          <td><a href="{{ playlist.playlist_id | trim }}" target="_blank">Open in Spotify</a></td>
           <td>{{ playlist.track_count }}</td>
           <td>{{ playlist.last_synced_at.strftime('%Y-%m-%d %H:%M') if playlist.last_synced_at else 'Never' }}</td>
           <td>{{ playlist.status }}</td>
