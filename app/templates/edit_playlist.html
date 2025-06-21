@@ -37,6 +37,7 @@
               <option value="all" {% if cond.match == "all" %}selected{% endif %}>All</option>
               <option value="any" {% if cond.match == "any" %}selected{% endif %}>Any</option>
             </select>
+            <input type="hidden" name="is_group[]" value="true">
             {% for subcond in cond.conditions %}
               <input type="hidden" name="group[]" value="{{ loop.index0 }}">
               {{ render_condition(subcond) }}
@@ -45,6 +46,7 @@
           </div>
         {% else %}
           <div class="rule-row">
+            <input type="hidden" name="group[]" value="">
             <select name="field[]">
               <option value="artist" {% if cond.field == "artist" %}selected{% endif %}>Artist</option>
               <option value="track_name" {% if cond.field == "track_name" %}selected{% endif %}>Track Name</option>
@@ -76,6 +78,7 @@
     </div>
 
     <div class="rule-row">
+      <input type="hidden" name="group[]" value="">
       <select name="field[]">
         <option value="artist">Artist</option>
         <option value="track_name">Track Name</option>
@@ -170,6 +173,7 @@
     const newRow = document.createElement('div');
     newRow.className = 'rule-row';
     newRow.innerHTML = `
+      <input type="hidden" name="group[]" value="">
       <select name="field[]">
         <option value="artist">Artist</option>
         <option value="track_name">Track Name</option>
@@ -264,6 +268,7 @@
         <option value="all">All</option>
         <option value="any" selected>Any</option>
       </select>
+      <input type="hidden" name="is_group[]" value="true">
       <div class="rule-row">
         <input type="hidden" name="group[]" value="${groupId}">
         <select name="field[]">
