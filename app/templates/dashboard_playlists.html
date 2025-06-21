@@ -10,6 +10,7 @@
     <thead>
       <tr>
         <th>Name</th>
+        <th>Spotify Link</th>
         <th>Size</th>
         <th>Last Run</th>
         <th>Status</th>
@@ -21,10 +22,11 @@
       {% for playlist in playlists|sort(attribute='name') %}
         <tr>
           <td>{{ playlist.name }}</td>
+          <td><a href="{{ playlist.spotify_url }}" target="_blank">Open in Spotify</a></td>
           <td>{{ playlist.track_count }}</td>
           <td>{{ playlist.last_synced_at.strftime('%Y-%m-%d %H:%M') if playlist.last_synced_at else 'Never' }}</td>
           <td>{{ playlist.status }}</td>
-          <td><pre>{{ playlist.rules }}</pre></td>
+          <td><pre>{{ playlist.rules if playlist.rules else '{}' }}</pre></td>
           <td>
             <a href="/dashboard/playlists/{{ playlist.slug }}/delete" onclick="return confirm('Are you sure you want to delete this playlist?');">🗑️ Delete</a> |
             <a href="/dashboard/playlists/{{ playlist.slug }}/sync">Sync Now</a>
