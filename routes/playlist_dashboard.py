@@ -91,7 +91,7 @@ def edit_playlist(slug):
         values = request.form.getlist("value[]")
         group_matches = request.form.getlist("group_match[]")
 
-        sort_fields = request.form.getlist("sort_field[]")
+        sort_fields = request.form.getlist("sort_by[]")
         sort_directions = request.form.getlist("sort_direction[]")
 
         # Build conditions
