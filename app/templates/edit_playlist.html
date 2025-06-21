@@ -106,7 +106,7 @@
       {% if sort %}
         {% for s in sort %}
           <div class="sort-row">
-            <select name="sort_by">
+            <select name="sort_by[]">
               <option value="artist" {{ 'selected' if s.by == 'artist' }}>Artist</option>
               <option value="track_name" {{ 'selected' if s.by == 'track_name' }}>Track Name</option>
               <option value="is_liked" {{ 'selected' if s.by == 'is_liked' }}>Is Liked</option>
@@ -117,7 +117,7 @@
               <option value="track_number" {{ 'selected' if s.by == 'track_number' }}>Track Number</option>
               <option value="plays" {{ 'selected' if s.by == 'plays' }}>Plays</option>
             </select>
-            <select name="sort_direction">
+            <select name="sort_direction[]">
               <option value="asc" {% if s.direction == "asc" %}selected{% endif %}>Ascending</option>
               <option value="desc" {% if s.direction == "desc" %}selected{% endif %}>Descending</option>
             </select>
@@ -126,7 +126,7 @@
         {% endfor %}
       {% else %}
         <div class="sort-row">
-          <select name="sort_by">
+          <select name="sort_by[]">
             <option value="artist">Artist</option>
             <option value="track_name">Track Name</option>
             <option value="is_liked">Is Liked</option>
@@ -137,7 +137,7 @@
             <option value="track_number">Track Number</option>
             <option value="plays">Plays</option>
           </select>
-          <select name="sort_direction">
+          <select name="sort_direction[]">
             <option value="asc">Ascending</option>
             <option value="desc">Descending</option>
           </select>
@@ -188,7 +188,7 @@
     const newRow = document.createElement('div');
     newRow.className = 'sort-row';
     newRow.innerHTML = `
-      <select name="sort_by">
+      <select name="sort_by[]">
         <option value="artist">Artist</option>
         <option value="track_name">Track Name</option>
         <option value="is_liked">Is Liked</option>
@@ -199,7 +199,7 @@
         <option value="track_number">Track Number</option>
         <option value="plays">Plays</option>
       </select>
-      <select name="sort_direction">
+      <select name="sort_direction[]">
         <option value="asc">Ascending</option>
         <option value="desc">Descending</option>
       </select>
