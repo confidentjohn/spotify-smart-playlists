@@ -142,7 +142,9 @@
         conditions: [],
       };
 
-      const rows = groupElement.querySelectorAll(".rule-conditions > .rule-row");
+      // Serialize direct rules only from this group's rule-conditions container
+      const rulesContainer = groupElement.querySelector(".rule-conditions");
+      const rows = rulesContainer ? rulesContainer.querySelectorAll(".rule-row") : [];
       rows.forEach(row => {
         const field = row.querySelector('[name="field[]"]').value;
         const operator = row.querySelector('[name="operator[]"]').value;
@@ -152,8 +154,9 @@
         }
       });
 
-      const subgroups = Array.from(groupElement.children).filter(child => child.classList.contains('rule-group'));
-      subgroups.forEach(subgroup => {
+      // Now serialize direct nested groups (not any rule-row that got duplicated)
+      // Alternatively: find direct children .rule-group that are not inside .rule-conditions
+      groupElement.querySelectorAll(':scope > .rule-group').forEach(subgroup => {
         group.conditions.push(serializeGroup(subgroup));
       });
 
