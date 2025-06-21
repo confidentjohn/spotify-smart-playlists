@@ -6,6 +6,7 @@
 <body>
   <h1>Edit Playlist: {{ name }}</h1>
   <form method="POST" action="{{ url_for('playlist_dashboard.edit_playlist', slug=slug) }}">
+    <input type="hidden" name="form_origin" value="edit_playlist.html">
     <p><label>Playlist Name:<br>
       <input type="text" name="name" required value="{{ name }}">
     </label></p>
@@ -151,7 +152,17 @@
     <button type="submit">💾 Save Changes</button>
     <a href="/dashboard/playlists"><button type="button">🔙 Back</button></a>
   </form>
+  <!-- End of form and body content -->
 </body>
+<script>
+  document.querySelector('form').addEventListener('submit', function (e) {
+    const sortFields = [...document.querySelectorAll('select[name="sort_by[]"]')];
+    const sortDirections = [...document.querySelectorAll('select[name="sort_direction[]"]')];
+
+    console.log('Submitting sort_by:', sortFields.map(s => s.value));
+    console.log('Submitting sort_direction:', sortDirections.map(s => s.value));
+  });
+</script>
 <script>
   function addRule() {
     const container = document.getElementById('rules-container');
