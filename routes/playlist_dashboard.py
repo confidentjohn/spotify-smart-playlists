@@ -83,10 +83,55 @@ def edit_playlist(slug):
 
     if request.method == "POST":
         name = request.form.get("name")
-        rules_json = request.form.get("rules_json")
+        limit = request.form.get("limit")
+        match = request.form.get("match")
+
+        fields = request.form.getlist("field[]")
+        operators = request.form.getlist("operator[]")
+        values = request.form.getlist("value[]")
+        group_matches = request.form.getlist("group_match[]")
+
+        sort_fields = request.form.getlist("sort_field[]")
+        sort_directions = request.form.getlist("sort_direction[]")
+
+        # Build conditions
+        conditions = []
+        idx = 0
+        for gm in group_matches:
+            group = {
+                "match": gm,
+                "conditions": []
+            }
+            for _ in range(3):  # Assume 3 rules per group max for now
+                if idx < len(fields):
+                    field = fields[idx]
+                    operator = operators[idx]
+                    value = values[idx]
+                    group["conditions"].append({
+                        "field": field,
+                        "operator": operator,
+                        "value": value
+                    })
+                    idx += 1
+            conditions.append(group if len(group_matches) > 1 else group["conditions"][0])
+
+        # Build sort array
+        sort = []
+        for s_field, s_dir in zip(sort_fields, sort_directions):
+            if s_field:
+                sort.append({"by": s_field, "direction": s_dir})
+
+        # Combine into rules dict
+        rules = {
+            "sort": sort,
+            "limit": int(limit) if limit else None,
+            "match": match,
+            "conditions": conditions
+        }
+
         cur.execute(
             "UPDATE playlist_mappings SET name = %s, rules = %s WHERE slug = %s",
-            (name, rules_json, slug)
+            (name, json.dumps(rules), slug)
         )
         conn.commit()
         flash("Playlist updated successfully!", "success")
