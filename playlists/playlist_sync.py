@@ -1,7 +1,5 @@
-
-
-
 import os
+import json
 import psycopg2
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
@@ -15,6 +13,15 @@ def sync_playlist(playlist_config):
     rules = playlist_config["rules"]
 
     log_event("generate_playlist", f"🔁 Syncing playlist: {playlist_name}")
+
+    log_event("generate_playlist", f"Raw rules input: {rules}")
+
+    if isinstance(rules, str):
+        try:
+            rules = json.loads(rules)
+        except Exception as e:
+            log_event("generate_playlist", f"❌ Error decoding rules JSON for '{playlist_name}': {e}", level="error")
+            return
 
     try:
         query = build_track_query(rules)
