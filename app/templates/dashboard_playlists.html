@@ -18,7 +18,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for playlist in playlists %}
+      {% for playlist in playlists|sort(attribute='name') %}
         <tr>
           <td>{{ playlist.name }}</td>
           <td>{{ playlist.track_count }}</td>
