@@ -109,13 +109,16 @@ def edit_playlist(slug):
     rules_data.setdefault("limit", "")
     rules_data.setdefault("match", "all")
 
+    sort_values = rules_data.get("sort", [])
+    sort_field = sort_values[0] if len(sort_values) > 0 else ""
+    sort_direction = sort_values[1] if len(sort_values) > 1 else "asc"
     return render_template(
         "create_playlist.html",
         editing=True,
         slug=slug,
         name=name,
-        sort_field=(rules_data.get("sort")[0] if rules_data.get("sort") else ""),
-        sort_direction=(rules_data.get("sort")[1] if rules_data.get("sort") else "asc"),
+        sort_field=sort_field,
+        sort_direction=sort_direction,
         limit=rules_data.get("limit", ""),
         match=rules_data.get("match", "all"),
         conditions=rules_data.get("conditions", [])
