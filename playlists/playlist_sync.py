@@ -10,18 +10,14 @@ from utils.spotify_auth import get_spotify_client
 def sync_playlist(playlist_config):
     playlist_id = playlist_config["spotify_id"]
     playlist_name = playlist_config["name"]
-    rules = playlist_config["rules"]
-
-    log_event("generate_playlist", f"🔁 Syncing playlist: {playlist_name}")
+    raw_rules = playlist_config["rules"]
+    try:
+        rules = json.loads(raw_rules) if isinstance(raw_rules, str) else raw_rules
+    except Exception as e:
+        log_event("generate_playlist", f"❌ Failed to parse rules for '{playlist_name}': {e}", level="error")
+        return
 
     log_event("generate_playlist", f"Raw rules input: {rules}")
-
-    if isinstance(rules, str):
-        try:
-            rules = json.loads(rules)
-        except Exception as e:
-            log_event("generate_playlist", f"❌ Error decoding rules JSON for '{playlist_name}': {e}", level="error")
-            return
 
     try:
         query = build_track_query(rules)
