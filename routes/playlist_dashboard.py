@@ -98,6 +98,8 @@ def edit_playlist(slug):
         return "Playlist not found", 404
 
     name, rules = row
+    # Log raw rules from DB
+    log_event("edit_playlist", f"🎯 Raw rules from DB for '{slug}': {rules}")
     try:
         if isinstance(rules, str):
             rules_data = json.loads(rules)
@@ -105,7 +107,10 @@ def edit_playlist(slug):
             rules_data = rules
         else:
             rules_data = {}
+        # Log parsed rules_data
+        log_event("edit_playlist", f"🧩 Parsed rules_data for '{slug}': {rules_data}")
     except Exception as e:
+        log_event("edit_playlist", f"❌ JSON parsing error for rules: {e}", level="error")
         rules_data = {}
 
     # Ensure default structure and prevent index errors
@@ -114,16 +119,13 @@ def edit_playlist(slug):
     rules_data.setdefault("limit", "")
     rules_data.setdefault("match", "all")
 
-    sort_field = rules_data["sort"][0] if len(rules_data["sort"]) > 0 else ""
-    sort_direction = rules_data["sort"][1] if len(rules_data["sort"]) > 1 else "asc"
     return render_template(
         "create_playlist.html",
         editing=True,
         slug=slug,
         name=name,
-        sort_field=sort_field,
-        sort_direction=sort_direction,
         limit=rules_data.get("limit", ""),
+        sort_rules=rules_data.get("sort", []),
         match=rules_data.get("match", "all"),
         conditions=rules_data.get("conditions", [])
     )
