@@ -17,15 +17,15 @@
       </tr>
     </thead>
     <tbody>
-      {% for slug, name, status, track_count, last_synced_at in playlists %}
+      {% for playlist in playlists %}
         <tr>
-          <td>{{ name }}</td>
-          <td>{{ track_count }}</td>
-          <td>{{ last_synced_at.strftime('%Y-%m-%d %H:%M') if last_synced_at else 'Never' }}</td>
-          <td>{{ status }}</td>
+          <td>{{ playlist.name }}</td>
+          <td>{{ playlist.track_count }}</td>
+          <td>{{ playlist.last_synced_at.strftime('%Y-%m-%d %H:%M') if playlist.last_synced_at else 'Never' }}</td>
+          <td>{{ playlist.status }}</td>
           <td>
-            <a href="/dashboard/playlists/{{ slug }}/edit">View/Edit</a> |
-            <a href="/dashboard/playlists/{{ slug }}/sync">Sync Now</a>
+            <a href="/dashboard/playlists/{{ playlist.slug }}/edit">View/Edit</a> |
+            <a href="/dashboard/playlists/{{ playlist.slug }}/sync">Sync Now</a>
           </td>
         </tr>
       {% endfor %}
