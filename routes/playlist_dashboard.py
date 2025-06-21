@@ -99,7 +99,7 @@ def edit_playlist(slug):
 
     name, rules = row
     try:
-        rules_data = json.loads(rules) if rules else {}
+        rules_data = rules if isinstance(rules, dict) else json.loads(rules or "{}")
     except json.JSONDecodeError:
         rules_data = {}
 
