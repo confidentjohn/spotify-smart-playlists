@@ -1,12 +1,11 @@
-# utils/playlist_setup.py
+# utils/create_exclusions_playlist.py
 import os
 import psycopg2
 from datetime import datetime
 from utils.logger import log_event
 from utils.spotify_auth import get_spotify_client
 
-def ensure_exclusions_playlist():
-    sp = get_spotify_client()
+def ensure_exclusions_playlist(sp):
     try:
         conn = psycopg2.connect(
             dbname=os.environ["DB_NAME"],
