@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,9 +7,38 @@
   <h1>Edit Playlist: {{ name }}</h1>
   <form method="POST">
     <p><label>Name:<br><input type="text" name="name" value="{{ name }}"></label></p>
-    <p><label>Rules JSON:<br>
-      <textarea name="rules_json" rows="20" cols="80">{{ rules_json }}</textarea>
+    
+    <p><label>Sort By:<br>
+      <input type="text" name="sort_by" value="{{ rules_json.sort[0].by if rules_json.sort else '' }}">
     </label></p>
+    
+    <p><label>Sort Direction:<br>
+      <select name="sort_direction">
+        <option value="asc" {% if rules_json.sort and rules_json.sort[0].direction == "asc" %}selected{% endif %}>Ascending</option>
+        <option value="desc" {% if rules_json.sort and rules_json.sort[0].direction == "desc" %}selected{% endif %}>Descending</option>
+      </select>
+    </label></p>
+
+    <p><label>Limit:<br>
+      <input type="number" name="limit" value="{{ rules_json.limit }}">
+    </label></p>
+
+    <p><label>Match Type:<br>
+      <select name="match">
+        <option value="all" {% if rules_json.match == "all" %}selected{% endif %}>All</option>
+        <option value="any" {% if rules_json.match == "any" %}selected{% endif %}>Any</option>
+      </select>
+    </label></p>
+
+    <h3>Conditions:</h3>
+    {% for cond in rules_json.conditions %}
+      <fieldset>
+        <label>Field: <input type="text" name="field_{{ loop.index }}" value="{{ cond.field }}"></label>
+        <label>Operator: <input type="text" name="operator_{{ loop.index }}" value="{{ cond.operator }}"></label>
+        <label>Value: <input type="text" name="value_{{ loop.index }}" value="{{ cond.value }}"></label>
+      </fieldset>
+    {% endfor %}
+
     <button type="submit">💾 Save Changes</button>
     <a href="/dashboard"><button type="button">🔙 Back</button></a>
   </form>
