@@ -106,6 +106,8 @@
       <button type="button" onclick="this.parentElement.remove()">➖</button>
     </div>
     <button type="button" onclick="addRule()">➕ Add Rule</button>
+    <button type="button" onclick="addGroupRule()">➕ Add Nested Group</button>
+
 
     <h3>Sort By:</h3>
     {% set sort = sort_rules %}
@@ -124,7 +126,7 @@
 
     <br>
     <button type="submit">💾 Save Changes</button>
-    <a href="/dashboard"><button type="button">🔙 Back</button></a>
+    <a href="/dashboard/playlists"><button type="button">🔙 Back</button></a>
   </form>
 </body>
 <script>
@@ -196,6 +198,40 @@
       <button type="button" onclick="this.parentElement.remove()">➖</button>
     `;
     groupContainer.insertBefore(newRow, button);
+  }
+</script>
+<script>
+  function addGroupRule() {
+    const container = document.getElementById('rules-container');
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'rule-group';
+    groupDiv.innerHTML = `
+      <strong>Group (ANY):</strong>
+      <select name="group_match[]">
+        <option value="all">All</option>
+        <option value="any" selected>Any</option>
+      </select>
+      <div class="rule-row">
+        <select name="field[]">
+          <option value="artist">Artist</option>
+          <option value="track_name">Track Name</option>
+          <option value="is_liked">Is Liked</option>
+          <option value="play_count">Play Count</option>
+          <option value="last_played_at">Last Played</option>
+        </select>
+        <select name="operator[]">
+          <option value="eq">=</option>
+          <option value="neq">!=</option>
+          <option value="gt">&gt;</option>
+          <option value="lt">&lt;</option>
+          <option value="contains">contains</option>
+        </select>
+        <input type="text" name="value[]" placeholder="Enter value">
+        <button type="button" onclick="this.parentElement.remove()">➖</button>
+      </div>
+      <button type="button" onclick="addNestedRule(this)">➕ Add Rule</button>
+    `;
+    container.appendChild(groupDiv);
   }
 </script>
 </html>
