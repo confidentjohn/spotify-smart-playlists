@@ -6,46 +6,65 @@
 <body>
   <h1>Edit Playlist: {{ name }}</h1>
   <form method="POST">
-    <p><label>Name:<br><input type="text" name="name" value="{{ name }}"></label></p>
-    
-    <p><label>Sort By:<br>
-      <input type="text" name="sort_by" value="{{ rules_json['sort'][0]['by'] if rules_json.get('sort') else '' }}">
-      <!-- DEBUG: sort_by={{ rules_json['sort'][0]['by'] if rules_json.get('sort') else 'none' }} -->
-    </label></p>
-    
-    <p><label>Sort Direction:<br>
-      <select name="sort_direction">
-        <option value="asc" {% if rules_json.get('sort') and rules_json['sort'][0]['direction'] == "asc" %}selected{% endif %}>
-          Ascending <!-- DEBUG: sort_direction={{ rules_json['sort'][0]['direction'] if rules_json.get('sort') else 'none' }} -->
-        </option>
-        <option value="desc" {% if rules_json.get('sort') and rules_json['sort'][0]['direction'] == "desc" %}selected{% endif %}>
-          Descending <!-- DEBUG: sort_direction={{ rules_json['sort'][0]['direction'] if rules_json.get('sort') else 'none' }} -->
-        </option>
-      </select>
-    </label></p>
-
-    <p><label>Limit:<br>
-      <input type="number" name="limit" value="{{ rules_json.get('limit', '') }}">
-      <!-- DEBUG: limit={{ rules_json.get('limit', 'none') }} -->
+    <p><label>Playlist Name:<br>
+      <input type="text" name="name" required value="{{ name }}">
     </label></p>
 
     <p><label>Match Type:<br>
       <select name="match">
-        <option value="all" {% if rules_json.get('match') == "all" %}selected{% endif %}>All</option>
-        <option value="any" {% if rules_json.get('match') == "any" %}selected{% endif %}>Any</option>
+        <option value="all" {% if rules_json.get("match") == "all" %}selected{% endif %}>All</option>
+        <option value="any" {% if rules_json.get("match") == "any" %}selected{% endif %}>Any</option>
+      </select>
+    </label></p>
+
+    <p><label>Limit:<br>
+      <select name="limit">
+        <option value="50" {% if rules_json.get("limit") == 50 %}selected{% endif %}>50</option>
+        <option value="500" {% if rules_json.get("limit") == 500 %}selected{% endif %}>500</option>
+        <option value="1000" {% if rules_json.get("limit") == 1000 %}selected{% endif %}>1000</option>
+        <option value="9000" {% if rules_json.get("limit") == 9000 %}selected{% endif %}>9000</option>
       </select>
     </label></p>
 
     <h3>Conditions:</h3>
-    {% for cond in rules_json.get('conditions', []) %}
-      <fieldset>
-        <label>Field: <input type="text" name="field_{{ loop.index }}" value="{{ cond.get('field', '') }}"></label>
-        <label>Operator: <input type="text" name="operator_{{ loop.index }}" value="{{ cond.get('operator', '') }}"></label>
-        <label>Value: <input type="text" name="value_{{ loop.index }}" value="{{ cond.get('value', '') }}"></label>
-        <!-- DEBUG: condition {{ loop.index }} = field={{ cond.get('field', 'none') }}, operator={{ cond.get('operator', 'none') }}, value={{ cond.get('value', 'none') }} -->
-      </fieldset>
-    {% endfor %}
+    <div id="rules-container">
+      {% for cond in rules_json.get("conditions", []) %}
+        <div class="rule-row">
+          <select name="field[]">
+            <option value="artist" {% if cond.field == "artist" %}selected{% endif %}>Artist</option>
+            <option value="track_name" {% if cond.field == "track_name" %}selected{% endif %}>Track Name</option>
+            <option value="is_liked" {% if cond.field == "is_liked" %}selected{% endif %}>Is Liked</option>
+            <option value="play_count" {% if cond.field == "play_count" %}selected{% endif %}>Play Count</option>
+            <option value="last_played_at" {% if cond.field == "last_played_at" %}selected{% endif %}>Last Played</option>
+          </select>
 
+          <select name="operator[]">
+            <option value="eq" {% if cond.operator == "eq" %}selected{% endif %}>=</option>
+            <option value="neq" {% if cond.operator == "neq" %}selected{% endif %}>!=</option>
+            <option value="gt" {% if cond.operator == "gt" %}selected{% endif %}>&gt;</option>
+            <option value="lt" {% if cond.operator == "lt" %}selected{% endif %}>&lt;</option>
+            <option value="contains" {% if cond.operator == "contains" %}selected{% endif %}>contains</option>
+          </select>
+
+          <input type="text" name="value[]" value="{{ cond.value }}">
+        </div>
+      {% endfor %}
+    </div>
+
+    <h3>Sort By:</h3>
+    {% set sort = rules_json.get("sort", []) %}
+    <div class="sort-row">
+      <select name="sort_by">
+        <option value="last_played_at" {% if sort and sort[0].by == "last_played_at" %}selected{% endif %}>Last Played</option>
+        <option value="play_count" {% if sort and sort[0].by == "play_count" %}selected{% endif %}>Play Count</option>
+      </select>
+      <select name="sort_direction">
+        <option value="asc" {% if sort and sort[0].direction == "asc" %}selected{% endif %}>Ascending</option>
+        <option value="desc" {% if sort and sort[0].direction == "desc" %}selected{% endif %}>Descending</option>
+      </select>
+    </div>
+
+    <br>
     <button type="submit">💾 Save Changes</button>
     <a href="/dashboard"><button type="button">🔙 Back</button></a>
   </form>

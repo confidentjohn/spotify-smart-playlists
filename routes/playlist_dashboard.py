@@ -120,7 +120,7 @@ def edit_playlist(slug):
     rules_data.setdefault("match", "all")
 
     return render_template(
-        "create_playlist.html",
+        "edit_playlist.html",
         editing=True,
         slug=slug,
         name=name,
