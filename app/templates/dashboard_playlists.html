@@ -13,6 +13,7 @@
         <th>Size</th>
         <th>Last Run</th>
         <th>Status</th>
+        <th>Rules</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -23,8 +24,9 @@
           <td>{{ playlist.track_count }}</td>
           <td>{{ playlist.last_synced_at.strftime('%Y-%m-%d %H:%M') if playlist.last_synced_at else 'Never' }}</td>
           <td>{{ playlist.status }}</td>
+          <td><pre>{{ playlist.rules }}</pre></td>
           <td>
-            <a href="/dashboard/playlists/{{ playlist.slug }}/edit">View/Edit</a> |
+            <a href="/dashboard/playlists/{{ playlist.slug }}/delete" onclick="return confirm('Are you sure you want to delete this playlist?');">🗑️ Delete</a> |
             <a href="/dashboard/playlists/{{ playlist.slug }}/sync">Sync Now</a>
           </td>
         </tr>
