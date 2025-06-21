@@ -51,6 +51,7 @@
                 </select>
 
                 <input type="text" name="value[]" value="{{ subcond.value }}">
+                <button type="button" onclick="this.parentElement.remove()">➖</button>
               </div>
             {% endfor %}
           </div>
@@ -73,6 +74,7 @@
             </select>
 
             <input type="text" name="value[]" value="{{ cond.value }}">
+            <button type="button" onclick="this.parentElement.remove()">➖</button>
           </div>
         {% endif %}
       {% endfor %}
@@ -96,6 +98,7 @@
       </select>
 
       <input type="text" name="value[]" placeholder="Enter value">
+      <button type="button" onclick="this.parentElement.remove()">➖</button>
     </div>
     <button type="button" onclick="addRule()">➕ Add Rule</button>
 
@@ -110,7 +113,9 @@
         <option value="asc" {% if sort and sort[0].direction == "asc" %}selected{% endif %}>Ascending</option>
         <option value="desc" {% if sort and sort[0].direction == "desc" %}selected{% endif %}>Descending</option>
       </select>
+      <button type="button" onclick="this.parentElement.remove()">➖</button>
     </div>
+    <button type="button" onclick="addSortRule()">➕ Add Sort Rule</button>
 
     <br>
     <button type="submit">💾 Save Changes</button>
@@ -138,6 +143,26 @@
         <option value="contains">contains</option>
       </select>
       <input type="text" name="value[]" placeholder="Enter value">
+      <button type="button" onclick="this.parentElement.remove()">➖</button>
+    `;
+    container.appendChild(newRow);
+  }
+</script>
+<script>
+  function addSortRule() {
+    const container = document.querySelector('.sort-row').parentElement;
+    const newRow = document.createElement('div');
+    newRow.className = 'sort-row';
+    newRow.innerHTML = `
+      <select name="sort_by">
+        <option value="last_played_at">Last Played</option>
+        <option value="play_count">Play Count</option>
+      </select>
+      <select name="sort_direction">
+        <option value="asc">Ascending</option>
+        <option value="desc">Descending</option>
+      </select>
+      <button type="button" onclick="this.parentElement.remove()">➖</button>
     `;
     container.appendChild(newRow);
   }
