@@ -1,0 +1,19 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit Playlist</title>
+</head>
+<body>
+  <h1>Edit Playlist: {{ name }}</h1>
+  <form method="POST">
+    <p><label>Name:<br><input type="text" name="name" value="{{ name }}"></label></p>
+    <p><label>Rules JSON:<br>
+      <textarea name="rules_json" rows="20" cols="80">{{ rules_json }}</textarea>
+    </label></p>
+    <button type="submit">💾 Save Changes</button>
+    <a href="/dashboard"><button type="button">🔙 Back</button></a>
+  </form>
+</body>
+</html>

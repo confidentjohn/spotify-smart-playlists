@@ -24,8 +24,7 @@
           <td>{{ last_synced_at.strftime('%Y-%m-%d %H:%M') if last_synced_at else 'Never' }}</td>
           <td>{{ status }}</td>
           <td>
-            <a href="/dashboard/playlists/{{ slug }}">View</a> |
-            <a href="/dashboard/playlists/{{ slug }}/edit">Edit</a> |
+            <a href="/dashboard/playlists/{{ slug }}/edit">View/Edit</a> |
             <a href="/dashboard/playlists/{{ slug }}/sync">Sync Now</a>
           </td>
         </tr>
