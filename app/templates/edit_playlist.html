@@ -33,9 +33,9 @@
     <h3>Conditions:</h3>
     {% for cond in rules_json.get('conditions', []) %}
       <fieldset>
-        <label>Field: <input type="text" name="field_{{ loop.index }}" value="{{ cond['field'] }}"></label>
-        <label>Operator: <input type="text" name="operator_{{ loop.index }}" value="{{ cond['operator'] }}"></label>
-        <label>Value: <input type="text" name="value_{{ loop.index }}" value="{{ cond['value'] }}"></label>
+        <label>Field: <input type="text" name="field_{{ loop.index }}" value="{{ cond.get('field', '') }}"></label>
+        <label>Operator: <input type="text" name="operator_{{ loop.index }}" value="{{ cond.get('operator', '') }}"></label>
+        <label>Value: <input type="text" name="value_{{ loop.index }}" value="{{ cond.get('value', '') }}"></label>
       </fieldset>
     {% endfor %}
 
