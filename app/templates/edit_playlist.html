@@ -29,25 +29,52 @@
     <h3>Conditions:</h3>
     <div id="rules-container">
       {% for cond in conditions %}
-        <div class="rule-row">
-          <select name="field[]">
-            <option value="artist" {% if cond.field == "artist" %}selected{% endif %}>Artist</option>
-            <option value="track_name" {% if cond.field == "track_name" %}selected{% endif %}>Track Name</option>
-            <option value="is_liked" {% if cond.field == "is_liked" %}selected{% endif %}>Is Liked</option>
-            <option value="play_count" {% if cond.field == "play_count" %}selected{% endif %}>Play Count</option>
-            <option value="last_played_at" {% if cond.field == "last_played_at" %}selected{% endif %}>Last Played</option>
-          </select>
+        {% if cond.conditions is defined %}
+          <div class="rule-group">
+            <strong>Group ({{ cond.match | upper }}):</strong>
+            {% for subcond in cond.conditions %}
+              <div class="rule-row">
+                <select name="field[]">
+                  <option value="artist" {% if subcond.field == "artist" %}selected{% endif %}>Artist</option>
+                  <option value="track_name" {% if subcond.field == "track_name" %}selected{% endif %}>Track Name</option>
+                  <option value="is_liked" {% if subcond.field == "is_liked" %}selected{% endif %}>Is Liked</option>
+                  <option value="play_count" {% if subcond.field == "play_count" %}selected{% endif %}>Play Count</option>
+                  <option value="last_played_at" {% if subcond.field == "last_played_at" %}selected{% endif %}>Last Played</option>
+                </select>
 
-          <select name="operator[]">
-            <option value="eq" {% if cond.operator == "eq" %}selected{% endif %}>=</option>
-            <option value="neq" {% if cond.operator == "neq" %}selected{% endif %}>!=</option>
-            <option value="gt" {% if cond.operator == "gt" %}selected{% endif %}>&gt;</option>
-            <option value="lt" {% if cond.operator == "lt" %}selected{% endif %}>&lt;</option>
-            <option value="contains" {% if cond.operator == "contains" %}selected{% endif %}>contains</option>
-          </select>
+                <select name="operator[]">
+                  <option value="eq" {% if subcond.operator == "eq" %}selected{% endif %}>=</option>
+                  <option value="neq" {% if subcond.operator == "neq" %}selected{% endif %}>!=</option>
+                  <option value="gt" {% if subcond.operator == "gt" %}selected{% endif %}>&gt;</option>
+                  <option value="lt" {% if subcond.operator == "lt" %}selected{% endif %}>&lt;</option>
+                  <option value="contains" {% if subcond.operator == "contains" %}selected{% endif %}>contains</option>
+                </select>
 
-          <input type="text" name="value[]" value="{{ cond.value }}">
-        </div>
+                <input type="text" name="value[]" value="{{ subcond.value }}">
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="rule-row">
+            <select name="field[]">
+              <option value="artist" {% if cond.field == "artist" %}selected{% endif %}>Artist</option>
+              <option value="track_name" {% if cond.field == "track_name" %}selected{% endif %}>Track Name</option>
+              <option value="is_liked" {% if cond.field == "is_liked" %}selected{% endif %}>Is Liked</option>
+              <option value="play_count" {% if cond.field == "play_count" %}selected{% endif %}>Play Count</option>
+              <option value="last_played_at" {% if cond.field == "last_played_at" %}selected{% endif %}>Last Played</option>
+            </select>
+
+            <select name="operator[]">
+              <option value="eq" {% if cond.operator == "eq" %}selected{% endif %}>=</option>
+              <option value="neq" {% if cond.operator == "neq" %}selected{% endif %}>!=</option>
+              <option value="gt" {% if cond.operator == "gt" %}selected{% endif %}>&gt;</option>
+              <option value="lt" {% if cond.operator == "lt" %}selected{% endif %}>&lt;</option>
+              <option value="contains" {% if cond.operator == "contains" %}selected{% endif %}>contains</option>
+            </select>
+
+            <input type="text" name="value[]" value="{{ cond.value }}">
+          </div>
+        {% endif %}
       {% endfor %}
     </div>
 
