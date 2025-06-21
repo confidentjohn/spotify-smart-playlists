@@ -78,6 +78,27 @@
       {% endfor %}
     </div>
 
+    <div class="rule-row">
+      <select name="field[]">
+        <option value="artist">Artist</option>
+        <option value="track_name">Track Name</option>
+        <option value="is_liked">Is Liked</option>
+        <option value="play_count">Play Count</option>
+        <option value="last_played_at">Last Played</option>
+      </select>
+
+      <select name="operator[]">
+        <option value="eq">=</option>
+        <option value="neq">!=</option>
+        <option value="gt">&gt;</option>
+        <option value="lt">&lt;</option>
+        <option value="contains">contains</option>
+      </select>
+
+      <input type="text" name="value[]" placeholder="Enter value">
+    </div>
+    <button type="button" onclick="addRule()">➕ Add Rule</button>
+
     <h3>Sort By:</h3>
     {% set sort = sort_rules %}
     <div class="sort-row">
@@ -96,4 +117,29 @@
     <a href="/dashboard"><button type="button">🔙 Back</button></a>
   </form>
 </body>
+<script>
+  function addRule() {
+    const container = document.getElementById('rules-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'rule-row';
+    newRow.innerHTML = `
+      <select name="field[]">
+        <option value="artist">Artist</option>
+        <option value="track_name">Track Name</option>
+        <option value="is_liked">Is Liked</option>
+        <option value="play_count">Play Count</option>
+        <option value="last_played_at">Last Played</option>
+      </select>
+      <select name="operator[]">
+        <option value="eq">=</option>
+        <option value="neq">!=</option>
+        <option value="gt">&gt;</option>
+        <option value="lt">&lt;</option>
+        <option value="contains">contains</option>
+      </select>
+      <input type="text" name="value[]" placeholder="Enter value">
+    `;
+    container.appendChild(newRow);
+  }
+</script>
 </html>

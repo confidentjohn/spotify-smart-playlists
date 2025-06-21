@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
-from utils.spotify_auth import get_access_token
+from utils.spotify_auth import get_spotify_client
 
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0
@@ -31,8 +31,7 @@ def safe_spotify_call(func, *args, **kwargs):
             raise
 
 # ─────────────────────────────────────────────
-access_token = get_access_token()
-sp = Spotify(auth=access_token)
+sp = get_spotify_client()
 
 # 🌍 Get user country
 try:
