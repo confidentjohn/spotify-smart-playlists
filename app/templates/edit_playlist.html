@@ -9,29 +9,29 @@
     <p><label>Name:<br><input type="text" name="name" value="{{ name }}"></label></p>
     
     <p><label>Sort By:<br>
-      <input type="text" name="sort_by" value="{{ rules_json.sort[0].by if rules_json.sort else '' }}">
+      <input type="text" name="sort_by" value="{{ rules_json['sort'][0]['by'] if rules_json.get('sort') else '' }}">
     </label></p>
     
     <p><label>Sort Direction:<br>
       <select name="sort_direction">
-        <option value="asc" {% if rules_json.sort and rules_json.sort[0].direction == "asc" %}selected{% endif %}>Ascending</option>
-        <option value="desc" {% if rules_json.sort and rules_json.sort[0].direction == "desc" %}selected{% endif %}>Descending</option>
+        <option value="asc" {% if rules_json.get('sort') and rules_json['sort'][0]['direction'] == "asc" %}selected{% endif %}>Ascending</option>
+        <option value="desc" {% if rules_json.get('sort') and rules_json['sort'][0]['direction'] == "desc" %}selected{% endif %}>Descending</option>
       </select>
     </label></p>
 
     <p><label>Limit:<br>
-      <input type="number" name="limit" value="{{ rules_json.limit }}">
+      <input type="number" name="limit" value="{{ rules_json.get('limit', '') }}">
     </label></p>
 
     <p><label>Match Type:<br>
       <select name="match">
-        <option value="all" {% if rules_json.match == "all" %}selected{% endif %}>All</option>
-        <option value="any" {% if rules_json.match == "any" %}selected{% endif %}>Any</option>
+        <option value="all" {% if rules_json.get('match') == "all" %}selected{% endif %}>All</option>
+        <option value="any" {% if rules_json.get('match') == "any" %}selected{% endif %}>Any</option>
       </select>
     </label></p>
 
     <h3>Conditions:</h3>
-    {% for cond in rules_json.conditions %}
+    {% for cond in rules_json.get('conditions', []) %}
       <fieldset>
         <label>Field: <input type="text" name="field_{{ loop.index }}" value="{{ cond.field }}"></label>
         <label>Operator: <input type="text" name="operator_{{ loop.index }}" value="{{ cond.operator }}"></label>
