@@ -5,7 +5,7 @@
 </head>
 <body>
   <h1>Edit Playlist: {{ name }}</h1>
-  <form method="POST" action="{{ url_for('edit_playlist', slug=slug) }}">
+  <form method="POST" action="{{ url_for('playlist_dashboard.edit_playlist', slug=slug) }}">
     <p><label>Playlist Name:<br>
       <input type="text" name="name" required value="{{ name }}">
     </label></p>
