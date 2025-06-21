@@ -99,11 +99,14 @@ def edit_playlist(slug):
         i = 0
         group_index = 0
         while i < len(fields):
-            if is_group_flags[i] == "true":
-                group_match = group_matches[group_index]
-                group_index += 1
+            if i < len(is_group_flags) and is_group_flags[i] == "true":
+                if group_index < len(group_matches):
+                    group_match = group_matches[group_index]
+                    group_index += 1
+                else:
+                    group_match = "any"
                 group_conditions = []
-                while i < len(fields) and is_group_flags[i] == "true":
+                while i < len(fields) and i < len(is_group_flags) and is_group_flags[i] == "true":
                     group_conditions.append({
                         "field": fields[i],
                         "operator": operators[i],
