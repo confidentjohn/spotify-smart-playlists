@@ -96,24 +96,29 @@ def edit_playlist(slug):
 
         # Build conditions
         conditions = []
-        idx = 0
-        for gm in group_matches:
-            group = {
-                "match": gm,
-                "conditions": []
-            }
-            for _ in range(3):  # Assume 3 rules per group max for now
-                if idx < len(fields):
-                    field = fields[idx]
-                    operator = operators[idx]
-                    value = values[idx]
-                    group["conditions"].append({
-                        "field": field,
-                        "operator": operator,
-                        "value": value
-                    })
-                    idx += 1
-            conditions.append(group if len(group_matches) > 1 else group["conditions"][0])
+        if group_matches:
+            idx = 0
+            for gm in group_matches:
+                group = {
+                    "match": gm,
+                    "conditions": []
+                }
+                for _ in range(3):  # Assume 3 rules per group max for now
+                    if idx < len(fields):
+                        group["conditions"].append({
+                            "field": fields[idx],
+                            "operator": operators[idx],
+                            "value": values[idx]
+                        })
+                        idx += 1
+                conditions.append(group)
+        else:
+            for field, operator, value in zip(fields, operators, values):
+                conditions.append({
+                    "field": field,
+                    "operator": operator,
+                    "value": value
+                })
 
         # Build sort array
         sort = []
@@ -129,6 +134,7 @@ def edit_playlist(slug):
             "conditions": conditions
         }
 
+        log_event("edit_playlist", f"📝 Saving rules for '{slug}': {json.dumps(rules)}")
         cur.execute(
             "UPDATE playlist_mappings SET name = %s, rules = %s WHERE slug = %s",
             (name, json.dumps(rules), slug)
