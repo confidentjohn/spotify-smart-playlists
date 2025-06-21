@@ -32,6 +32,10 @@
         {% if cond.conditions is defined %}
           <div class="rule-group">
             <strong>Group ({{ cond.match | upper }}):</strong>
+            <select name="group_match[]">
+              <option value="all" {% if cond.match == "all" %}selected{% endif %}>All</option>
+              <option value="any" {% if cond.match == "any" %}selected{% endif %}>Any</option>
+            </select>
             {% for subcond in cond.conditions %}
               <div class="rule-row">
                 <select name="field[]">
@@ -54,6 +58,7 @@
                 <button type="button" onclick="this.parentElement.remove()">➖</button>
               </div>
             {% endfor %}
+            <button type="button" onclick="addNestedRule(this)">➕ Add Rule</button>
           </div>
         {% else %}
           <div class="rule-row">
@@ -165,6 +170,32 @@
       <button type="button" onclick="this.parentElement.remove()">➖</button>
     `;
     container.appendChild(newRow);
+  }
+</script>
+<script>
+  function addNestedRule(button) {
+    const groupContainer = button.parentElement;
+    const newRow = document.createElement('div');
+    newRow.className = 'rule-row';
+    newRow.innerHTML = `
+      <select name="field[]">
+        <option value="artist">Artist</option>
+        <option value="track_name">Track Name</option>
+        <option value="is_liked">Is Liked</option>
+        <option value="play_count">Play Count</option>
+        <option value="last_played_at">Last Played</option>
+      </select>
+      <select name="operator[]">
+        <option value="eq">=</option>
+        <option value="neq">!=</option>
+        <option value="gt">&gt;</option>
+        <option value="lt">&lt;</option>
+        <option value="contains">contains</option>
+      </select>
+      <input type="text" name="value[]" placeholder="Enter value">
+      <button type="button" onclick="this.parentElement.remove()">➖</button>
+    `;
+    groupContainer.insertBefore(newRow, button);
   }
 </script>
 </html>
