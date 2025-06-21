@@ -107,15 +107,15 @@
         {% for s in sort %}
           <div class="sort-row">
             <select name="sort_by">
-              <option value="artist" {% if s.by == "artist" %}selected{% endif %}>Artist</option>
-              <option value="track_name" {% if s.by == "track_name" %}selected{% endif %}>Track Name</option>
-              <option value="is_liked" {% if s.by == "is_liked" %}selected{% endif %}>Is Liked</option>
-              <option value="play_count" {% if s.by == "play_count" %}selected{% endif %}>Play Count</option>
-              <option value="last_played_at" {% if s.by == "last_played_at" %}selected{% endif %}>Last Played</option>
-              <option value="album_id" {% if s.by == "album_id" %}selected{% endif %}>Album ID</option>
-              <option value="disc_number" {% if s.by == "disc_number" %}selected{% endif %}>Disc Number</option>
-              <option value="track_number" {% if s.by == "track_number" %}selected{% endif %}>Track Number</option>
-              <option value="plays" {% if s.by == "plays" %}selected{% endif %}>Plays</option>
+              <option value="artist" {{ 'selected' if s.by == 'artist' }}>Artist</option>
+              <option value="track_name" {{ 'selected' if s.by == 'track_name' }}>Track Name</option>
+              <option value="is_liked" {{ 'selected' if s.by == 'is_liked' }}>Is Liked</option>
+              <option value="play_count" {{ 'selected' if s.by == 'play_count' }}>Play Count</option>
+              <option value="last_played_at" {{ 'selected' if s.by == 'last_played_at' }}>Last Played</option>
+              <option value="album_id" {{ 'selected' if s.by == 'album_id' }}>Album ID</option>
+              <option value="disc_number" {{ 'selected' if s.by == 'disc_number' }}>Disc Number</option>
+              <option value="track_number" {{ 'selected' if s.by == 'track_number' }}>Track Number</option>
+              <option value="plays" {{ 'selected' if s.by == 'plays' }}>Plays</option>
             </select>
             <select name="sort_direction">
               <option value="asc" {% if s.direction == "asc" %}selected{% endif %}>Ascending</option>
