@@ -10,6 +10,7 @@ CONDITION_MAP = {
     "added_before": lambda v: f"added_at <= '{v}'",
     "plays": {
         "is": lambda v: f"play_count = {int(v)}",
+        "eq": lambda v: f"play_count = {int(v)}",
         "gt": lambda v: f"play_count > {int(v)}",
         "lt": lambda v: f"play_count < {int(v)}",
         "gte": lambda v: f"play_count >= {int(v)}",
