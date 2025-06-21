@@ -103,4 +103,10 @@ def edit_playlist(slug):
     except json.JSONDecodeError:
         rules_data = {}
 
+    # Ensure default structure
+    rules_data.setdefault("conditions", [])
+    rules_data.setdefault("sort", [])
+    rules_data.setdefault("limit", "")
+    rules_data.setdefault("match", "all")
+
     return render_template("edit_playlist.html", slug=slug, name=name, rules_json=json.dumps(rules_data, indent=2))
