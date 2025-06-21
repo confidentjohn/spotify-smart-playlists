@@ -89,49 +89,44 @@ def edit_playlist(slug):
         fields = request.form.getlist("field[]")
         operators = request.form.getlist("operator[]")
         values = request.form.getlist("value[]")
+        is_group_flags = request.form.getlist("is_group[]")
         group_matches = request.form.getlist("group_match[]")
 
         sort_fields = request.form.getlist("sort_by[]")
         sort_directions = request.form.getlist("sort_direction[]")
 
-        # Build conditions with support for nested groups
         conditions = []
-        flat_conditions = []
-        nested_groups = []
-
-        for i in range(len(fields)):
-            field = fields[i]
-            operator = operators[i]
-            value = values[i]
-
-            # Check if this field is part of a nested group (by naming convention or grouping)
-            group_key = request.form.getlist(f"group[{i}]")
-            if group_key:
-                group_index = int(group_key[0])
-                while len(nested_groups) <= group_index:
-                    nested_groups.append({"match": group_matches[group_index], "conditions": []})
-                nested_groups[group_index]["conditions"].append({
-                    "field": field,
-                    "operator": operator,
-                    "value": value
+        i = 0
+        group_index = 0
+        while i < len(fields):
+            if is_group_flags[i] == "true":
+                group_match = group_matches[group_index]
+                group_index += 1
+                group_conditions = []
+                while i < len(fields) and is_group_flags[i] == "true":
+                    group_conditions.append({
+                        "field": fields[i],
+                        "operator": operators[i],
+                        "value": values[i]
+                    })
+                    i += 1
+                conditions.append({
+                    "match": group_match,
+                    "conditions": group_conditions
                 })
             else:
-                flat_conditions.append({
-                    "field": field,
-                    "operator": operator,
-                    "value": value
+                conditions.append({
+                    "field": fields[i],
+                    "operator": operators[i],
+                    "value": values[i]
                 })
+                i += 1
 
-        # Combine flat conditions and nested groups
-        conditions = flat_conditions + nested_groups
-
-        # Build sort array
         sort = []
         for s_field, s_dir in zip(sort_fields, sort_directions):
             if s_field:
                 sort.append({"by": s_field, "direction": s_dir})
 
-        # Combine into rules dict
         rules = {
             "sort": sort,
             "limit": int(limit) if limit else None,
