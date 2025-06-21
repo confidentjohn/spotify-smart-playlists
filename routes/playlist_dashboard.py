@@ -6,7 +6,7 @@ from utils.playlist_builder import create_and_store_playlist
 from markupsafe import escape
 from utils.auth import check_auth
 from utils.logger import log_event
-from playlists.generate_playlist import sync_playlist
+from playlists.playlist_sync import sync_playlist
 
 playlist_dashboard = Blueprint("playlist_dashboard", __name__)
 
