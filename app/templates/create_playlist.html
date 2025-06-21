@@ -162,15 +162,12 @@
 
     function serializeRules() {
       const topGroup = document.querySelector("#rules-container .rule-group");
-      const rules = {
-        match: "all",
-        limit: document.querySelector('[name="limit"]').value === 'no_limit' ? 9000 : parseInt(document.querySelector('[name="limit"]').value),
-        sort: Array.from(document.querySelectorAll('#sort-container .sort-row')).map(row => ({
-          by: row.querySelector('[name="sort_by[]"]').value,
-          direction: row.querySelector('[name="sort_direction[]"]').value
-        })),
-        conditions: serializeGroup(topGroup).conditions
-      };
+      const rules = serializeGroup(topGroup);
+      rules.limit = document.querySelector('[name="limit"]').value === 'no_limit' ? 9000 : parseInt(document.querySelector('[name="limit"]').value);
+      rules.sort = Array.from(document.querySelectorAll('#sort-container .sort-row')).map(row => ({
+        by: row.querySelector('[name="sort_by[]"]').value,
+        direction: row.querySelector('[name="sort_direction[]"]').value
+      }));
 
       document.getElementById("rules_json").value = JSON.stringify(rules);
       return true;
