@@ -10,17 +10,23 @@
     
     <p><label>Sort By:<br>
       <input type="text" name="sort_by" value="{{ rules_json['sort'][0]['by'] if rules_json.get('sort') else '' }}">
+      <!-- DEBUG: sort_by={{ rules_json['sort'][0]['by'] if rules_json.get('sort') else 'none' }} -->
     </label></p>
     
     <p><label>Sort Direction:<br>
       <select name="sort_direction">
-        <option value="asc" {% if rules_json.get('sort') and rules_json['sort'][0]['direction'] == "asc" %}selected{% endif %}>Ascending</option>
-        <option value="desc" {% if rules_json.get('sort') and rules_json['sort'][0]['direction'] == "desc" %}selected{% endif %}>Descending</option>
+        <option value="asc" {% if rules_json.get('sort') and rules_json['sort'][0]['direction'] == "asc" %}selected{% endif %}>
+          Ascending <!-- DEBUG: sort_direction={{ rules_json['sort'][0]['direction'] if rules_json.get('sort') else 'none' }} -->
+        </option>
+        <option value="desc" {% if rules_json.get('sort') and rules_json['sort'][0]['direction'] == "desc" %}selected{% endif %}>
+          Descending <!-- DEBUG: sort_direction={{ rules_json['sort'][0]['direction'] if rules_json.get('sort') else 'none' }} -->
+        </option>
       </select>
     </label></p>
 
     <p><label>Limit:<br>
       <input type="number" name="limit" value="{{ rules_json.get('limit', '') }}">
+      <!-- DEBUG: limit={{ rules_json.get('limit', 'none') }} -->
     </label></p>
 
     <p><label>Match Type:<br>
@@ -36,6 +42,7 @@
         <label>Field: <input type="text" name="field_{{ loop.index }}" value="{{ cond.get('field', '') }}"></label>
         <label>Operator: <input type="text" name="operator_{{ loop.index }}" value="{{ cond.get('operator', '') }}"></label>
         <label>Value: <input type="text" name="value_{{ loop.index }}" value="{{ cond.get('value', '') }}"></label>
+        <!-- DEBUG: condition {{ loop.index }} = field={{ cond.get('field', 'none') }}, operator={{ cond.get('operator', 'none') }}, value={{ cond.get('value', 'none') }} -->
       </fieldset>
     {% endfor %}
 
