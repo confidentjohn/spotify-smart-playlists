@@ -28,7 +28,7 @@
 
     <h3>Conditions:</h3>
     <div id="rules-container">
-      {% for cond in conditions %}
+      {% macro render_condition(cond) %}
         {% if cond.conditions is defined %}
           <div class="rule-group">
             <strong>Group ({{ cond.match | upper }}):</strong>
@@ -37,26 +37,7 @@
               <option value="any" {% if cond.match == "any" %}selected{% endif %}>Any</option>
             </select>
             {% for subcond in cond.conditions %}
-              <div class="rule-row">
-                <select name="field[]">
-                  <option value="artist" {% if subcond.field == "artist" %}selected{% endif %}>Artist</option>
-                  <option value="track_name" {% if subcond.field == "track_name" %}selected{% endif %}>Track Name</option>
-                  <option value="is_liked" {% if subcond.field == "is_liked" %}selected{% endif %}>Is Liked</option>
-                  <option value="play_count" {% if subcond.field == "play_count" %}selected{% endif %}>Play Count</option>
-                  <option value="last_played_at" {% if subcond.field == "last_played_at" %}selected{% endif %}>Last Played</option>
-                </select>
-
-                <select name="operator[]">
-                  <option value="eq" {% if subcond.operator == "eq" %}selected{% endif %}>=</option>
-                  <option value="neq" {% if subcond.operator == "neq" %}selected{% endif %}>!=</option>
-                  <option value="gt" {% if subcond.operator == "gt" %}selected{% endif %}>&gt;</option>
-                  <option value="lt" {% if subcond.operator == "lt" %}selected{% endif %}>&lt;</option>
-                  <option value="contains" {% if subcond.operator == "contains" %}selected{% endif %}>contains</option>
-                </select>
-
-                <input type="text" name="value[]" value="{{ subcond.value }}">
-                <button type="button" onclick="this.parentElement.remove()">➖</button>
-              </div>
+              {{ render_condition(subcond) }}
             {% endfor %}
             <button type="button" onclick="addNestedRule(this)">➕ Add Rule</button>
           </div>
@@ -82,6 +63,9 @@
             <button type="button" onclick="this.parentElement.remove()">➖</button>
           </div>
         {% endif %}
+      {% endmacro %}
+      {% for cond in conditions %}
+        {{ render_condition(cond) }}
       {% endfor %}
     </div>
 
@@ -108,19 +92,36 @@
     <button type="button" onclick="addRule()">➕ Add Rule</button>
     <button type="button" onclick="addGroupRule()">➕ Add Nested Group</button>
 
-
     <h3>Sort By:</h3>
     {% set sort = sort_rules %}
-    <div class="sort-row">
-      <select name="sort_by">
-        <option value="last_played_at" {% if sort and sort[0].by == "last_played_at" %}selected{% endif %}>Last Played</option>
-        <option value="play_count" {% if sort and sort[0].by == "play_count" %}selected{% endif %}>Play Count</option>
-      </select>
-      <select name="sort_direction">
-        <option value="asc" {% if sort and sort[0].direction == "asc" %}selected{% endif %}>Ascending</option>
-        <option value="desc" {% if sort and sort[0].direction == "desc" %}selected{% endif %}>Descending</option>
-      </select>
-      <button type="button" onclick="this.parentElement.remove()">➖</button>
+    <div id="sort-container">
+      {% if sort %}
+        {% for s in sort %}
+          <div class="sort-row">
+            <select name="sort_by">
+              <option value="last_played_at" {% if s.by == "last_played_at" %}selected{% endif %}>Last Played</option>
+              <option value="play_count" {% if s.by == "play_count" %}selected{% endif %}>Play Count</option>
+            </select>
+            <select name="sort_direction">
+              <option value="asc" {% if s.direction == "asc" %}selected{% endif %}>Ascending</option>
+              <option value="desc" {% if s.direction == "desc" %}selected{% endif %}>Descending</option>
+            </select>
+            <button type="button" onclick="this.parentElement.remove()">➖</button>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="sort-row">
+          <select name="sort_by">
+            <option value="last_played_at">Last Played</option>
+            <option value="play_count">Play Count</option>
+          </select>
+          <select name="sort_direction">
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+          <button type="button" onclick="this.parentElement.remove()">➖</button>
+        </div>
+      {% endif %}
     </div>
     <button type="button" onclick="addSortRule()">➕ Add Sort Rule</button>
 
@@ -157,7 +158,7 @@
 </script>
 <script>
   function addSortRule() {
-    const container = document.querySelector('.sort-row').parentElement;
+    const container = document.getElementById('sort-container');
     const newRow = document.createElement('div');
     newRow.className = 'sort-row';
     newRow.innerHTML = `
