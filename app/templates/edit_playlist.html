@@ -38,6 +38,7 @@
               <option value="any" {% if cond.match == "any" %}selected{% endif %}>Any</option>
             </select>
             {% for subcond in cond.conditions %}
+              <input type="hidden" name="group[]" value="{{ loop.index0 }}">
               {{ render_condition(subcond) }}
             {% endfor %}
             <button type="button" onclick="addNestedRule(this)">➕ Add Rule</button>
@@ -246,6 +247,8 @@
       <input type="text" name="value[]" placeholder="Enter value">
       <button type="button" onclick="this.parentElement.remove()">➖</button>
     `;
+    const groupId = Date.now(); // simple unique group id
+    newRow.innerHTML += `<input type="hidden" name="group[]" value="${groupId}">`;
     groupContainer.insertBefore(newRow, button);
   }
 </script>
@@ -254,6 +257,7 @@
     const container = document.getElementById('rules-container');
     const groupDiv = document.createElement('div');
     groupDiv.className = 'rule-group';
+    const groupId = Date.now();
     groupDiv.innerHTML = `
       <strong>Group (ANY):</strong>
       <select name="group_match[]">
@@ -261,6 +265,7 @@
         <option value="any" selected>Any</option>
       </select>
       <div class="rule-row">
+        <input type="hidden" name="group[]" value="${groupId}">
         <select name="field[]">
           <option value="artist">Artist</option>
           <option value="track_name">Track Name</option>

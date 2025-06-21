@@ -94,31 +94,36 @@ def edit_playlist(slug):
         sort_fields = request.form.getlist("sort_by[]")
         sort_directions = request.form.getlist("sort_direction[]")
 
-        # Build conditions
+        # Build conditions with support for nested groups
         conditions = []
-        if group_matches:
-            idx = 0
-            for gm in group_matches:
-                group = {
-                    "match": gm,
-                    "conditions": []
-                }
-                for _ in range(3):  # Assume 3 rules per group max for now
-                    if idx < len(fields):
-                        group["conditions"].append({
-                            "field": fields[idx],
-                            "operator": operators[idx],
-                            "value": values[idx]
-                        })
-                        idx += 1
-                conditions.append(group)
-        else:
-            for field, operator, value in zip(fields, operators, values):
-                conditions.append({
+        flat_conditions = []
+        nested_groups = []
+
+        for i in range(len(fields)):
+            field = fields[i]
+            operator = operators[i]
+            value = values[i]
+
+            # Check if this field is part of a nested group (by naming convention or grouping)
+            group_key = request.form.getlist(f"group[{i}]")
+            if group_key:
+                group_index = int(group_key[0])
+                while len(nested_groups) <= group_index:
+                    nested_groups.append({"match": group_matches[group_index], "conditions": []})
+                nested_groups[group_index]["conditions"].append({
                     "field": field,
                     "operator": operator,
                     "value": value
                 })
+            else:
+                flat_conditions.append({
+                    "field": field,
+                    "operator": operator,
+                    "value": value
+                })
+
+        # Combine flat conditions and nested groups
+        conditions = flat_conditions + nested_groups
 
         # Build sort array
         sort = []
