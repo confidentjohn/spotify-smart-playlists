@@ -3,7 +3,6 @@ import os
 import psycopg2
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from utils.playlist_builder import create_and_store_playlist
-from markupsafe import escape
 from utils.auth import check_auth
 from utils.logger import log_event
 from playlists.playlist_sync import sync_playlist
@@ -25,13 +24,7 @@ def dashboard_playlists():
     if not check_auth(request):
         return "❌ Unauthorized", 403
     try:
-        conn = psycopg2.connect(
-            dbname=os.environ["DB_NAME"],
-            user=os.environ["DB_USER"],
-            password=os.environ["DB_PASSWORD"],
-            host=os.environ["DB_HOST"],
-            port=os.environ.get("DB_PORT", 5432)
-        )
+        conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("SELECT slug, name, status, track_count, last_synced_at, playlist_id, rules FROM playlist_mappings")
         playlists = cur.fetchall()
@@ -117,53 +110,3 @@ def edit_playlist(slug):
         match=rules_data.get("match", "all"),
         conditions=rules_data.get("conditions", [])
     )
-
-@playlist_dashboard.route("/dashboard/playlists/<slug>/delete", methods=["POST"])
-def delete_playlist(slug):
-    if not check_auth(request):
-        return "❌ Unauthorized", 403
-
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        # Get the playlist_id from DB
-        cur.execute("SELECT playlist_id FROM playlist_mappings WHERE slug = %s", (slug,))
-        row = cur.fetchone()
-
-        if not row:
-            flash(f"Playlist with slug '{slug}' not found.", "error")
-            return redirect(url_for("playlist_dashboard.dashboard_playlists"))
-
-        playlist_id = row[0]
-
-        # Delete from Spotify using direct API call with Bearer token
-        import requests
-        from utils.spotify_auth import get_access_token
-
-        access_token = get_access_token()
-        headers = {
-            "Authorization": f"Bearer {access_token}"
-        }
-        response = requests.delete(
-            f"https://api.spotify.com/v1/playlists/{playlist_id}/followers",
-            headers=headers
-        )
-        if response.status_code not in [200, 202]:
-            log_event("playlist_dashboard", f"⚠️ Failed to unfollow playlist on Spotify: {response.status_code} - {response.text}", level="warning")
-        else:
-            log_event("playlist_dashboard", f"✅ Unfollowed playlist on Spotify: {playlist_id}")
-
-        # Delete from database
-        cur.execute("DELETE FROM playlist_mappings WHERE slug = %s", (slug,))
-        conn.commit()
-
-        cur.close()
-        conn.close()
-
-        flash(f"✅ Deleted playlist '{slug}' successfully.", "success")
-        return redirect(url_for("playlist_dashboard.dashboard_playlists"))
-
-    except Exception as e:
-        log_event("playlist_dashboard", f"❌ Error deleting playlist: {e}", level="error")
-        return f"<pre>❌ Error deleting playlist: {e}</pre>"
