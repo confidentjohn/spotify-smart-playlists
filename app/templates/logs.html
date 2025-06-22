@@ -38,12 +38,12 @@
     </tr>
   </thead>
   <tbody>
-    {% for log in rows %}
+    {% for timestamp, level, source, message in rows %}
       <tr>
-        <td>{{ log.timestamp }}</td>
-        <td>{{ log.level }}</td>
-        <td>{{ log.source }}</td>
-        <td>{{ log.message }}</td>
+        <td>{{ timestamp }}</td>
+        <td>{{ level }}</td>
+        <td>{{ source }}</td>
+        <td>{{ message }}</td>
       </tr>
     {% endfor %}
   </tbody>
