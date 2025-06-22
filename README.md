@@ -175,15 +175,11 @@ Use the web UI (`/dashboard/playlists`) to:
 
 ## 9. Sync Triggers via Flask UI
 
-You can manually trigger syncs or playlist updates via these endpoints:
+⚠️ Note: As of the latest update, sync jobs are no longer triggered via direct URL routes for security and simplicity. All automation is now handled via scheduled GitHub Actions workflows.
 
-- `/sync-saved-albums` — Sync saved albums  
-- `/sync-album-tracks` — Sync tracks for albums missing data  
-- `/sync-liked-tracks` — Sync liked tracks incrementally  
-- `/sync-liked-tracks-full` — Full liked tracks sync  
-- `/run-tracker` — Run all syncs sequentially  
-- `/update-dynamic-playlists` — Update all dynamic smart playlists  
-- `/dashboard/playlists` — View, create, and manage smart playlists
+If you need to run a job manually, trigger the corresponding workflow in GitHub Actions or run the script locally.
+
+Previously available routes like `/sync-saved-albums`, `/sync-liked-tracks`, and `/run-tracker` have been deprecated from the web UI.
 
 ---
 
@@ -367,6 +363,7 @@ Logs are stored in the `logs` table to help with debugging and automation tracki
 
 The Flask-based Web UI provides a user-friendly dashboard to manage Spotify syncing and smart playlists without needing to run scripts manually. It's designed to make playlist generation, rule editing, and log viewing simple and accessible.
 
+
 ### Key Features
 
 - 🎛️ **Playlist Dashboard** (`/dashboard/playlists`)
@@ -380,17 +377,16 @@ The Flask-based Web UI provides a user-friendly dashboard to manage Spotify sync
   - Rules are stored in the database (`jsonb` field)
   - Used to generate playlists dynamically via backend sync
 
-- 📅 **Manual Sync Endpoints**
-  - Trigger any sync job manually via the browser:
-    - `/sync-saved-albums`
-    - `/sync-album-tracks`
-    - `/sync-liked-tracks`
-    - `/sync-liked-tracks-full`
-    - `/run-tracker`
-    - `/update-dynamic-playlists`
-
 - 🔐 **OAuth Management**
   - Handles token refresh and authorization securely
   - Refresh token stored and reused for all backend tasks
 
 The UI is hosted via Render and can be used both as a trigger surface for GitHub Actions-based automation and a control center for playlist logic and diagnostics.
+
+### Web UI Pages
+
+| URL Path                   | Purpose                                                                 |
+|----------------------------|-------------------------------------------------------------------------|
+| `/logs`                    | 📜 View the most recent sync logs and errors for debugging              |
+| `/dashboard/playlists`     | 🎛️ View and manage all smart playlists with their sync status and rules |
+| `/dashboard/create-playlist` | ➕ Create a new smart playlist and define its rule set                  |

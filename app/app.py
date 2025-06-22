@@ -1,4 +1,5 @@
 from flask import Flask, request, redirect, session
+from flask import render_template
 from markupsafe import escape
 import os
 import subprocess
@@ -51,9 +52,10 @@ def get_spotify_oauth():
     )
 
 # ─────────────────────────────────────────────────────
-@app.route('/')
-def index():
-    return '<a href="/login">Login with Spotify</a>'
+
+@app.route("/")
+def home():
+    return render_template("home.html")
 
 @app.route('/login')
 def login():
