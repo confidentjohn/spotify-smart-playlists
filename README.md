@@ -291,4 +291,71 @@ This ensures smooth syncing without manual intervention despite Spotify rate lim
 
 ---
 
-Feel free to fork, contribute, and extend this project to fit your Spotify tracking needs!
+
+---
+
+## 14. Playlist Rules Format
+
+Rules are stored in the database as `jsonb` and are used to dynamically select tracks for each playlist. These rules are editable and parsed during playlist generation.
+
+Example rule:
+
+```json
+{
+  "sort": [{ "by": "album_id", "direction": "asc" }],
+  "limit": 50,
+  "match": "all",
+  "conditions": [
+    { "field": "is_liked", "value": "true", "operator": "eq" },
+    {
+      "match": "any",
+      "conditions": [
+        { "field": "artist", "value": "pulp", "operator": "eq" },
+        { "field": "artist", "value": "oasis", "operator": "eq" }
+      ]
+    }
+  ]
+}
+```
+
+Supported fields include:
+- `field`: e.g., `artist`, `album_id`, `is_liked`, `play_count`, etc.
+- `operator`: supports `eq`, `neq`, `lt`, `lte`, `gt`, `gte`, `in`, `not_in`
+- `match`: determines logical nesting (`any` for OR, `all` for AND)
+
+---
+
+## 15. Playlist Sync Logic
+
+Smart playlists in this system follow the logic:
+
+- 🎯 All playlists are generated using stored **rules**
+- 📅 The `playlist_sync.py` script runs daily to:
+  - Sync the playlist using its latest rule set
+  - Remove from the DB if the playlist has been deleted on Spotify
+- ❌ **Playlists are not deleted** via the web UI; deletion must happen in Spotify
+- ✅ Web UI is used for:
+  - Creating new playlists
+  - Viewing sync history
+  - Browsing and editing rules
+
+---
+
+## 16. Example Log Entry
+
+Logs are stored in the `logs` table to help with debugging and automation tracking.
+
+| timestamp           | job                  | message                                      |
+|---------------------|----------------------|----------------------------------------------|
+| 2025-06-21 10:05:23 | sync_liked_tracks    | ✅ Synced 42 liked tracks (skipped 5 cached) |
+| 2025-06-21 10:06:02 | playlist_sync        | ⚠️ Playlist 'test_delete_3' no longer exists on Spotify; removing from DB |
+| 2025-06-21 10:10:15 | track_plays          | ✅ Synced 12 new plays from last 10 minutes  |
+
+---
+
+## 17. Known Limitations
+
+- ⚠️ **Rate-limited API**: While handled via retries, high-frequency jobs may still delay
+- 🔍 **Missing metadata**: Tracks with no `album_id` or orphaned metadata may be skipped
+- 🧑‍🤝‍🧑 **Personal use only**: Built for personal Spotify accounts; not tested for team or shared environments
+- 🗑️ **No web UI deletion**: Playlists must be deleted directly in Spotify
