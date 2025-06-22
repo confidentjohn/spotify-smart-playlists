@@ -1,14 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Spotify Tracker Home</title>
-</head>
-<body>
-    <h1>Welcome to Your Spotify Tracker</h1>
-    <ul>
-        <li><a href="/dashboard/playlists">🎛️ Playlist Dashboard</a></li>
-        <li><a href="/logs">📜 View Logs</a></li>
-    </ul>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Spotify Tracker Home{% endblock %}
+
+{% block content %}
+<h1>Welcome to Your Spotify Tracker</h1>
+<ul>
+    <li><a href="/dashboard/playlists">🎛️ Playlist Dashboard</a></li>
+    <li><a href="/logs">📜 View Logs</a></li>
+</ul>
+{% endblock %}

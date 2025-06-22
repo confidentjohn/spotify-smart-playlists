@@ -1,3 +1,8 @@
+{% extends "base.html" %}
+
+{% block title %}Create Playlist{% endblock %}
+
+{% block content %}
 <h2>➕ Create New Smart Playlist</h2>
 <form method="post" onsubmit="console.log('Submitting form with serialized rules:', document.getElementById('rules_json').value); return serializeRules()">
   <label>
@@ -182,3 +187,4 @@
 </form>
 
 <p><a href="/dashboard/playlists">⬅️ Back to Playlists</a></p>
+{% endblock %}
