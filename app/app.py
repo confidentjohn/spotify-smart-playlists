@@ -82,7 +82,6 @@ def get_spotify_oauth():
 # ─────────────────────────────────────────────────────
 
 @app.route("/")
-@login_required
 def home():
     return render_template("home.html")
 
@@ -106,7 +105,6 @@ def callback():
 
 # ─────────────────────────────────────────────────────
 @app.route('/logs')
-@login_required
 def view_logs():
 
     # Parse query parameters
@@ -196,7 +194,6 @@ def view_logs():
     return html
 
 @app.route("/logout")
-@login_required
 def logout():
     logout_user()
     return redirect(url_for("login"))
