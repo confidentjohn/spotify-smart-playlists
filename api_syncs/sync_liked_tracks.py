@@ -48,7 +48,7 @@ with open(LOCK_FILE, 'w') as lock_file:
     cur = conn.cursor()
 
     now = datetime.now(tz=None).astimezone()  # keep UTC-awareness
-    FRESH_LIKED_CUTOFF_DAYS = int(os.environ.get("FRESH_LIKED_CUTOFF_DAYS", "4"))
+    FRESH_LIKED_CUTOFF_DAYS = int(os.environ.get("FRESH_LIKED_CUTOFF_DAYS", "10"))
     fresh_cutoff = now - timedelta(days=FRESH_LIKED_CUTOFF_DAYS)
 
     limit = 50
