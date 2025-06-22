@@ -28,7 +28,7 @@
           <td>{{ playlist.status }}</td>
           <td><pre style="white-space: pre-wrap; word-wrap: break-word; max-width: 400px;">{{ playlist.rules }}</pre></td>
           <td>
-            <form action="/dashboard/playlists/{{ playlist.slug }}/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this playlist?');">
+            <form action="/dashboard/playlists/{{ playlist.slug }}/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this playlist?');" target="hidden_iframe">
               <button type="submit">🗑️ Delete</button>
             </form> |
             <a href="/dashboard/playlists/{{ playlist.slug }}/sync">Sync Now</a>
@@ -37,5 +37,6 @@
       {% endfor %}
     </tbody>
   </table>
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
 </body>
 </html>

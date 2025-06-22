@@ -117,3 +117,53 @@ def edit_playlist(slug):
         match=rules_data.get("match", "all"),
         conditions=rules_data.get("conditions", [])
     )
+
+@playlist_dashboard.route("/dashboard/playlists/<slug>/delete", methods=["POST"])
+def delete_playlist(slug):
+    if not check_auth(request):
+        return "❌ Unauthorized", 403
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Get the playlist_id from DB
+        cur.execute("SELECT playlist_id FROM playlist_mappings WHERE slug = %s", (slug,))
+        row = cur.fetchone()
+
+        if not row:
+            flash(f"Playlist with slug '{slug}' not found.", "error")
+            return redirect(url_for("playlist_dashboard.dashboard_playlists"))
+
+        playlist_id = row[0]
+
+        # Delete from Spotify (optional, depending on how you want to handle it)
+        from spotipy import Spotify
+        from spotipy.oauth2 import SpotifyOAuth
+
+        sp = Spotify(auth_manager=SpotifyOAuth(
+            client_id=os.environ["SPOTIFY_CLIENT_ID"],
+            client_secret=os.environ["SPOTIFY_CLIENT_SECRET"],
+            redirect_uri=os.environ["SPOTIFY_REDIRECT_URI"],
+            scope="playlist-modify-public playlist-modify-private"
+        ))
+
+        try:
+            sp.current_user_unfollow_playlist(playlist_id)
+            log_event("playlist_dashboard", f"✅ Unfollowed playlist on Spotify: {playlist_id}")
+        except Exception as e:
+            log_event("playlist_dashboard", f"⚠️ Failed to unfollow playlist on Spotify: {e}", level="warning")
+
+        # Delete from database
+        cur.execute("DELETE FROM playlist_mappings WHERE slug = %s", (slug,))
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        flash(f"✅ Deleted playlist '{slug}' successfully.", "success")
+        return redirect(url_for("playlist_dashboard.dashboard_playlists"))
+
+    except Exception as e:
+        log_event("playlist_dashboard", f"❌ Error deleting playlist: {e}", level="error")
+        return f"<pre>❌ Error deleting playlist: {e}</pre>"
