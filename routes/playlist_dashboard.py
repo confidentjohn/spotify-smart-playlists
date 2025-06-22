@@ -139,7 +139,7 @@ def delete_playlist(slug):
 
         # Delete from Spotify using direct API call with Bearer token
         import requests
-        from utils.auth import get_access_token
+        from utils.auth import get_spotify_token as get_access_token
 
         access_token = get_access_token()
         headers = {
