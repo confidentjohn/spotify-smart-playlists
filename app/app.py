@@ -96,7 +96,6 @@ def callback():
 @app.route('/logs')
 @login_required
 def view_logs():
-    if not check_auth(request): return "❌ Unauthorized", 403
 
     # Parse query parameters
     script = request.args.get("script")
