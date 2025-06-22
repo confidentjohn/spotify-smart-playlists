@@ -53,6 +53,7 @@ th {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
+  margin-bottom: 12px;
 }
 
 .btn:hover {
