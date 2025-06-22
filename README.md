@@ -8,14 +8,14 @@ This project is a comprehensive Spotify library and play history tracker built w
 
 ## 2. Features
 
-- **Daily Sync** of saved albums and liked tracks
-- **Frequent Sync** (every 10 minutes) of recently played tracks
-- **Smart Playlists** generated automatically (never played, most played, recently added, etc.)
-- **Track Availability Checks** to ensure songs are still available on Spotify
-- **Rate Limit Handling** with automatic retries and exponential backoff
-- **Flask Web UI** to trigger syncs, view logs, and manage OAuth tokens
-- **GitHub Actions** workflows for automation and scheduling
-- **Materialized Views** and unified track data for efficient querying and reporting
+- **Daily Sync** of saved albums and liked tracks  
+- **Frequent Sync** (every 10 minutes) of recently played tracks  
+- **Smart Playlists** generated automatically (never played, most played, recently added, etc.)  
+- **Track Availability Checks** to ensure songs are still available on Spotify  
+- **Rate Limit Handling** with automatic retries and exponential backoff  
+- **Flask Web UI** to trigger syncs, view logs, and manage OAuth tokens  
+- **GitHub Actions** workflows for automation and scheduling  
+- **Materialized Views** and unified track data for efficient querying and reporting  
 
 ---
 
@@ -94,12 +94,9 @@ Tracks may be orphaned (not liked or in albums) and are cleaned automatically.
 
 | Script                                    | Playlist Logic                                         |
 |-------------------------------------------|-------------------------------------------------------|
-| `update_playlist_never_played.py`         | Tracks that have never been played                     |
-| `update_playlist_played_once.py`          | Tracks played exactly once                             |
-| `update_playlist_oldest_played.py`        | Tracks played multiple times, oldest first             |
-| `update_playlist_most_played.py`          | Tracks with the highest play counts                     |
-| `update_playlist_loved_added_last_30_days.py` | Liked tracks added within the last 30 days           |
-| `update_playlist_never_played_new_tracks.py`  | Newly added tracks that have never been played        |
+| `update_dynamic_playlst.py`                | Updates dynamic playlists based on defined rules      |
+| `generate_playlist.py`                     | Generates playlists according to specified criteria   |
+| `playlist_sync.py`                         | Synchronizes playlists with Spotify                    |
 
 ---
 
@@ -107,15 +104,16 @@ Tracks may be orphaned (not liked or in albums) and are cleaned automatically.
 
 | Workflow File                  | Trigger / Schedule           | Purpose                                  |
 |-------------------------------|-----------------------------|------------------------------------------|
-| `check_track_availability.yml`| Manual / Reusable            | Checks if tracks are still available     |
-| `master_sync.yml`              | Daily at 07:07 UTC           | Runs full sync of albums, tracks, likes  |
-| `sync_album_tracks.yml`        | Reusable                    | Syncs album track details                  |
-| `sync_albums.yml`              | Reusable                    | Syncs saved albums                         |
-| `sync_liked_tracks.yml`        | Reusable                    | Syncs liked tracks incrementally           |
-| `sync_liked_tracks_full.yml`   | Reusable                    | Full liked tracks sync                      |
+| `00_master_sync.yml`           | Daily at 07:07 UTC           | Runs full sync of albums, tracks, likes  |
+| `01_sync_albums.yml`           | Reusable                    | Syncs saved albums                         |
+| `02_sync_album_tracks.yml`     | Reusable                    | Syncs album track details                  |
+| `03a_sync_liked_tracks.yml`    | Reusable                    | Syncs liked tracks incrementally           |
+| `03b_sync_liked_tracks_full.yml` | Reusable                  | Full liked tracks sync                      |
+| `04_check_track_availability.yml` | Manual / Reusable        | Checks if tracks are still available     |
+| `05_sync_exclusions.yml`       | Reusable                    | Syncs tracks added to manual exclusions playlist |
+| `06_build_unified_tracks.yml`  | Manual / Scheduled           | Builds and refreshes materialized views    |
 | `track_plays.yml`              | Every 10 minutes             | Syncs recent play history                   |
-| `update_all_playlists.yml`     | Daily at 10:00 UTC           | Regenerates all smart playlists             |
-| `build_unified_tracks.yml`     | Manual / Scheduled           | Builds and refreshes materialized views    |
+| `update_dynamic_playlists.yml` | Daily at 10:00 UTC          | Regenerates all smart playlists             |
 
 ---
 
@@ -147,24 +145,24 @@ cd spotify-oauth-tracker
 
 ### Register a Spotify Developer App
 
-- Create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)
-- Set Redirect URI to `https://<your-app>.onrender.com/callback`
+- Create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)  
+- Set Redirect URI to `https://<your-app>.onrender.com/callback`  
 
 ### Deploy to Render.com
 
-- Add a new Web Service pointing to `app/app.py`
-- Set all required environment variables listed above
-- Enable auto-deploy from GitHub
+- Add a new Web Service pointing to `app/app.py`  
+- Set all required environment variables listed above  
+- Enable auto-deploy from GitHub  
 
 ### Obtain Refresh Token
 
-- Visit `/login` on your deployed site
-- Authenticate with Spotify
-- Copy the refresh token from the `/callback` response
+- Visit `/login` on your deployed site  
+- Authenticate with Spotify  
+- Copy the refresh token from the `/callback` response  
 
 ### Initialize the Database
 
-- Visit `/init-db` endpoint to create necessary tables and constraints
+- Visit `/init-db` endpoint to create necessary tables and constraints  
 
 ### Add Playlist Mappings
 
@@ -183,17 +181,12 @@ Repeat for each smart playlist.
 
 You can manually trigger syncs or playlist updates via these endpoints:
 
-- `/sync-saved-albums` — Sync saved albums
-- `/sync-album-tracks` — Sync tracks for albums missing data
-- `/sync-liked-tracks` — Sync liked tracks incrementally
-- `/sync-liked-tracks-full` — Full liked tracks sync
-- `/run-tracker` — Run all syncs sequentially
-- `/update-never-played-playlist` — Update the "Never Played" playlist
-- `/update-most-played-playlist` — Update the "Most Played" playlist
-- `/update-played-once-playlist` — Update the "Played Once" playlist
-- `/update-oldest-played-playlist` — Update the "Oldest Played" playlist
-- `/update-loved-added-last-30-days-playlist` — Update recently loved playlist
-- `/update-never-played-new-tracks-playlist` — Update newly added never played playlist
+- `/sync-saved-albums` — Sync saved albums  
+- `/sync-album-tracks` — Sync tracks for albums missing data  
+- `/sync-liked-tracks` — Sync liked tracks incrementally  
+- `/sync-liked-tracks-full` — Full liked tracks sync  
+- `/run-tracker` — Run all syncs sequentially  
+- `/update-dynamic-playlists` — Update all dynamic smart playlists  
 
 ---
 
@@ -207,7 +200,7 @@ graph TD
         C[sync_album_tracks.py]
         D[sync_liked_tracks.py]
         E[check_track_availability.py]
-        F[update_all_playlists.py]
+        F[update_dynamic_playlists.py]
         G[build_unified_tracks.py]
     end
 
@@ -240,9 +233,9 @@ graph TD
 
 All Spotify API requests are wrapped with logic to:
 
-- Detect `429 Too Many Requests` responses
-- Wait for the specified `Retry-After` duration
-- Retry with exponential backoff if needed
+- Detect `429 Too Many Requests` responses  
+- Wait for the specified `Retry-After` duration  
+- Retry with exponential backoff if needed  
 
 This ensures smooth syncing without manual intervention despite Spotify rate limits.
 
@@ -258,26 +251,27 @@ This ensures smooth syncing without manual intervention despite Spotify rate lim
 
 - Use Flask routes to test UI-triggered syncs and observe logs, e.g.:
 
-  - `/sync-saved-albums`
-  - `/sync-album-tracks`
-  - `/sync-liked-tracks`
+  - `/sync-saved-albums`  
+  - `/sync-album-tracks`  
+  - `/sync-liked-tracks`  
 
-- Inspect the `logs` table for detailed output and errors
-- Verify materialized views and `unified_tracks` table for correct data aggregation
-- Test track availability updates by running `check_track_availability.py`
-- Simulate rate limiting by mocking `429` responses and confirm retry behavior
+- Inspect the `logs` table for detailed output and errors  
+- Verify materialized views and `unified_tracks` table for correct data aggregation  
+- Test track availability updates by running `check_track_availability.py`  
+- Simulate rate limiting by mocking `429` responses and confirm retry behavior  
 
 ---
 
 ## 13. Maintenance Notes
 
-- `init_db.py` creates tables and enforces constraints
-- `sync_album_tracks.py` only syncs albums missing track details
-- `track_plays.py` runs every 10 minutes and logs play history
-- Orphan tracks (not liked and not in albums) are cleaned automatically
-- Play history (`plays` table) is never deleted, even if tracks are removed from library
-- Materialized views are refreshed regularly to optimize queries
-- Playlist update scripts rely on `playlist_mappings` for Spotify playlist IDs
+- `init_db.py` creates tables and enforces constraints  
+- `sync_album_tracks.py` only syncs albums missing track details  
+- `track_plays.py` runs every 10 minutes and logs play history  
+- Orphan tracks (not liked and not in albums) are cleaned automatically  
+- Play history (`plays` table) is never deleted, even if tracks are removed from library  
+- Materialized views are refreshed regularly to optimize queries  
+- Playlist update scripts rely on `playlist_mappings` for Spotify playlist IDs  
+- Playlists are only removed if deleted directly in Spotify and detected during sync; no playlist deletions occur via the web UI  
 
 ---
 
