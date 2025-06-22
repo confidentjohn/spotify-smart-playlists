@@ -353,9 +353,44 @@ Logs are stored in the `logs` table to help with debugging and automation tracki
 
 ---
 
+
 ## 17. Known Limitations
 
 - ⚠️ **Rate-limited API**: While handled via retries, high-frequency jobs may still delay
 - 🔍 **Missing metadata**: Tracks with no `album_id` or orphaned metadata may be skipped
 - 🧑‍🤝‍🧑 **Personal use only**: Built for personal Spotify accounts; not tested for team or shared environments
 - 🗑️ **No web UI deletion**: Playlists must be deleted directly in Spotify
+
+---
+
+## 18. Web UI Overview
+
+The Flask-based Web UI provides a user-friendly dashboard to manage Spotify syncing and smart playlists without needing to run scripts manually. It's designed to make playlist generation, rule editing, and log viewing simple and accessible.
+
+### Key Features
+
+- 🎛️ **Playlist Dashboard** (`/dashboard/playlists`)
+  - View all playlists stored in the database
+  - Create new playlists with custom rules
+  - View playlist metadata and last synced status
+  - Launch manual syncs
+
+- 🧩 **Rule-Based Playlist Builder**
+  - Enter JSON-formatted rules directly into the UI
+  - Rules are stored in the database (`jsonb` field)
+  - Used to generate playlists dynamically via backend sync
+
+- 📅 **Manual Sync Endpoints**
+  - Trigger any sync job manually via the browser:
+    - `/sync-saved-albums`
+    - `/sync-album-tracks`
+    - `/sync-liked-tracks`
+    - `/sync-liked-tracks-full`
+    - `/run-tracker`
+    - `/update-dynamic-playlists`
+
+- 🔐 **OAuth Management**
+  - Handles token refresh and authorization securely
+  - Refresh token stored and reused for all backend tasks
+
+The UI is hosted via Render and can be used both as a trigger surface for GitHub Actions-based automation and a control center for playlist logic and diagnostics.
