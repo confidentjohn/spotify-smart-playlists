@@ -92,11 +92,11 @@ Tracks may be orphaned (not liked or in albums) and are cleaned automatically.
 
 ## 5. Smart Playlist Descriptions
 
-| Script                                    | Playlist Logic                                         |
-|-------------------------------------------|-------------------------------------------------------|
-| `update_dynamic_playlst.py`                | Updates dynamic playlists based on defined rules      |
-| `generate_playlist.py`                     | Generates playlists according to specified criteria   |
-| `playlist_sync.py`                         | Synchronizes playlists with Spotify                    |
+| Script                      | Playlist Logic                                                                 |
+|-----------------------------|---------------------------------------------------------------------------------|
+| `generate_playlist.py`     | Creates a new playlist in Spotify and stores it in the database with rules     |
+| `playlist_sync.py`         | Syncs all playlists in the DB, removes deleted ones, and updates track lists   |
+| `update_dynamic_playlst.py`| Refreshes playlists based on current rules stored in the DB                    |
 
 ---
 
@@ -164,16 +164,12 @@ cd spotify-oauth-tracker
 
 - Visit `/init-db` endpoint to create necessary tables and constraints  
 
-### Add Playlist Mappings
+### Create Playlists
 
-Insert playlist mappings into the database, e.g.:
-
-```sql
-INSERT INTO playlist_mappings (slug, name, playlist_id)
-VALUES ('never_played', 'Never Played', 'your_spotify_playlist_id');
-```
-
-Repeat for each smart playlist.
+Use the web UI (`/dashboard/playlists`) to:
+- Define playlist rules
+- Auto-generate the playlist in Spotify
+- Automatically store the mapping in the database
 
 ---
 
@@ -187,6 +183,7 @@ You can manually trigger syncs or playlist updates via these endpoints:
 - `/sync-liked-tracks-full` — Full liked tracks sync  
 - `/run-tracker` — Run all syncs sequentially  
 - `/update-dynamic-playlists` — Update all dynamic smart playlists  
+- `/dashboard/playlists` — View, create, and manage smart playlists
 
 ---
 
@@ -199,32 +196,48 @@ graph TD
         B[sync_saved_albums.py]
         C[sync_album_tracks.py]
         D[sync_liked_tracks.py]
+        D2[sync_liked_tracks_full.py]
         E[check_track_availability.py]
         F[update_dynamic_playlists.py]
         G[build_unified_tracks.py]
+        H[sync_exclusions.py]
     end
 
     subgraph Flask_Web_UI
-        H[app.py]
+        I[app.py]
+        J[create_playlist.html]
+        K[dashboard_playlists.html]
+        L[playlist_dashboard.py]
     end
 
     subgraph PostgreSQL_DB
         DB[(Database)]
         MV[Materialized Views]
+        PL[playlist_mappings]
+        P[plays]
+        T[tracks]
+        LTS[liked_tracks]
+        ADB[albums]
     end
 
-    A --> DB
-    B --> DB
-    C --> DB
-    D --> DB
+    A --> P
+    B --> ADB
+    C --> T
+    D --> LTS
+    D2 --> LTS
     E --> DB
-    F --> DB
+    H --> DB
+    F --> PL
     G --> MV
     MV --> DB
-    H --> DB
-    H --> Spotify[(Spotify API)]
+
+    I --> Spotify[(Spotify API)]
     F --> Spotify
     E --> Spotify
+    I --> DB
+    L --> DB
+    J --> I
+    K --> I
 ```
 
 ---
@@ -271,7 +284,10 @@ This ensures smooth syncing without manual intervention despite Spotify rate lim
 - Play history (`plays` table) is never deleted, even if tracks are removed from library  
 - Materialized views are refreshed regularly to optimize queries  
 - Playlist update scripts rely on `playlist_mappings` for Spotify playlist IDs  
-- Playlists are only removed if deleted directly in Spotify and detected during sync; no playlist deletions occur via the web UI  
+-- Playlists are only removed if deleted directly in Spotify and detected during sync; no playlist deletions occur via the web UI  
+- Playlists can no longer be deleted via the web UI; they are removed from the database only when deleted in Spotify
+- The web UI manages playlist creation and stores metadata in `playlist_mappings`
+- Playlist `rules` are stored as a `jsonb` field in the database and used for dynamic sync logic
 
 ---
 
