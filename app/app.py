@@ -100,8 +100,26 @@ def login():
 @app.route('/callback')
 def callback():
     code = request.args.get('code')
-    token_info = get_spotify_oauth().get_access_token(code)
-    return f"✅ Refresh Token: <code>{token_info['refresh_token']}</code>"
+    if not code:
+        return "❌ No authorization code provided", 400
+
+    try:
+        token_info = get_spotify_oauth().get_access_token(code)
+    except Exception as e:
+        return f"❌ Token exchange failed: {e}", 400
+
+    refresh_token = token_info.get("refresh_token")
+    access_token = token_info.get("access_token")
+
+    if not refresh_token:
+        return "❌ No refresh token received", 400
+
+    # You can store tokens here in session or database
+    print("Access Token:", access_token)
+    print("Refresh Token:", refresh_token)
+
+    flash("Spotify authentication successful!", "success")
+    return redirect(url_for("home"))
 
 # ─────────────────────────────────────────────────────
 @app.route('/logs')
