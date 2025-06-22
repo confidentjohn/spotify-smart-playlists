@@ -4,7 +4,7 @@
 
 {% block content %}
   <h1>Smart Playlists</h1>
-  <p><a href="/dashboard/create-playlist"><button>➕ Create New Playlist</button></a></p>
+  <p><a href="/dashboard/create-playlist" class="btn">➕ Create New Playlist</a></p>
   <table border="1">
     <thead>
       <tr>
@@ -27,11 +27,12 @@
           <td>{{ playlist.status }}</td>
           <td><pre style="white-space: pre-wrap; word-wrap: break-word; max-width: 400px;">{{ playlist.rules }}</pre></td>
           <td>
-            <a href="/dashboard/playlists/{{ playlist.slug }}/sync">Sync Now</a>
+            <a href="/dashboard/playlists/{{ playlist.slug }}/sync" class="btn">Sync Now</a>
           </td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
+  <p><a href="/" class="btn">🏠 Back to Home</a></p>
   <iframe name="hidden_iframe" style="display:none;"></iframe>
 {% endblock %}

@@ -36,7 +36,7 @@ th {
   padding: 10px 20px;
   margin: 0.5em 0;
   color: #fff;
-  background: #1db954;
+  background: #FFA500;
   border: none;
   border-radius: 5px;
   text-decoration: none;
@@ -45,5 +45,5 @@ th {
 }
 
 .btn:hover {
-  background: #1aa34a;
+  background: #e69500;
 }

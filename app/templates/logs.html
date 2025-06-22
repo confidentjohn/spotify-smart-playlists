@@ -25,7 +25,7 @@
     <option value="desc" {% if sort == 'desc' or not sort %}selected{% endif %}>Descending</option>
   </select>
   
-  <button type="submit">Filter</button>
+  <button type="submit" class="btn">Filter</button>
 </form>
 
 <table border="1">
@@ -51,10 +51,11 @@
 
 <div>
   {% if prev_url %}
-    <a href="{{ prev_url }}">Previous</a>
+    <a href="{{ prev_url }}" class="btn">Previous</a>
   {% endif %}
   {% if next_url %}
-    <a href="{{ next_url }}">Next</a>
+    <a href="{{ next_url }}" class="btn">Next</a>
   {% endif %}
 </div>
+<p><a href="/" class="btn">🏠 Back to Home</a></p>
 {% endblock %}
