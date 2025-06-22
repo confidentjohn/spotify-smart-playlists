@@ -28,7 +28,9 @@
           <td>{{ playlist.status }}</td>
           <td><pre style="white-space: pre-wrap; word-wrap: break-word; max-width: 400px;">{{ playlist.rules }}</pre></td>
           <td>
-            <a href="/dashboard/playlists/{{ playlist.slug }}/delete" onclick="return confirm('Are you sure you want to delete this playlist?');">🗑️ Delete</a> |
+            <form action="/dashboard/playlists/{{ playlist.slug }}/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this playlist?');">
+              <button type="submit">🗑️ Delete</button>
+            </form> |
             <a href="/dashboard/playlists/{{ playlist.slug }}/sync">Sync Now</a>
           </td>
         </tr>

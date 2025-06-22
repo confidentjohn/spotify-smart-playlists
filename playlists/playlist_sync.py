@@ -107,3 +107,43 @@ def sync_playlist(slug):
     finally:
         if 'cur' in locals(): cur.close()
         if 'conn' in locals(): conn.close()
+def delete_playlist(slug):
+    log_event("delete_playlist", f"🗑 Attempting to delete playlist with slug: '{slug}'")
+    try:
+        conn = psycopg2.connect(
+            dbname=os.environ["DB_NAME"],
+            user=os.environ["DB_USER"],
+            password=os.environ["DB_PASSWORD"],
+            host=os.environ["DB_HOST"],
+            port=os.environ.get("DB_PORT", 5432)
+        )
+        cur = conn.cursor()
+
+        cur.execute("SELECT playlist_id FROM playlist_mappings WHERE slug = %s", (slug,))
+        row = cur.fetchone()
+        if not row:
+            log_event("delete_playlist", f"⚠️ Playlist with slug '{slug}' not found in DB")
+            return
+
+        playlist_url = row[0]
+        playlist_id = playlist_url.split("/")[-1]
+
+        sp = get_spotify_client()
+        user_id = sp.current_user()["id"]
+
+        try:
+            sp.current_user_unfollow_playlist(playlist_id)
+            log_event("delete_playlist", f"✅ Successfully unfollowed playlist '{playlist_id}' on Spotify")
+        except Exception as e:
+            log_event("delete_playlist", f"⚠️ Failed to unfollow playlist '{playlist_id}' on Spotify: {e}")
+
+        cur.execute("DELETE FROM playlist_mappings WHERE slug = %s", (slug,))
+        conn.commit()
+        log_event("delete_playlist", f"🧹 Deleted playlist '{slug}' from DB")
+
+    except Exception as e:
+        log_event("delete_playlist", f"❌ Failed to delete playlist '{slug}': {e}", level="error")
+        raise
+    finally:
+        if 'cur' in locals(): cur.close()
+        if 'conn' in locals(): conn.close()
