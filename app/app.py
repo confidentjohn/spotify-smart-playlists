@@ -85,6 +85,7 @@ def get_spotify_oauth():
 def home():
     return render_template("home.html")
 
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -96,6 +97,13 @@ def login():
             return redirect(url_for("home"))
         flash("Invalid credentials", "error")
     return render_template("login.html")
+
+# ─────────────────────────────────────────────────────
+# Spotify OAuth login route
+@app.route("/login/spotify")
+def login_spotify():
+    auth_url = get_spotify_oauth().get_authorize_url()
+    return redirect(auth_url)
 
 @app.route('/callback')
 def callback():
