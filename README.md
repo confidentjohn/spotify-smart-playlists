@@ -23,38 +23,48 @@ This project is a comprehensive Spotify library and play history tracker built w
 
 ```
 spotify-oauth-tracker/
-├── app/                      # Flask frontend (OAuth, UI, sync triggers)
-│   └── app.py
 ├── api_syncs/                # Spotify sync jobs and track availability checks
 │   ├── __init__.py
 │   ├── check_track_availability.py  # Checks if tracks are still available on Spotify
 │   ├── materialized_views.py         # Creates and refreshes materialized views in DB
 │   ├── sync_album_tracks.py          # Syncs tracks for saved albums missing track data
+│   ├── sync_exclusions.py            # Syncs tracks added to the manual exclusions playlist
 │   ├── sync_liked_tracks_full.py     # Full sync of liked tracks (historical)
 │   ├── sync_liked_tracks.py          # Incremental sync of liked tracks
 │   ├── sync_saved_albums.py          # Syncs user's saved albums
 │   └── track_plays.py                # Syncs recently played tracks every 10 minutes
-├── playlists/                # Smart playlist update scripts
-│   ├── update_playlist_loved_added_last_30_days.py  # Liked tracks added recently
-│   ├── update_playlist_most_played.py                # Tracks with highest play counts
-│   ├── update_playlist_never_played.py               # Tracks never played
-│   ├── update_playlist_never_played_new_tracks.py   # Newly added tracks never played
-│   ├── update_playlist_oldest_played.py              # Tracks played multiple times, oldest first
-│   └── update_playlist_played_once.py                 # Tracks played exactly once
+├── app/                      # Flask frontend (OAuth, UI, sync triggers)
+│   ├── app.py
+│   └── templates/
+│         └── create_playlist.html
+│         └── dashboard_playlists.html
 ├── db/                       # Database initialization script
 │   └── init_db.py
+├── playlists/                # Smart playlist update scripts
+│   ├── generate_playlist.py
+│   ├── playlist_sync.py
+│   └── update_dynamic_playlst.py
 ├── reports/                  # Usage reports and analytics (not detailed here)
+├── routes/                   # Usage reports and analytics (not detailed here)
+│   ├── playlist_dashboard.py
+│   └── rule_parser.py
 ├── utils/                    # Shared utilities for logging and DB access
+│   ├── auth.py
+│   ├── create_exclusions_playlist.py
+│   ├── logger.py
+│   ├── playlist_builder.py
+│   └── spotify_auth.py
 ├── .github/workflows/        # GitHub Actions workflows for automation
-│   ├── build_unified_tracks.yml
-│   ├── check_track_availability.yml
-│   ├── master_sync.yml
-│   ├── sync_album_tracks.yml
-│   ├── sync_albums.yml
-│   ├── sync_liked_tracks_full.yml
-│   ├── sync_liked_tracks.yml
+│   ├── 00_master_sync.yml
+│   ├── 01_sync_albums.yml
+│   ├── 02_sync_album_tracks.yml
+│   ├── 03a_sync_liked_tracks.yml
+│   ├── 03b_sync_liked_tracks_full.yml
+│   ├── 04_check_track_availability.yml
+│   ├── 05_sync_exclusions.yml
+│   ├── 06_build_unified_tracks.yml
 │   ├── track_plays.yml
-│   └── update_all_playlists.yml
+│   └── update_dynamic_playlists.yml
 ├── render.yaml               # Render deployment configuration
 ├── requirements.txt          # Python dependencies
 └── README.md                 # This file
