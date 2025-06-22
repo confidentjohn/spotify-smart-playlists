@@ -1,5 +1,8 @@
 from flask import Flask, request, redirect, session
 from flask import render_template
+from flask import redirect, url_for, request, flash
+from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
+from app.users import validate_user
 from markupsafe import escape
 import os
 import subprocess
@@ -27,10 +30,23 @@ def get_access_token():
     return token_response.json()["access_token"]
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your preferred secure method
 app.register_blueprint(playlist_dashboard)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+class User(UserMixin):
+    def __init__(self, id):
+        self.id = id
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User(user_id)
+
 sp = Spotify(auth=get_access_token())
 ensure_exclusions_playlist(sp)
-app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")
 
 # ─────────────────────────────────────────────────────
 from utils.auth import check_auth
@@ -54,12 +70,21 @@ def get_spotify_oauth():
 # ─────────────────────────────────────────────────────
 
 @app.route("/")
+@login_required
 def home():
     return render_template("home.html")
 
-@app.route('/login')
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return redirect(get_spotify_oauth().get_authorize_url())
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        if validate_user(username, password):
+            user = User(username)
+            login_user(user)
+            return redirect(url_for("home"))
+        flash("Invalid credentials", "error")
+    return render_template("login.html")
 
 @app.route('/callback')
 def callback():
@@ -69,6 +94,7 @@ def callback():
 
 # ─────────────────────────────────────────────────────
 @app.route('/logs')
+@login_required
 def view_logs():
     if not check_auth(request): return "❌ Unauthorized", 403
 
@@ -158,10 +184,11 @@ def view_logs():
     html += "<p><a href='/logout'>🚪 Logout</a></p>"
     return html
 
-@app.route('/logout')
+@app.route("/logout")
+@login_required
 def logout():
-    session.clear()
-    return redirect('/')
+    logout_user()
+    return redirect(url_for("login"))
 
 # ─────────────────────────────────────────────────────
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 import os
 import psycopg2
 from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required
 from utils.playlist_builder import create_and_store_playlist
 from utils.auth import check_auth
 from utils.logger import log_event
@@ -20,6 +21,7 @@ def get_db_connection():
     )
 
 @playlist_dashboard.route("/dashboard/playlists")
+@login_required
 def dashboard_playlists():
     if not check_auth(request):
         return "❌ Unauthorized", 403
