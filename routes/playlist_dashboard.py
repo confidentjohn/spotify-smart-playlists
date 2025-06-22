@@ -137,22 +137,22 @@ def delete_playlist(slug):
 
         playlist_id = row[0]
 
-        # Delete from Spotify (optional, depending on how you want to handle it)
-        from spotipy import Spotify
-        from spotipy.oauth2 import SpotifyOAuth
+        # Delete from Spotify using direct API call with Bearer token
+        import requests
+        from utils.auth import get_access_token
 
-        sp = Spotify(auth_manager=SpotifyOAuth(
-            client_id=os.environ["SPOTIFY_CLIENT_ID"],
-            client_secret=os.environ["SPOTIFY_CLIENT_SECRET"],
-            redirect_uri=os.environ["SPOTIFY_REDIRECT_URI"],
-            scope="playlist-modify-public playlist-modify-private"
-        ))
-
-        try:
-            sp.current_user_unfollow_playlist(playlist_id)
+        access_token = get_access_token()
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        response = requests.delete(
+            f"https://api.spotify.com/v1/playlists/{playlist_id}/followers",
+            headers=headers
+        )
+        if response.status_code not in [200, 202]:
+            log_event("playlist_dashboard", f"⚠️ Failed to unfollow playlist on Spotify: {response.status_code} - {response.text}", level="warning")
+        else:
             log_event("playlist_dashboard", f"✅ Unfollowed playlist on Spotify: {playlist_id}")
-        except Exception as e:
-            log_event("playlist_dashboard", f"⚠️ Failed to unfollow playlist on Spotify: {e}", level="warning")
 
         # Delete from database
         cur.execute("DELETE FROM playlist_mappings WHERE slug = %s", (slug,))
