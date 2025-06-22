@@ -23,8 +23,6 @@ def get_db_connection():
 @playlist_dashboard.route("/dashboard/playlists")
 @login_required
 def dashboard_playlists():
-    if not check_auth(request):
-        return "❌ Unauthorized", 403
     try:
         conn = get_db_connection()
         cur = conn.cursor()
