@@ -30,11 +30,16 @@ def sync_playlist(slug):
 
         sp = get_spotify_client()
         try:
-            playlist_data = sp.playlist(playlist_id)
-            owner_id = playlist_data["owner"]["id"]
-            current_user_id = sp.current_user()["id"]
-            if owner_id != current_user_id:
-                log_event("generate_playlist", f"🗑 Playlist '{playlist_id}' no longer owned by user. Deleting from DB.")
+            user_id = sp.current_user()["id"]
+            playlists = []
+            results = sp.current_user_playlists()
+            while results:
+                playlists.extend(results['items'])
+                results = sp.next(results) if results.get('next') else None
+
+            user_playlist_ids = {pl["id"] for pl in playlists}
+            if playlist_id not in user_playlist_ids:
+                log_event("generate_playlist", f"🗑 Playlist '{playlist_id}' not found in user's library. Deleting from DB.")
                 cur.execute("DELETE FROM playlist_mappings WHERE slug = %s", (slug,))
                 conn.commit()
                 return
