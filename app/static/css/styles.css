@@ -1,8 +1,8 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(to right, #1e3c72, #2a5298);
-  color: #fff;
+  background: #ffffff;
+  color: #333;
 }
 
 header img {
@@ -19,31 +19,43 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1em;
-  background: rgba(255, 255, 255, 0.05);
+  background: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 th, td {
-  padding: 10px;
-  border: 1px solid #ffffff33;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
 }
 
 th {
-  background: rgba(255, 255, 255, 0.15);
+  background-color: #f7f7f7;
+  font-weight: 600;
+  color: #333;
 }
 
 .btn {
-  display: inline-block;
-  padding: 10px 20px;
-  margin: 0.5em 0;
-  color: #fff;
-  background: #FFA500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
   border: none;
-  border-radius: 5px;
-  text-decoration: none;
+  border-radius: 999px;
+  background: linear-gradient(to right, #FFA500, #FF7F50);
+  color: white;
+  font-size: 1rem;
   font-weight: 600;
-  transition: background 0.3s ease;
+  text-decoration: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
 .btn:hover {
-  background: #e69500;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
