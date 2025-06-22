@@ -26,6 +26,16 @@ def sync_playlist(slug):
             raise ValueError(f"Playlist with slug '{slug}' not found")
 
         name, playlist_url, rules_json, is_dynamic = row
+        playlist_id = playlist_url.split("/")[-1]
+
+        sp = get_spotify_client()
+        try:
+            sp.playlist(playlist_id)
+        except Exception as e:
+            log_event("generate_playlist", f"🗑 Playlist '{playlist_id}' not found on Spotify. Deleting from DB.")
+            cur.execute("DELETE FROM playlist_mappings WHERE slug = %s", (slug,))
+            conn.commit()
+            return
 
         if not is_dynamic:
             log_event("generate_playlist", f"⏭ Skipped legacy playlist '{name}' (not dynamic)")
@@ -35,7 +45,6 @@ def sync_playlist(slug):
             log_event("generate_playlist", "⏭ Skipped 'exclusions' playlist (manually managed)")
             return
 
-        playlist_id = playlist_url.split("/")[-1]
         try:
             log_event("generate_playlist", f"📥 Raw rules_json for '{slug}': {rules_json} (type: {type(rules_json)})")
             if isinstance(rules_json, dict):
