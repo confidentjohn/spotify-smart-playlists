@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Logs{% endblock %}
+
+{% block content %}
+<h1>📜 Logs</h1>
+
+<form method="get" action="">
+  <label for="script">Script:</label>
+  <input type="text" id="script" name="script" value="{{ script|default('') }}">
+  
+  <label for="level">Level:</label>
+  <select id="level" name="level">
+    <option value="" {% if not level %}selected{% endif %}>All</option>
+    <option value="DEBUG" {% if level == 'DEBUG' %}selected{% endif %}>DEBUG</option>
+    <option value="INFO" {% if level == 'INFO' %}selected{% endif %}>INFO</option>
+    <option value="WARNING" {% if level == 'WARNING' %}selected{% endif %}>WARNING</option>
+    <option value="ERROR" {% if level == 'ERROR' %}selected{% endif %}>ERROR</option>
+    <option value="CRITICAL" {% if level == 'CRITICAL' %}selected{% endif %}>CRITICAL</option>
+  </select>
+  
+  <label for="sort">Sort:</label>
+  <select id="sort" name="sort">
+    <option value="asc" {% if sort == 'asc' %}selected{% endif %}>Ascending</option>
+    <option value="desc" {% if sort == 'desc' or not sort %}selected{% endif %}>Descending</option>
+  </select>
+  
+  <button type="submit">Filter</button>
+</form>
+
+<table border="1">
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>Level</th>
+      <th>Source</th>
+      <th>Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for log in rows %}
+      <tr>
+        <td>{{ log.timestamp }}</td>
+        <td>{{ log.level }}</td>
+        <td>{{ log.source }}</td>
+        <td>{{ log.message }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div>
+  {% if prev_url %}
+    <a href="{{ prev_url }}">Previous</a>
+  {% endif %}
+  {% if next_url %}
+    <a href="{{ next_url }}">Next</a>
+  {% endif %}
+</div>
+{% endblock %}

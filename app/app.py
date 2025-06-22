@@ -106,6 +106,7 @@ def callback():
 # ─────────────────────────────────────────────────────
 @app.route('/logs')
 def view_logs():
+    from urllib.parse import urlencode
 
     # Parse query parameters
     script = request.args.get("script")
@@ -154,44 +155,24 @@ def view_logs():
     except Exception as e:
         return f"<pre>❌ DB Error: {e}</pre>"
 
-    # Build HTML response
-    html = f"""
-    <h2>📜 Recent Logs</h2>
-    <form method='get' action='/logs'>
-      <label>Script: <input name='script' value='{escape(script or "")}'></label>
-      <label>Level: <input name='level' value='{escape(level or "")}'></label>
-      <label>Sort:
-        <select name='sort'>
-          <option value='desc' {"selected" if sort=="desc" else ""}>Newest first</option>
-          <option value='asc' {"selected" if sort=="asc" else ""}>Oldest first</option>
-        </select>
-      </label>
-      <input type='hidden' name='page' value='1'>
-      <button type='submit'>Filter</button>
-    </form>
-    <p>Page {page}</p>
-    """
-    html += "<table border='1' cellpadding='5'><tr><th>Time</th><th>Script</th><th>Level</th><th>Message</th></tr>"
-    for row in rows:
-        html += "<tr>" + "".join(f"<td>{escape(str(col))}</td>" for col in row) + "</tr>"
-    html += "</table>"
-
-    # Navigation
-    base_url = "/logs?"
+    # Build next and previous page URLs
+    base_params = {}
     if script:
-        base_url += f"script={script}&"
+        base_params['script'] = script
     if level:
-        base_url += f"level={level}&"
+        base_params['level'] = level
     if sort:
-        base_url += f"sort={sort}&"
-    
-    html += f"<p><a href='{base_url}page={page + 1}'>▶️ Next</a>"
-    if page > 1:
-        html += f" | <a href='{base_url}page={page - 1}'>◀️ Prev</a>"
-    html += "</p>"
+        base_params['sort'] = sort
 
-    html += "<p><a href='/logout'>🚪 Logout</a></p>"
-    return html
+    next_params = base_params.copy()
+    next_params['page'] = page + 1
+    next_url = url_for('view_logs') + '?' + urlencode(next_params)
+
+    prev_params = base_params.copy()
+    prev_params['page'] = max(page - 1, 1)
+    prev_url = url_for('view_logs') + '?' + urlencode(prev_params)
+
+    return render_template("logs.html", rows=rows, page=page, script=script, level=level, sort=sort, next_url=next_url, prev_url=prev_url)
 
 @app.route("/logout")
 def logout():
