@@ -49,6 +49,7 @@ def dashboard_playlists():
     return render_template("dashboard_playlists.html", playlists=playlists)
 
 @playlist_dashboard.route("/dashboard/create-playlist", methods=["GET", "POST"])
+@login_required
 def create_playlist():
     if request.method == "POST":
         name = request.form.get("name")

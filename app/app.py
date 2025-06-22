@@ -37,6 +37,18 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# ─────────────────────────────────────────────────────
+# Enforce login on all routes by default, except allowed ones
+from flask_login import current_user
+
+@app.before_request
+def require_login_for_all_routes():
+    allowed_routes = {"login", "callback", "static"}
+    if request.endpoint and any(request.endpoint.startswith(route) for route in allowed_routes):
+        return
+    if not current_user.is_authenticated:
+        return redirect(url_for("login", next=request.path))
+
 class User(UserMixin):
     def __init__(self, id):
         self.id = id
