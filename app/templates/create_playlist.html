@@ -4,6 +4,7 @@
 
 {% block content %}
 <h2>➕ Create New Smart Playlist</h2>
+<div class="page-container">
 <form method="post" class="form-container" onsubmit="console.log('Submitting form with serialized rules:', document.getElementById('rules_json').value); return serializeRules()">
   <label>
     Playlist Name:
@@ -187,4 +188,5 @@
 </form>
 
 <p><a href="/dashboard/playlists" class="btn">⬅️ Back to Playlists</a></p>
+</div>
 {% endblock %}

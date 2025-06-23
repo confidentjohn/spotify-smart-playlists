@@ -92,3 +92,8 @@ th {
 .btn-secondary:hover {
   background-color: #e69500;
 }
+.page-container {
+  padding: 2rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
