@@ -26,9 +26,6 @@
           <td>{{ playlist.last_synced_at.strftime('%Y-%m-%d %H:%M') if playlist.last_synced_at else 'Never' }}</td>
           <td>{{ playlist.status }}</td>
           <td><pre style="white-space: pre-wrap; word-wrap: break-word; max-width: 400px;">{{ playlist.rules }}</pre></td>
-          <td>
-            <a href="/dashboard/playlists/{{ playlist.slug }}/sync" class="btn">Sync Now</a>
-          </td>
         </tr>
       {% endfor %}
     </tbody>
