@@ -10,7 +10,7 @@ import psycopg2
 import spotipy
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
-import startup
+from app import startup
 import requests
 from routes import playlist_dashboard
 
