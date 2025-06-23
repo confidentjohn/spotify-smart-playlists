@@ -10,7 +10,7 @@ import psycopg2
 import spotipy
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
-from utils.create_exclusions_playlist import ensure_exclusions_playlist
+import startup
 import requests
 from routes import playlist_dashboard
 
@@ -58,7 +58,6 @@ def load_user(user_id):
     return User(user_id)
 
 sp = Spotify(auth=get_access_token())
-ensure_exclusions_playlist(sp)
 
 # ─────────────────────────────────────────────────────
 from utils.auth import check_auth
