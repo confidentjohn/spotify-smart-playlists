@@ -60,3 +60,35 @@ th {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.form-input, .form-select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.btn-secondary {
+  background-color: #FFA500;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 6px 4px 6px 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-secondary:hover {
+  background-color: #e69500;
+}

@@ -4,17 +4,17 @@
 
 {% block content %}
 <h2>➕ Create New Smart Playlist</h2>
-<form method="post" onsubmit="console.log('Submitting form with serialized rules:', document.getElementById('rules_json').value); return serializeRules()">
+<form method="post" class="form-container" onsubmit="console.log('Submitting form with serialized rules:', document.getElementById('rules_json').value); return serializeRules()">
   <label>
     Playlist Name:
-    <input type="text" name="name" required>
+    <input type="text" name="name" required class="form-input">
   </label>
   <br><br>
 
 
   <label>
     Track Limit:
-    <select name="limit" required>
+    <select name="limit" required class="form-select">
       <option value="50" selected>50</option>
       <option value="100">100</option>
       <option value="500">500</option>
@@ -29,7 +29,7 @@
     Sort By:
     <div id="sort-container">
       <div class="sort-row">
-        <select name="sort_by[]">
+        <select name="sort_by[]" class="form-select">
           <option value="album_id" selected>Album ID</option>
           <option value="artist">Artist</option>
           <option value="track">Track</option>
@@ -40,14 +40,14 @@
           <option value="disc_number">Disc Number</option>
           <option value="track_number">Track Number</option>
         </select>
-        <select name="sort_direction[]">
+        <select name="sort_direction[]" class="form-select">
           <option value="asc" selected>Ascending</option>
           <option value="desc">Descending</option>
         </select>
-        <button type="button" onclick="removeSort(this)">−</button>
+        <button type="button" class="btn-secondary" onclick="removeSort(this)">−</button>
       </div>
     </div>
-    <button type="button" onclick="addSort()">➕ Add Sort Rule</button>
+    <button type="button" class="btn-secondary" onclick="addSort()">➕ Add Sort Rule</button>
   </label>
 
   <hr>
@@ -57,14 +57,14 @@
     <div class="rule-group" data-match="all">
       <label>
         Match
-        <select class="match-selector">
+        <select class="match-selector form-select">
           <option value="all">all</option>
           <option value="any">any</option>
         </select>
       </label>
       <div class="rule-conditions">
         <div class="rule-row">
-          <select name="field[]">
+          <select name="field[]" class="form-select">
             <option value="artist">Artist</option>
             <option value="album">Album</option>
             <option value="track">Track</option>
@@ -79,7 +79,7 @@
             <option value="first_played">First Played</option>
           </select>
 
-          <select name="operator[]">
+          <select name="operator[]" class="form-select">
             <option value="eq">is</option>
             <option value="is_not">is not</option>
             <option value="contains">contains</option>
@@ -90,12 +90,12 @@
             <option value="lte">less than or equal to</option>
           </select>
 
-          <input type="text" name="value[]">
-          <button type="button" onclick="removeRule(this)">−</button>
+          <input type="text" name="value[]" class="form-input">
+          <button type="button" class="btn-secondary" onclick="removeRule(this)">−</button>
         </div>
       </div>
-      <button type="button" onclick="addRule(this)">➕ Add Rule</button>
-      <button type="button" onclick="addGroup(this)">➕ Add Nested Group</button>
+      <button type="button" class="btn-secondary" onclick="addRule(this)">➕ Add Rule</button>
+      <button type="button" class="btn-secondary" onclick="addGroup(this)">➕ Add Nested Group</button>
     </div>
   </div>
 
