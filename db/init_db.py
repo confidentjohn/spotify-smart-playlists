@@ -143,6 +143,20 @@ CREATE TABLE IF NOT EXISTS canonical_album_matches (
 );
 """)
 
+# ─────────────────────────────────────────────
+# Users table (multi-user support)
+# ─────────────────────────────────────────────
+cur.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    spotify_user_id TEXT UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+""")
+
 conn.commit()
 cur.close()
 conn.close()
