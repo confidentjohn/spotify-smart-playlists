@@ -13,7 +13,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from app import startup
 import requests
 from routes import playlist_dashboard
-from db_utils import get_db_connection
+from utils.db_utils import get_db_connection
 
 # ─────────────────────────────────────────────────────
 # Retrieve a fresh Spotify access token using the refresh token
