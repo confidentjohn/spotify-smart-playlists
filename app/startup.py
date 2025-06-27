@@ -4,7 +4,10 @@ from utils.spotify_auth import get_spotify_client
 
 def run_startup_tasks():
     run_init_db()
-    sp = get_spotify_client()
-    ensure_exclusions_playlist(sp)
+    try:
+        sp = get_spotify_client()
+        ensure_exclusions_playlist(sp)
+    except Exception as e:
+        print(f"⚠️ Spotify client init failed (ignored): {e}")
 
 run_startup_tasks()
