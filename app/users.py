@@ -2,7 +2,7 @@ import os
 import psycopg2
 from werkzeug.security import check_password_hash
 from utils.logger import log_event
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 
 def get_user(username):
     conn = get_db_connection()

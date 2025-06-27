@@ -11,7 +11,7 @@ from datetime import datetime
 def sync_playlist(slug):
     log_event("generate_playlist", f"🔁 Starting sync for playlist slug: '{slug}'")
     try:
-        from utils.db_auth import get_db_connection
+        from utils.db_utils import get_db_connection
         conn = get_db_connection()
         cur = conn.cursor()
 
@@ -105,7 +105,7 @@ def sync_playlist(slug):
 def delete_playlist(slug):
     log_event("delete_playlist", f"🗑 Attempting to delete playlist with slug: '{slug}'")
     try:
-        from utils.db_auth import get_db_connection
+        from utils.db_utils import get_db_connection
         conn = get_db_connection()
         cur = conn.cursor()
 

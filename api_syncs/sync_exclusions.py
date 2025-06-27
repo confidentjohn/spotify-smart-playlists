@@ -12,7 +12,7 @@ sp = get_spotify_client()
 # ─────────────────────────────────────────────
 # Connect to DB
 # ─────────────────────────────────────────────
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 conn = get_db_connection()
 cur = conn.cursor()
 

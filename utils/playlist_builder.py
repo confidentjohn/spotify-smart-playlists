@@ -5,7 +5,7 @@ import requests
 from spotipy import Spotify
 from utils.logger import log_event
 from utils.spotify_auth import get_spotify_client
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 
 def create_and_store_playlist(name, rules_json="{}", limit=None):
     """

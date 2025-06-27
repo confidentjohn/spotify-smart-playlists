@@ -1,5 +1,5 @@
 import os
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 import json
 from datetime import datetime
 

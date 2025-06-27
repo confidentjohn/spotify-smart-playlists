@@ -38,7 +38,7 @@ def safe_spotify_call(func, *args, **kwargs):
 # ─────────────────────────────────────────────
 sp = get_spotify_client()
 
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 
 conn = get_db_connection()
 

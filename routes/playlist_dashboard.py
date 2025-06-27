@@ -8,7 +8,7 @@ from utils.auth import check_auth
 from utils.logger import log_event
 from playlists.playlist_sync import sync_playlist
 import json
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 
 playlist_dashboard = Blueprint("playlist_dashboard", __name__)
 

@@ -53,7 +53,7 @@ def main():
     access_token = get_access_token()
     sp = Spotify(auth=access_token)
 
-    from utils.db_auth import get_db_connection
+    from utils.db_utils import get_db_connection
     conn = get_db_connection()
     cur = conn.cursor()
 

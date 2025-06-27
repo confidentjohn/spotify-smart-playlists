@@ -1,6 +1,6 @@
 import os
 from utils.logger import log_event
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 
 UNIFIED_TRACKS_VIEW = """
 CREATE MATERIALIZED VIEW IF NOT EXISTS unified_tracks AS

@@ -37,7 +37,7 @@ with open(LOCK_FILE, 'w') as lock_file:
 
     sp = get_spotify_client()
 
-    from utils.db_auth import get_db_connection
+    from utils.db_utils import get_db_connection
     conn = get_db_connection()
     cur = conn.cursor()
 

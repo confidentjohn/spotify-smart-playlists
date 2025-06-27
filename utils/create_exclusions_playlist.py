@@ -4,7 +4,7 @@ import psycopg2
 from datetime import datetime
 from utils.logger import log_event
 from utils.spotify_auth import get_spotify_client
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 
 def ensure_exclusions_playlist(sp):
     try:

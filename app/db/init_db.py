@@ -1,6 +1,6 @@
 import os
 import psycopg2
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 
 def run_init_db():
     # Connect to PostgreSQL

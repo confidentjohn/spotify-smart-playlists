@@ -7,7 +7,7 @@ from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
 from utils.spotify_auth import get_spotify_client
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0

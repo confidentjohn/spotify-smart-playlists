@@ -2,7 +2,7 @@
 
 import os
 import psycopg2
-from utils.db_auth import get_db_connection
+from utils.db_utils import get_db_connection
 from playlists.generate_playlist import sync_playlist
 from utils.logger import log_event
 
