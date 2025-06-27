@@ -1,6 +1,6 @@
 import os
-import psycopg2
 from utils.logger import log_event
+from utils.db_auth import get_db_connection
 
 UNIFIED_TRACKS_VIEW = """
 CREATE MATERIALIZED VIEW IF NOT EXISTS unified_tracks AS
@@ -71,14 +71,7 @@ GROUP BY lt.track_id, lt.track_name, lt.track_artist, lt.added_at, lt.liked_at, 
 
 if __name__ == "__main__":
     log_event("build_unified_tracks", "Starting unified_tracks materialized view build...")
-    conn = psycopg2.connect(
-        dbname=os.environ['DB_NAME'],
-        user=os.environ['DB_USER'],
-        password=os.environ['DB_PASSWORD'],
-        host=os.environ['DB_HOST'],
-        port=os.environ.get('DB_PORT', 5432),
-        sslmode='require'
-    )
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("DROP MATERIALIZED VIEW IF EXISTS unified_tracks;")
     cur.execute(UNIFIED_TRACKS_VIEW)

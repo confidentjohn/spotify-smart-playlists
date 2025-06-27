@@ -37,14 +37,8 @@ with open(LOCK_FILE, 'w') as lock_file:
 
     sp = get_spotify_client()
 
-    conn = psycopg2.connect(
-        dbname=os.environ['DB_NAME'],
-        user=os.environ['DB_USER'],
-        password=os.environ['DB_PASSWORD'],
-        host=os.environ['DB_HOST'],
-        port=os.environ.get('DB_PORT', 5432),
-        sslmode='require'
-    )
+    from utils.db_auth import get_db_connection
+    conn = get_db_connection()
     cur = conn.cursor()
 
     now = datetime.now(tz=None).astimezone()  # keep UTC-awareness

@@ -7,6 +7,7 @@ from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from utils.logger import log_event
 from utils.spotify_auth import get_spotify_client
+from utils.db_auth import get_db_connection
 
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0
@@ -30,13 +31,7 @@ def safe_spotify_call(func, *args, **kwargs):
 
 sp = get_spotify_client()
 
-conn = psycopg2.connect(
-    dbname=os.environ['DB_NAME'],
-    user=os.environ['DB_USER'],
-    password=os.environ['DB_PASSWORD'],
-    host=os.environ['DB_HOST'],
-    port=os.environ.get('DB_PORT', 5432),
-)
+conn = get_db_connection()
 cur = conn.cursor()
 
 log_event("sync_album_tracks", "Syncing album tracks for unsynced albums")

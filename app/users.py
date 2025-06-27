@@ -2,15 +2,10 @@ import os
 import psycopg2
 from werkzeug.security import check_password_hash
 from utils.logger import log_event
+from utils.db_auth import get_db_connection
 
 def get_user(username):
-    conn = psycopg2.connect(
-        dbname=os.environ["DB_NAME"],
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-        host=os.environ["DB_HOST"],
-        port=os.environ.get("DB_PORT", 5432)
-    )
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT id, username, email, password_hash FROM users WHERE username = %s", (username,))
     result = cur.fetchone()

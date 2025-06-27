@@ -5,6 +5,7 @@ import requests
 from spotipy import Spotify
 from utils.logger import log_event
 from utils.spotify_auth import get_spotify_client
+from utils.db_auth import get_db_connection
 
 def create_and_store_playlist(name, rules_json="{}", limit=None):
     """
@@ -28,13 +29,7 @@ def create_and_store_playlist(name, rules_json="{}", limit=None):
         track_limit = 9000 if limit is None else limit
 
         # Insert into DB
-        conn = psycopg2.connect(
-            dbname=os.environ["DB_NAME"],
-            user=os.environ["DB_USER"],
-            password=os.environ["DB_PASSWORD"],
-            host=os.environ["DB_HOST"],
-            port=os.environ.get("DB_PORT", 5432),
-        )
+        conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
             INSERT INTO playlist_mappings (slug, name, playlist_id, status, rules, track_count, last_synced_at)

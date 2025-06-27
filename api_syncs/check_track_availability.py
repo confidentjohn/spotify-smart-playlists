@@ -1,5 +1,5 @@
 import os
-import psycopg2
+from utils.db_auth import get_db_connection
 import requests
 import time
 from datetime import datetime, timedelta
@@ -42,13 +42,7 @@ except Exception as e:
     log_event("check_track_availability", f"Could not retrieve user country, defaulting to 'US': {e}", level="warning")
     user_country = "US"
 
-conn = psycopg2.connect(
-    dbname=os.environ['DB_NAME'],
-    user=os.environ['DB_USER'],
-    password=os.environ['DB_PASSWORD'],
-    host=os.environ['DB_HOST'],
-    port=os.environ.get('DB_PORT', 5432),
-)
+conn = get_db_connection()
 cur = conn.cursor()
 
 now = datetime.utcnow()

@@ -2,19 +2,14 @@
 
 import os
 import psycopg2
+from utils.db_auth import get_db_connection
 from playlists.generate_playlist import sync_playlist
 from utils.logger import log_event
 
 def main():
     log_event("update_dynamic_playlists", "🚀 Starting dynamic playlist updater")
     try:
-        conn = psycopg2.connect(
-            dbname=os.environ["DB_NAME"],
-            user=os.environ["DB_USER"],
-            password=os.environ["DB_PASSWORD"],
-            host=os.environ["DB_HOST"],
-            port=os.environ.get("DB_PORT", 5432)
-        )
+        conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("SELECT slug FROM playlist_mappings WHERE is_dynamic = TRUE")
         slugs = [row[0] for row in cur.fetchall()]

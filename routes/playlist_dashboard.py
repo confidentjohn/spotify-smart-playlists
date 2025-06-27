@@ -8,17 +8,9 @@ from utils.auth import check_auth
 from utils.logger import log_event
 from playlists.playlist_sync import sync_playlist
 import json
+from utils.db_auth import get_db_connection
 
 playlist_dashboard = Blueprint("playlist_dashboard", __name__)
-
-def get_db_connection():
-    return psycopg2.connect(
-        dbname=os.environ["DB_NAME"],
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-        host=os.environ["DB_HOST"],
-        port=os.environ.get("DB_PORT", 5432)
-    )
 
 @playlist_dashboard.route("/dashboard/playlists")
 def dashboard_playlists():

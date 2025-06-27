@@ -1,5 +1,4 @@
 import os
-import psycopg2
 import requests
 import time
 from spotipy import Spotify
@@ -54,14 +53,8 @@ def main():
     access_token = get_access_token()
     sp = Spotify(auth=access_token)
 
-    conn = psycopg2.connect(
-        dbname=os.environ['DB_NAME'],
-        user=os.environ['DB_USER'],
-        password=os.environ['DB_PASSWORD'],
-        host=os.environ['DB_HOST'],
-        port=os.environ.get('DB_PORT', 5432),
-        sslmode='require'
-    )
+    from utils.db_auth import get_db_connection
+    conn = get_db_connection()
     cur = conn.cursor()
 
     # Fetch saved albums with artist_id
