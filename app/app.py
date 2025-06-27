@@ -13,6 +13,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from app import startup
 import requests
 from routes import playlist_dashboard
+from db_utils import get_db_connection
 
 # ─────────────────────────────────────────────────────
 # Retrieve a fresh Spotify access token using the refresh token
@@ -144,13 +145,7 @@ def view_logs():
     offset = (page - 1) * page_size
 
     try:
-        conn = psycopg2.connect(
-            dbname=os.environ['DB_NAME'],
-            user=os.environ['DB_USER'],
-            password=os.environ['DB_PASSWORD'],
-            host=os.environ['DB_HOST'],
-            port=os.environ.get('DB_PORT', 5432)
-        )
+        conn = get_db_connection()
         cur = conn.cursor()
 
         # Build dynamic query
