@@ -1,27 +1,21 @@
-import os
-import psycopg2
 from werkzeug.security import check_password_hash
 from utils.logger import log_event
-from utils.db_utils import get_db_connection
+
+# Hardcoded user
+HARDCODED_USER = {
+    "id": 1,
+    "username": "admin",
+    "email": "admin@example.com",
+    # Provided password hash
+    "password_hash": "scrypt:32768:8:1$dxRjboeqkJf2XdGP$fab4ec1b741def46189ad1d02ae1c02a70acc523719d761457270fdf1569876a8c50b8107d02774e41c57b24f0f1c16ddcaeac0da89bd12105fc38f53b711912"
+}
 
 def get_user(username):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id, username, email, password_hash FROM users WHERE username = %s", (username,))
-    result = cur.fetchone()
-    cur.close()
-    conn.close()
-
-    if result:
-        log_event("auth", "debug", f"User '{username}' found in database.")
-        return {
-            "id": result[0],
-            "username": result[1],
-            "email": result[2],
-            "password_hash": result[3],
-        }
+    if username == HARDCODED_USER["username"]:
+        log_event("auth", "debug", f"User '{username}' found in hardcoded config.")
+        return HARDCODED_USER
     else:
-        log_event("auth", "debug", f"User '{username}' not found in database.")
+        log_event("auth", "debug", f"User '{username}' not found in hardcoded config.")
     return None
 
 def validate_user(username, password):
