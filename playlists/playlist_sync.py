@@ -80,7 +80,12 @@ def sync_playlist(slug):
             return
 
         if not track_uris:
-            log_event("generate_playlist", f"⚠️ No tracks found for '{slug}' — skipping playlist update.")
+            log_event("generate_playlist", f"⚠️ No tracks found for '{slug}' — clearing playlist.")
+            sp = get_spotify_client()
+            user = sp.current_user()
+            sp.user_playlist_replace_tracks(user["id"], playlist_id, [])
+            cur.execute("UPDATE playlist_mappings SET track_count = 0, last_synced_at = %s WHERE slug = %s", (datetime.utcnow(), slug))
+            conn.commit()
             return
 
         log_event("generate_playlist", f"🎧 Retrieved {len(track_uris)} tracks for '{slug}'")

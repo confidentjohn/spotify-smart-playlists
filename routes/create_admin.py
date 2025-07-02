@@ -17,7 +17,7 @@ def create_admin():
             session["user_id"] = user_id
             session["username"] = username
             log_event("auth", "info", f"User '{username}' auto-logged in after setup.", {"user_id": user_id})
-            return redirect(url_for("playlist_dashboard.dashboard"))
+            return redirect(url_for("playlist_dashboard.dashboard_playlists"))
         except Exception as e:
             error = str(e)
             return render_template("create_admin.html", error=error)
