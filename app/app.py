@@ -13,7 +13,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from app import startup
 import requests
 from routes import playlist_dashboard
-from routes.create_admin.py import setup_bp
+from routes.create_admin import setup_bp
 from utils.db_utils import get_db_connection
 
 # ─────────────────────────────────────────────────────
