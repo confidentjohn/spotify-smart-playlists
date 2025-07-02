@@ -13,7 +13,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from app import startup
 import requests
 from routes import playlist_dashboard
-from routes.create_admin import setup_bp
+from routes.create_admin import create_admin_bp
 from utils.db_utils import get_db_connection
 
 # ─────────────────────────────────────────────────────
@@ -34,7 +34,7 @@ def get_access_token():
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your preferred secure method
 app.register_blueprint(playlist_dashboard)
-app.register_blueprint(setup_bp)
+app.register_blueprint(create_admin_bp)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -46,7 +46,7 @@ from flask_login import current_user
 
 @app.before_request
 def require_login_for_all_routes():
-    allowed_routes = {"login", "callback", "static", "setup", "setup.create_admin"}
+    allowed_routes = {"login", "callback", "static", "create_admin"}
     if request.endpoint and any(request.endpoint.startswith(route) for route in allowed_routes):
         return
     if not current_user.is_authenticated:
