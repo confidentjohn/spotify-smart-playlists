@@ -1,22 +1,37 @@
 from werkzeug.security import check_password_hash
 from utils.logger import log_event
+import psycopg2
+import os
 
-# Hardcoded user
-HARDCODED_USER = {
-    "id": 1,
-    "username": "admin",
-    "email": "admin@example.com",
-    # Provided password hash
-    "password_hash": "scrypt:32768:8:1$dxRjboeqkJf2XdGP$fab4ec1b741def46189ad1d02ae1c02a70acc523719d761457270fdf1569876a8c50b8107d02774e41c57b24f0f1c16ddcaeac0da89bd12105fc38f53b711912"
-}
+def get_db_connection():
+    return psycopg2.connect(
+        dbname=os.environ["DB_NAME"],
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"],
+        host=os.environ["DB_HOST"],
+        port=os.environ.get("DB_PORT", 5432),
+    )
 
 def get_user(username):
-    if username == HARDCODED_USER["username"]:
-        log_event("auth", "debug", f"User '{username}' found in hardcoded config.")
-        return HARDCODED_USER
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, username, email, password_hash FROM users WHERE username = %s", (username,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if row:
+        user = {
+            "id": row[0],
+            "username": row[1],
+            "email": row[2],
+            "password_hash": row[3]
+        }
+        log_event("auth", "debug", f"User '{username}' found in database.")
+        return user
     else:
-        log_event("auth", "debug", f"User '{username}' not found in hardcoded config.")
-    return None
+        log_event("auth", "debug", f"User '{username}' not found in database.")
+        return None
 
 def validate_user(username, password):
     user = get_user(username)
