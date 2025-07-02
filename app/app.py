@@ -120,14 +120,34 @@ def callback():
     refresh_token = token_info.get("refresh_token")
     access_token = token_info.get("access_token")
 
-    if not refresh_token:
-        return "❌ No refresh token received", 400
+    if not refresh_token or not access_token:
+        return "❌ Missing Spotify token(s)", 400
 
-    # You can store tokens here in session or database
-    print("Access Token:", access_token)
-    print("Refresh Token:", refresh_token)
+    # Use access token to get Spotify user ID
+    sp = Spotify(auth=access_token)
+    spotify_user = sp.current_user()
+    spotify_user_id = spotify_user["id"]
 
-    flash("Spotify authentication successful!", "success")
+    # Get current app user from session
+    from flask_login import current_user
+    app_user_id = current_user.id
+
+    # Store Spotify info in DB
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE users
+            SET spotify_user_id = %s, spotify_refresh_token = %s
+            WHERE username = %s
+        """, (spotify_user_id, refresh_token, app_user_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash("Spotify authentication successful!", "success")
+    except Exception as e:
+        return f"❌ Failed to save Spotify info: {e}", 500
+
     return redirect(url_for("home"))
 
 # ─────────────────────────────────────────────────────
