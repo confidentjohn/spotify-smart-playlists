@@ -3,6 +3,7 @@ from app.users import create_user
 from utils.logger import log_event
 
 setup_bp = Blueprint("setup", __name__)
+create_admin_bp = setup_bp
 
 @setup_bp.route("/create-admin", methods=["GET", "POST"])
 def create_admin():
