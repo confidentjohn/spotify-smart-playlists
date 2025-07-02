@@ -70,11 +70,19 @@ def sync_playlist(slug):
             cur.execute(query)
             rows = cur.fetchall()
             log_event("generate_playlist", f"📊 Fetched rows: {len(rows)} | Sample: {rows[:5]}")
-            if not rows or not all(isinstance(row, (list, tuple)) and len(row) > 0 for row in rows):
-                log_event("generate_playlist", f"❌ Fetched rows are empty or malformed: {rows}", level="error")
-                return
             track_uris = [row[0] for row in rows if row and row[0]]
             log_event("generate_playlist", f"📦 Track URIs fetched: {track_uris}")
+
+            # Always clear the playlist before re-adding
+            sp = get_spotify_client()
+            user = sp.current_user()
+            sp.user_playlist_replace_tracks(user["id"], playlist_id, [])
+
+            if not track_uris:
+                log_event("generate_playlist", f"⚠️ No tracks found for '{slug}' — playlist was cleared.")
+                cur.execute("UPDATE playlist_mappings SET track_count = 0, last_synced_at = %s WHERE slug = %s", (datetime.utcnow(), slug))
+                conn.commit()
+                return
         except Exception as query_error:
             log_event("generate_playlist", f"❌ Error building/executing track query for '{slug}': {query_error} — rules: {rules}", level="error")
             return
