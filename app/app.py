@@ -146,7 +146,10 @@ def callback():
         conn.close()
         flash("Spotify authentication successful!", "success")
     except Exception as e:
-        return f"❌ Failed to save Spotify info: {e}", 500
+        import traceback
+        print("❌ Exception in /callback DB update:")
+        traceback.print_exc()
+        return f"&lt;pre&gt;❌ Failed to save Spotify info: {e}&lt;/pre&gt;", 500
 
     return redirect(url_for("home"))
 
