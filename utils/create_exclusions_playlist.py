@@ -11,8 +11,7 @@ def ensure_exclusions_playlist(sp):
         conn = get_db_connection()
         log_event("init", "🔌 Connected to DB.")
         cur = conn.cursor()
-        #cur.execute("SELECT playlist_id FROM playlist_mappings WHERE slug = 'exclusions'")
-        cur.execute("SELECT playlist_id FROM playlist_mappings WHERE slug = 'exclusions_test'")
+        cur.execute("SELECT playlist_id FROM playlist_mappings WHERE slug = 'exclusions'")
         result = cur.fetchone()
         log_event("init", f"🧪 Checked for existing exclusions playlist. Found: {result}")
 
@@ -27,21 +26,20 @@ def ensure_exclusions_playlist(sp):
         playlist_url = playlist["external_urls"]["spotify"]
         log_event("init", f"📋 Created Spotify playlist: {playlist_url}")
 
-        log_event("init", f"📌 Inserting playlist: slug='exclusions_test', name='Exclusions TEST'")
+        log_event("init", f"📌 Inserting playlist: slug='exclusions', name='Exclusions'")
         log_event("init", "📝 Inserting new playlist record into DB.")
         cur.execute("""
-            INSERT INTO playlist_mappings (slug, name, playlist_id, status, rules, track_count, last_synced_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO playlist_mappings (slug, name, playlist_id, status, rules, track_count, last_synced_at, is_dynamic)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            # "exclusions",
-            # "Exclusions",
-            "exclusions_test",
-            "Exclusions TEST",
+            "exclusions",
+            "Exclusions",
             playlist_url,
             "active",
             "{}",
             0,
-            datetime.utcnow()
+            datetime.utcnow(),
+            False  # <-- explicitly set to False
         ))
         conn.commit()
 
