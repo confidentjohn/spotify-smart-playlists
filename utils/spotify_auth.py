@@ -2,10 +2,10 @@ import os
 import requests
 from spotipy import Spotify
 import psycopg2
-from utils.db_utils import get_conn
+from utils.db_utils import get_db_connection
 
 def get_spotify_client():
-    conn = get_conn()
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT id, spotify_refresh_token FROM users")
     users = cur.fetchall()
