@@ -17,6 +17,7 @@ def create_admin():
             session["user_id"] = user_id
             session["username"] = username
             log_event("auth", "info", f"User '{username}' auto-logged in after setup.", {"user_id": user_id})
+            session["pending_user"] = username
             return redirect(url_for("login_spotify"))
         except Exception as e:
             error = str(e)

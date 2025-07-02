@@ -103,6 +103,9 @@ def login():
 # Spotify OAuth login route
 @app.route("/login/spotify")
 def login_spotify():
+    from flask_login import current_user
+    if current_user.is_authenticated:
+        session["pending_user"] = current_user.id
     auth_url = get_spotify_oauth().get_authorize_url()
     return redirect(auth_url)
 
@@ -130,7 +133,7 @@ def callback():
 
     # Get current app user from session
     from flask_login import current_user
-    app_user_id = current_user.id
+    app_user_id = current_user.id if current_user.is_authenticated else session.get("pending_user")
 
     # Store Spotify info in DB
     try:
