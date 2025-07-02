@@ -47,15 +47,15 @@ def validate_user(username, password):
 def create_user(username, password, email=None):
     conn = get_db_connection()
     cur = conn.cursor()
-    # Enforce max of 2 users (for testing, can delete from DB manually)
+    # Enforce max of 1 user
     cur.execute("SELECT COUNT(*) FROM users")
     user_count = cur.fetchone()[0]
 
-    if user_count >= 2:
+    if user_count >= 1:
         cur.close()
         conn.close()
         log_event("auth", "warning", f"Attempt to create user '{username}' blocked: user limit reached.")
-        raise Exception("User limit reached. Only two users allowed.")
+        raise Exception("User limit reached. Only one user allowed.")
 
     password_hash = generate_password_hash(password)
     cur.execute(
