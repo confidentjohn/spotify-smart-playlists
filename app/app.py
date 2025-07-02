@@ -46,7 +46,7 @@ from flask_login import current_user
 
 @app.before_request
 def require_login_for_all_routes():
-    allowed_routes = {"login", "callback", "static", "setup.create_admin"}
+    allowed_routes = {"login", "callback", "static", "setup", "setup.create_admin"}
     if request.endpoint and any(request.endpoint.startswith(route) for route in allowed_routes):
         return
     if not current_user.is_authenticated:
