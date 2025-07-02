@@ -154,6 +154,15 @@ def callback():
         traceback.print_exc()
         return f"&lt;pre&gt;❌ Failed to save Spotify info: {e}&lt;/pre&gt;", 500
 
+    # Create exclusions playlist if not already present
+    try:
+        from utils.create_exclusions_playlist import ensure_exclusions_playlist
+        ensure_exclusions_playlist(sp)
+    except Exception as e:
+        import traceback
+        print("❌ Failed to create exclusions playlist:")
+        traceback.print_exc()
+
     return redirect(url_for("home"))
 
 # ─────────────────────────────────────────────────────
