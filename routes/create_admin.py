@@ -5,7 +5,7 @@ from utils.logger import log_event
 setup_bp = Blueprint("setup", __name__)
 
 @setup_bp.route("/create-admin", methods=["GET", "POST"])
-def setup():
+def create_admin():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
