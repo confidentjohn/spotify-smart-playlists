@@ -11,6 +11,7 @@ import spotipy
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from app import startup
+from utils.spotify_auth import get_spotify_client
 import requests
 from routes import playlist_dashboard
 from routes.create_admin import create_admin_bp
@@ -60,7 +61,6 @@ class User(UserMixin):
 def load_user(user_id):
     return User(user_id)
 
-sp = Spotify(auth=get_access_token())
 
 # ─────────────────────────────────────────────────────
 
@@ -127,7 +127,7 @@ def callback():
         return "❌ Missing Spotify token(s)", 400
 
     # Use access token to get Spotify user ID
-    sp = Spotify(auth=access_token)
+    sp = get_spotify_client(access_token)
     spotify_user = sp.current_user()
     spotify_user_id = spotify_user["id"]
 
