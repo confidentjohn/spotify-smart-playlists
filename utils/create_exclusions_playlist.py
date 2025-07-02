@@ -11,7 +11,8 @@ def ensure_exclusions_playlist(sp):
         conn = get_db_connection()
         log_event("init", "🔌 Connected to DB.")
         cur = conn.cursor()
-        cur.execute("SELECT playlist_id FROM playlist_mappings WHERE slug = 'exclusions'")
+        #cur.execute("SELECT playlist_id FROM playlist_mappings WHERE slug = 'exclusions'")
+        cur.execute("SELECT playlist_id FROM playlist_mappings WHERE slug = 'exclusions_test'")
         result = cur.fetchone()
         log_event("init", f"🧪 Checked for existing exclusions playlist. Found: {result}")
 
