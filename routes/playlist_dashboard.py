@@ -4,7 +4,6 @@ import psycopg2
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from utils.playlist_builder import create_and_store_playlist
-from utils.auth import check_auth
 from utils.logger import log_event
 from playlists.playlist_sync import sync_playlist
 import json

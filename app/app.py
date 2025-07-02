@@ -61,7 +61,6 @@ def load_user(user_id):
 sp = Spotify(auth=get_access_token())
 
 # ─────────────────────────────────────────────────────
-from utils.auth import check_auth
 
 def run_script(script_name):
     print(f"🔧 Running {script_name}", flush=True)
