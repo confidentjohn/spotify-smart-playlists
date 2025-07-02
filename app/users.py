@@ -1,4 +1,4 @@
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from utils.logger import log_event
 import psycopg2
 import os
@@ -41,3 +41,30 @@ def validate_user(username, password):
     else:
         log_event("auth", "warning", f"Failed login attempt for user '{username}'.")
         return False
+
+
+# Function to create a new user
+def create_user(username, password, email=None):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Enforce max of 2 users (for testing, can delete from DB manually)
+    cur.execute("SELECT COUNT(*) FROM users")
+    user_count = cur.fetchone()[0]
+
+    if user_count >= 2:
+        cur.close()
+        conn.close()
+        log_event("auth", "warning", f"Attempt to create user '{username}' blocked: user limit reached.")
+        raise Exception("User limit reached. Only two users allowed.")
+
+    password_hash = generate_password_hash(password)
+    cur.execute(
+        "INSERT INTO users (username, password_hash, email) VALUES (%s, %s, %s) RETURNING id",
+        (username, password_hash, email)
+    )
+    user_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    log_event("auth", "info", f"New user '{username}' created.", {"user_id": user_id})
+    return user_id

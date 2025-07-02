@@ -13,6 +13,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from app import startup
 import requests
 from routes import playlist_dashboard
+from routes.setup import setup_bp
 from utils.db_utils import get_db_connection
 
 # ─────────────────────────────────────────────────────
@@ -33,6 +34,7 @@ def get_access_token():
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your preferred secure method
 app.register_blueprint(playlist_dashboard)
+app.register_blueprint(setup_bp)
 
 login_manager = LoginManager()
 login_manager.init_app(app)

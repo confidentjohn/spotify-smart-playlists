@@ -1,0 +1,7 @@
+<form method="POST">
+  <label>Username: <input type="text" name="username" required></label><br>
+  <label>Password: <input type="password" name="password" required></label><br>
+  <label>Email (optional): <input type="email" name="email"></label><br>
+  <button type="submit">Create Account</button>
+  {% if error %}<p style="color:red">{{ error }}</p>{% endif %}
+</form>
