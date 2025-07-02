@@ -25,8 +25,10 @@ def ensure_exclusions_playlist(sp):
             INSERT INTO playlist_mappings (slug, name, playlist_id, status, rules, track_count, last_synced_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (
-            "exclusions",
-            "Exclusions",
+            # "exclusions",
+            # "Exclusions",
+            "exclusions_test",
+            "Exclusions TEST",
             playlist_url,
             "active",
             "{}",
