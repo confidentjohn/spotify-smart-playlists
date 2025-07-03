@@ -1,3 +1,4 @@
+from utils.logger import log_event
 from spotipy.oauth2 import SpotifyOAuth
 import os
 import requests
@@ -20,6 +21,7 @@ def get_spotify_client():
 
     user_id, refresh_token = users[0]
     if not refresh_token:
+        log_event("auth", "error", f"❌ User {user_id} does not have a Spotify refresh token.")
         raise Exception(f"❌ User {user_id} does not have a Spotify refresh token.")
 
     token_response = requests.post(
