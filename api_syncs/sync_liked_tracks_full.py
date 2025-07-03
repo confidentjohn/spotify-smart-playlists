@@ -129,13 +129,6 @@ with open(LOCK_FILE, 'w') as lock_file:
     log_event("sync_liked_tracks_full", f"{len(liked_track_ids)} liked tracks synced")
     log_event("sync_liked_tracks_full", f"Finished scanning liked tracks. Total fetched: {counter}")
 
-    # Removed "Recheck orphaned liked tracks not in any saved album" block as per instructions
-
-    # Removed "Recheck stale tracks in DB not updated in 60+ days" block as per instructions
-
-    # Removed "Update unliked tracks" and "Remove orphaned unliked tracks" blocks as per instructions
-
-
     conn.commit()
     log_event("sync_liked_tracks_full", f"✅ {updated_liked_tracks} tracks updated")
     log_event("sync_liked_tracks_full", f"⏭️ {skipped_due_to_freshness} tracks skipped due to recent check")

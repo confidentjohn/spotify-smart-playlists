@@ -1,3 +1,4 @@
+from spotipy.oauth2 import SpotifyOAuth
 import os
 import requests
 from spotipy import Spotify
@@ -32,3 +33,13 @@ def get_spotify_client():
     )
     token_response.raise_for_status()
     return Spotify(auth=token_response.json()["access_token"])
+
+
+# Returns a SpotifyOAuth instance using environment variables
+def get_spotify_oauth():
+    return SpotifyOAuth(
+        client_id=os.environ['SPOTIFY_CLIENT_ID'],
+        client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
+        redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
+        scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public"
+    )

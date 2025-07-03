@@ -11,26 +11,12 @@ import spotipy
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from app import startup
-from utils.spotify_auth import get_spotify_client
+from utils.spotify_auth import get_spotify_client, get_spotify_oauth
 import requests
 from routes import playlist_dashboard
 from routes.create_admin import create_admin_bp
 from utils.db_utils import get_db_connection
 
-# ─────────────────────────────────────────────────────
-# Retrieve a fresh Spotify access token using the refresh token
-def get_access_token():
-    token_response = requests.post(
-        "https://accounts.spotify.com/api/token",
-        data={
-            "grant_type": "refresh_token",
-            "refresh_token": os.environ["SPOTIFY_REFRESH_TOKEN"],
-            "client_id": os.environ["SPOTIFY_CLIENT_ID"],
-            "client_secret": os.environ["SPOTIFY_CLIENT_SECRET"],
-        }
-    )
-    token_response.raise_for_status()
-    return token_response.json()["access_token"]
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your preferred secure method
@@ -72,13 +58,6 @@ def run_script(script_name):
     except Exception as e:
         return f"<pre>Error: {str(e)}</pre>"
 
-def get_spotify_oauth():
-    return SpotifyOAuth(
-        client_id=os.environ['SPOTIFY_CLIENT_ID'],
-        client_secret=os.environ['SPOTIFY_CLIENT_SECRET'],
-        redirect_uri=os.environ['SPOTIFY_REDIRECT_URI'],
-        scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public"
-    )
 
 # ─────────────────────────────────────────────────────
 
@@ -237,5 +216,7 @@ def logout():
 
 # ─────────────────────────────────────────────────────
 if __name__ == "__main__":
+    from utils.spotify_auth import get_spotify_client
+    sp = get_spotify_client()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

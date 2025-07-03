@@ -2,15 +2,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from utils.logger import log_event
 import psycopg2
 import os
-
-def get_db_connection():
-    return psycopg2.connect(
-        dbname=os.environ["DB_NAME"],
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-        host=os.environ["DB_HOST"],
-        port=os.environ.get("DB_PORT", 5432),
-    )
+from utils.db_utils import get_db_connection
 
 def get_user(username):
     conn = get_db_connection()

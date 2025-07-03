@@ -44,7 +44,7 @@ conn = get_db_connection()
 
 cur = conn.cursor()
 
-limit = 20
+limit = 50
 offset = 0
 current_album_ids = set()
 
