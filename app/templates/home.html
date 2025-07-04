@@ -9,7 +9,7 @@
     <li><a href="/logs" class="btn">📜 View Logs</a></li>
 </ul>
 {% if can_sync %}
-  <form method="POST" action="{{ url_for('dashboard.run_initial_sync') }}">
+  <form method="POST" action="{{ url_for('playlist_dashboard.run_initial_sync') }}">
     <button type="submit">🔁 Run Initial Sync</button>
   </form>
 {% endif %}
