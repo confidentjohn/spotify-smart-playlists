@@ -71,3 +71,15 @@ def has_refresh_token(user_id):
     cur.close()
     conn.close()
     return row and row[0] is not None
+
+def get_user_by_username(username):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, username, email FROM users WHERE username = %s", (username,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if row:
+        return {"id": row[0], "username": row[1], "email": row[2]}
+    return None

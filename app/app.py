@@ -135,7 +135,7 @@ def callback():
         cur.execute("""
             UPDATE users
             SET spotify_user_id = %s, spotify_refresh_token = %s
-            WHERE username = %s
+            WHERE id = %s
         """, (spotify_user_id, refresh_token, app_user_id))
         conn.commit()
         cur.close()
