@@ -29,7 +29,8 @@ def run_initial_syncs(user_id: int):
                 ["python", f"api_syncs/{job}", "--user_id", str(user_id)],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                env={**os.environ, "PYTHONPATH": "."}
             )
             log_event("initial_sync", f"✅ Completed {job} for user {user_id}\n{result.stdout}")
         except subprocess.CalledProcessError as e:
