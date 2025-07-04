@@ -13,7 +13,8 @@ def user_has_synced_before(user_id):
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT 1 FROM unified_tracks WHERE user_id = %s LIMIT 1", (user_id,))
+        # No user_id filter since the unified_tracks table doesn't have that column
+        cur.execute("SELECT 1 FROM unified_tracks LIMIT 1")
         result = cur.fetchone()
         cur.close()
         conn.close()
