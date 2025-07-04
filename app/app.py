@@ -68,8 +68,23 @@ def home():
     from flask_login import current_user
     user_id = current_user.get_id() if current_user.is_authenticated else None
     can_sync = has_refresh_token(user_id) if user_id else False
-    print(f"[DEBUG] user_id={user_id}, can_sync={can_sync}", flush=True)
-    return render_template("home.html", can_sync=can_sync)
+
+    # Determine if unified_tracks has any records for this user
+    is_first_sync = True
+    if user_id:
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM unified_tracks WHERE user_id = %s", (user_id,))
+            count = cur.fetchone()[0]
+            is_first_sync = count == 0
+            cur.close()
+            conn.close()
+        except Exception as e:
+            print(f"❌ Failed unified_tracks check: {e}", flush=True)
+
+    print(f"[DEBUG] user_id={user_id}, can_sync={can_sync}, is_first_sync={is_first_sync}", flush=True)
+    return render_template("home.html", can_sync=can_sync, is_first_sync=is_first_sync)
 
 
 @app.route("/login", methods=["GET", "POST"])

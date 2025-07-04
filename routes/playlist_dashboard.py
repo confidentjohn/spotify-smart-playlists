@@ -9,14 +9,26 @@ from playlists.playlist_sync import sync_playlist
 import json
 from utils.db_utils import get_db_connection
 
-def run_initial_syncs(user_id: int):
+def user_has_synced_before(user_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT 1 FROM unified_tracks WHERE user_id = %s LIMIT 1", (user_id,))
+        result = cur.fetchone()
+        cur.close()
+        conn.close()
+        return result is not None
+    except Exception as e:
+        log_event("initial_sync", f"❌ Error checking sync status: {e}", level="error")
+        return False
+
+def run_initial_syncs(user_id: int, is_initial=True):
     import subprocess
 
     full_job_sequence = [
         "sync_saved_albums.py",
         "sync_album_tracks.py",
-        "sync_liked_tracks.py",
-        #"sync_liked_tracks_full.py",
+        "sync_liked_tracks_full.py" if is_initial else "sync_liked_tracks.py",
         "check_track_availability.py",
         "sync_exclusions.py",
         "materialized_views.py",
