@@ -14,4 +14,8 @@
   <label>Password: <input type="password" name="password" required></label><br>
   <button type="submit" class="btn">Login</button>
 </form>
+{% if show_create_admin_link %}
+  <p><a href="{{ url_for('setup.create_admin') }}">Create Admin Account</a></p>
+  <p class="note">No users found. You must create an admin account before logging in.</p>
+{% endif %}
 {% endblock %}

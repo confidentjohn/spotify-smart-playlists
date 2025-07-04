@@ -60,3 +60,14 @@ def create_user(username, password, email=None):
     conn.close()
     log_event("auth", "info", f"New user '{username}' created.", {"user_id": user_id})
     return user_id
+
+
+# Check if user has a Spotify refresh token
+def has_refresh_token(user_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT spotify_refresh_token FROM users WHERE id = %s", (user_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return row and row[0] is not None

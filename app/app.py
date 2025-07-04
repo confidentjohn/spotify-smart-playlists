@@ -3,6 +3,7 @@ from flask import render_template
 from flask import redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
 from app.users import validate_user
+from app.users import has_refresh_token
 from markupsafe import escape
 import os
 import subprocess
@@ -63,7 +64,9 @@ def run_script(script_name):
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    user_id = session.get("user_id")
+    can_sync = has_refresh_token(user_id) if user_id else False
+    return render_template("home.html", can_sync=can_sync)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -76,7 +79,14 @@ def login():
             login_user(user)
             return redirect(url_for("home"))
         flash("Invalid credentials", "error")
-    return render_template("login.html")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM users")
+    user_count = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    show_create_admin_link = user_count == 0
+    return render_template("login.html", show_create_admin_link=show_create_admin_link)
 
 # ─────────────────────────────────────────────────────
 # Spotify OAuth login route
