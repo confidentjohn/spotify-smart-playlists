@@ -64,7 +64,8 @@ def run_script(script_name):
 
 @app.route("/")
 def home():
-    user_id = session.get("user_id")
+    from flask_login import current_user
+    user_id = current_user.get_id() if current_user.is_authenticated else None
     can_sync = has_refresh_token(user_id) if user_id else False
     print(f"[DEBUG] user_id={user_id}, can_sync={can_sync}", flush=True)
     return render_template("home.html", can_sync=can_sync)
