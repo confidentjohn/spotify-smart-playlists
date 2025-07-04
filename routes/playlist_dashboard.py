@@ -147,8 +147,10 @@ def edit_playlist(slug):
 @login_required
 def run_initial_sync():
     user_id = current_user.get_id()
+    is_initial = not user_has_synced_before(user_id)
+    log_event("initial_sync", f"🔍 Determined is_initial={is_initial} for user {user_id}")
     log_event("initial_sync", f"🔔 Triggered sync for user {user_id}")
-    run_initial_syncs(user_id)
+    run_initial_syncs(user_id, is_initial=is_initial)
     flash("✅ Initial sync completed successfully.")
     log_event("initial_sync", f"✅ Sync finished for user {user_id}")
     return redirect(url_for("home"))
