@@ -75,9 +75,8 @@ def home():
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-            cur.execute("SELECT COUNT(*) FROM unified_tracks WHERE user_id = %s", (user_id,))
-            count = cur.fetchone()[0]
-            is_first_sync = count == 0
+            cur.execute("SELECT 1 FROM unified_tracks WHERE user_id = %s LIMIT 1", (user_id,))
+            is_first_sync = cur.fetchone() is None
             cur.close()
             conn.close()
         except Exception as e:
