@@ -66,6 +66,7 @@ def run_script(script_name):
 def home():
     user_id = session.get("user_id")
     can_sync = has_refresh_token(user_id) if user_id else False
+    print(f"[DEBUG] user_id={user_id}, can_sync={can_sync}", flush=True)
     return render_template("home.html", can_sync=can_sync)
 
 
