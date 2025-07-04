@@ -3,6 +3,7 @@ from flask import render_template
 from flask import redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
 from app.users import validate_user
+from app.users import get_user_by_username
 from app.users import has_refresh_token
 from markupsafe import escape
 import os
@@ -77,7 +78,8 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
         if validate_user(username, password):
-            user = User(username)
+            user_data = get_user_by_username(username)
+            user = User(user_data["id"])
             login_user(user)
             return redirect(url_for("home"))
         flash("Invalid credentials", "error")
