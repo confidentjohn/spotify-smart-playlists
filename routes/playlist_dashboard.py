@@ -8,7 +8,20 @@ from utils.logger import log_event
 from playlists.playlist_sync import sync_playlist
 import json
 from utils.db_utils import get_db_connection
-from utils.onboarding import run_initial_syncs
+
+def run_initial_syncs(user_id: int):
+    import subprocess
+
+    jobs = [
+        "sync_albums.py",
+        "sync_album_tracks.py",
+        "sync_liked_tracks.py",
+        "check_availability.py",
+    ]
+    for job in jobs:
+        print(f"🔁 Running {job} for user {user_id}")
+        subprocess.run(["python", f"jobs/{job}", "--user_id", str(user_id)])
+
 
 playlist_dashboard = Blueprint("playlist_dashboard", __name__)
 
