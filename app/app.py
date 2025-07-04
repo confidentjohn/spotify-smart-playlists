@@ -69,13 +69,13 @@ def home():
     user_id = current_user.get_id() if current_user.is_authenticated else None
     can_sync = has_refresh_token(user_id) if user_id else False
 
-    # Determine if unified_tracks has any records for this user
+    # Determine if unified_tracks has any records at all
     is_first_sync = True
     if user_id:
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-            cur.execute("SELECT 1 FROM unified_tracks WHERE user_id = %s LIMIT 1", (user_id,))
+            cur.execute("SELECT 1 FROM unified_tracks LIMIT 1")
             is_first_sync = cur.fetchone() is None
             cur.close()
             conn.close()
