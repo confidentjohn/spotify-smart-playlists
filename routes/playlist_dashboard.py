@@ -28,7 +28,7 @@ def run_initial_syncs(user_id: int, is_initial=True):
     full_job_sequence = [
         "sync_saved_albums.py",
         "sync_album_tracks.py",
-        "sync_liked_tracks_full.py" if is_initial else "sync_liked_tracks.py",
+        "sync_liked_tracks.py" if not is_initial else "sync_liked_tracks_full.py",
         "check_track_availability.py",
         "sync_exclusions.py",
         "materialized_views.py",
@@ -147,6 +147,8 @@ def edit_playlist(slug):
 @login_required
 def run_initial_sync():
     user_id = current_user.get_id()
+    log_event("initial_sync", f"🔔 Triggered sync for user {user_id}")
     run_initial_syncs(user_id)
     flash("✅ Initial sync completed successfully.")
+    log_event("initial_sync", f"✅ Sync finished for user {user_id}")
     return redirect(url_for("home"))
