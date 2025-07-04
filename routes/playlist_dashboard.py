@@ -12,15 +12,19 @@ from utils.db_utils import get_db_connection
 def run_initial_syncs(user_id: int):
     import subprocess
 
-    jobs = [
-        "sync_albums.py",
+    full_job_sequence = [
+        "sync_saved_albums.py",
         "sync_album_tracks.py",
         "sync_liked_tracks.py",
-        "check_availability.py",
+        #"sync_liked_tracks_full.py",
+        "check_track_availability.py",
+        "sync_exclusions.py",
+        "materialized_views.py",
     ]
-    for job in jobs:
+
+    for job in full_job_sequence:
         print(f"🔁 Running {job} for user {user_id}")
-        subprocess.run(["python", f"jobs/{job}", "--user_id", str(user_id)])
+        subprocess.run(["python", f"api_syncs/{job}", "--user_id", str(user_id)])
 
 
 playlist_dashboard = Blueprint("playlist_dashboard", __name__)
