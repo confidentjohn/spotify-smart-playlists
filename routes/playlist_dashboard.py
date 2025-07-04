@@ -2,12 +2,13 @@
 import os
 import psycopg2
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from utils.playlist_builder import create_and_store_playlist
 from utils.logger import log_event
 from playlists.playlist_sync import sync_playlist
 import json
 from utils.db_utils import get_db_connection
+from utils.onboarding import run_initial_syncs
 
 playlist_dashboard = Blueprint("playlist_dashboard", __name__)
 
@@ -100,3 +101,13 @@ def edit_playlist(slug):
         match=rules_data.get("match", "all"),
         conditions=rules_data.get("conditions", [])
     )
+
+
+# Route to trigger initial sync for the current user
+@playlist_dashboard.route("/run-initial-sync", methods=["POST"])
+@login_required
+def run_initial_sync():
+    user_id = current_user.get_id()
+    run_initial_syncs(user_id)
+    flash("✅ Initial sync completed successfully.")
+    return redirect(url_for("home"))
