@@ -6,9 +6,10 @@
 <h1>Welcome to Your Spotify Tracker</h1>
 
 {% if can_sync %}
-  <div style="margin-bottom: 1em;">
+<ul>
+  <li>
     <form method="POST" action="{{ url_for('playlist_dashboard.run_initial_sync') }}">
-      <button type="submit" class="btn primary-btn">
+      <button type="submit" class="btn">
         {% if is_first_sync %}
           🔁 Run Initial Sync
         {% else %}
@@ -16,7 +17,8 @@
         {% endif %}
       </button>
     </form>
-  </div>
+  </li>
+</ul>
 {% endif %}
 
 <ul>
