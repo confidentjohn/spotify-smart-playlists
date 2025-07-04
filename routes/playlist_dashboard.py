@@ -23,8 +23,17 @@ def run_initial_syncs(user_id: int):
     ]
 
     for job in full_job_sequence:
-        print(f"🔁 Running {job} for user {user_id}")
-        subprocess.run(["python", f"api_syncs/{job}", "--user_id", str(user_id)])
+        try:
+            log_event("initial_sync", f"🚀 Starting {job} for user {user_id}")
+            result = subprocess.run(
+                ["python", f"api_syncs/{job}", "--user_id", str(user_id)],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            log_event("initial_sync", f"✅ Completed {job} for user {user_id}\n{result.stdout}")
+        except subprocess.CalledProcessError as e:
+            log_event("initial_sync", f"❌ Failed {job} for user {user_id}\n{e.stderr}", level="error")
 
 
 playlist_dashboard = Blueprint("playlist_dashboard", __name__)
