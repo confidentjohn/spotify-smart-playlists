@@ -22,7 +22,7 @@ jobs:
 
       - name: 🚀 Run track_plays.py
         run: PYTHONPATH=. python api_syncs/track_plays.py
-        # env:
+        env:
           # SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           # SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
           # SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
