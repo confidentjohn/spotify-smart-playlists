@@ -1,92 +1,122 @@
-# Spotify Library & Play History Tracker
+# Spotify Smart Playlist Generator & Library Tracker
 
 ## 1. Project Summary
 
-This project is a comprehensive Spotify library and play history tracker built with Python, PostgreSQL, and Flask. It automatically syncs your Spotify saved albums, liked tracks, and play history, and generates smart playlists based on various listening patterns. The backend sync jobs run via GitHub Actions and the Flask frontend provides a UI for manual sync triggers, logs, and token management. The project is designed to be deployed easily on Render.com.
+This project is a single-user Spotify library and play history tracker with a focus on **smart playlist generation**. It is built with Python, PostgreSQL, and Flask, and supports dynamic playlist rules, robust onboarding, and full/incremental sync logic. The user authenticates with Spotify via a secure web UI (using OAuth), and all tokens are managed automatically. The backend sync jobs run via **GitHub Actions** for automation and scheduling, while the Flask frontend provides a dashboard for onboarding, playlist management, and sync logs. The architecture is optimized for **Render.com** deployment, with CI/CD integration via GitHub Actions.
 
 ---
 
 ## 2. Features
 
-- **Daily Sync** of saved albums and liked tracks  
-- **Frequent Sync** (every 10 minutes) of recently played tracks  
-- **Smart Playlists** generated automatically (never played, most played, recently added, etc.)  
-- **Track Availability Checks** to ensure songs are still available on Spotify  
-- **Rate Limit Handling** with automatic retries and exponential backoff  
-- **Flask Web UI** to trigger syncs, view logs, and manage OAuth tokens  
-- **GitHub Actions** workflows for automation and scheduling  
-- **Materialized Views** and unified track data for efficient querying and reporting  
+- **Smart Playlists**: Dynamically generated based on user-defined rules (never played, most played, recently added, etc.)
+- **Single User Support**: Designed for a single Spotify user account with personalized playlists and library tracking
+- **Web UI Onboarding**: Full onboarding flow (admin/user creation, Spotify OAuth, token storage) handled in the browser
+- **Dynamic Playlist Rules**: Playlists are defined with flexible, JSON-based rules stored in the database
+- **Full vs. Incremental Sync**: Initial sync uses a full pipeline; subsequent syncs are incremental for efficiency
+- **Sync Logging**: All sync operations are logged with timestamps and job names for easy diagnostics
+- **Materialized Views**: Efficient reporting and querying via unified track data
+- **Track Availability Checks**: Ensures playlists only include playable Spotify tracks
+- **GitHub Actions Automation**: All sync and playlist jobs are scheduled and managed via reusable workflows
+- **Render.com Deployment**: One-click deploy with environment variable configuration and GitHub integration
 
 ---
 
 ## 3. Folder Structure
 
 ```
-spotify-oauth-tracker/
-├── api_syncs/                # Spotify sync jobs and track availability checks
+.
+├── .DS_Store
+├── .flaskenv
+├── .gitignore
+├── README.md
+├── render.yaml
+├── requirements.txt
+├── structure.txt
+├── .github/
+│   ├── .DS_Store
+│   ├── .gitignore
+│   └── workflows/
+│       ├── .DS_Store
+│       ├── 00_master_sync.yml
+│       ├── 01_sync_albums.yml
+│       ├── 02_sync_album_tracks.yml
+│       ├── 03a_sync_liked_tracks.yml
+│       ├── 03b_sync_liked_tracks_full.yml
+│       ├── 04_check_track_availability.yml
+│       ├── 05_sync_exclusions.yml
+│       ├── 06_build_unified_tracks.yml
+│       ├── 08_match_canonical_albums.yml
+│       ├── track_plays.yml
+│       └── update_dynamic_playlists.yml
+├── api_syncs/
 │   ├── __init__.py
-│   ├── check_track_availability.py  # Checks if tracks are still available on Spotify
-│   ├── materialized_views.py         # Creates and refreshes materialized views in DB
-│   ├── sync_album_tracks.py          # Syncs tracks for saved albums missing track data
-│   ├── sync_exclusions.py            # Syncs tracks added to the manual exclusions playlist
-│   ├── sync_liked_tracks_full.py     # Full sync of liked tracks (historical)
-│   ├── sync_liked_tracks.py          # Incremental sync of liked tracks
-│   ├── sync_saved_albums.py          # Syncs user's saved albums
-│   └── track_plays.py                # Syncs recently played tracks every 10 minutes
-├── app/                      # Flask frontend (OAuth, UI, sync triggers)
+│   ├── check_track_availability.py
+│   ├── materialized_views.py
+│   ├── match_canonical_albums.py
+│   ├── sync_album_tracks.py
+│   ├── sync_exclusions.py
+│   ├── sync_liked_tracks.py
+│   ├── sync_liked_tracks_full.py
+│   ├── sync_saved_albums.py
+│   └── track_plays.py
+├── app/
 │   ├── app.py
+│   ├── startup.py
+│   ├── users.py
+│   ├── db/
+│   │   ├── __init__.py
+│   │   └── init_db.py
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── styles.css
+│   │   └── img/
+│   │       └── smartPlaylist_banner.jpg
 │   └── templates/
-│         └── create_playlist.html
-│         └── dashboard_playlists.html
-├── db/                       # Database initialization script
-│   └── init_db.py
-├── playlists/                # Smart playlist update scripts
+│       ├── base.html
+│       ├── create_admin.html
+│       ├── create_playlist.html
+│       ├── dashboard_playlists.html
+│       ├── home.html
+│       ├── login.html
+│       └── logs.html
+├── playlists/
+│   ├── __init__.py
 │   ├── generate_playlist.py
 │   ├── playlist_sync.py
-│   └── update_dynamic_playlst.py
-├── reports/                  # Usage reports and analytics (not detailed here)
-├── routes/                   # Usage reports and analytics (not detailed here)
+│   └── update_dynamic_playlists.py
+├── routes/
+│   ├── __init__.py
+│   ├── create_admin.py
 │   ├── playlist_dashboard.py
 │   └── rule_parser.py
-├── utils/                    # Shared utilities for logging and DB access
-│   ├── auth.py
-│   ├── create_exclusions_playlist.py
-│   ├── logger.py
-│   ├── playlist_builder.py
-│   └── spotify_auth.py
-├── .github/workflows/        # GitHub Actions workflows for automation
-│   ├── 00_master_sync.yml
-│   ├── 01_sync_albums.yml
-│   ├── 02_sync_album_tracks.yml
-│   ├── 03a_sync_liked_tracks.yml
-│   ├── 03b_sync_liked_tracks_full.yml
-│   ├── 04_check_track_availability.yml
-│   ├── 05_sync_exclusions.yml
-│   ├── 06_build_unified_tracks.yml
-│   ├── track_plays.yml
-│   └── update_dynamic_playlists.yml
-├── render.yaml               # Render deployment configuration
-├── requirements.txt          # Python dependencies
-└── README.md                 # This file
+└── utils/
+    ├── __init__.py
+    ├── create_exclusions_playlist.py
+    ├── db_utils.py
+    ├── logger.py
+    ├── playlist_builder.py
+    └── spotify_auth.py
 ```
 
 ---
 
 ## 4. Database Schema
 
-| Table                | Purpose                                                  |
-|----------------------|----------------------------------------------------------|
-| `albums`             | Stores user's saved albums                                |
-| `liked_tracks`       | All liked tracks with metadata                            |
-| `tracks`             | Tracks from albums, includes metadata                     |
-| `plays`              | Complete history of played tracks                         |
-| `playlist_mappings`  | Maps playlist slugs to Spotify playlist IDs              |
-| `track_availability` | Stores availability status and last checked timestamp    |
-| `logs`               | Logs output from sync scripts for debugging              |
-| `unified_tracks`     | Materialized view consolidating tracks, plays, and likes |
-| `materialized_views` | Managed via script for optimized querying                 |
+| Table                     | Purpose                                                                 |
+|---------------------------|-------------------------------------------------------------------------|
+| `albums`                 | Stores saved albums                                                      |
+| `excluded_tracks`        | Tracks manually excluded from playlist generation                        |
+| `liked_tracks`           | All liked tracks with metadata                                           |
+| `logs`                   | Logs output from all sync scripts                                        |
+| `playlist_mappings`      | Maps playlist slugs/rules to Spotify playlist IDs                        |
+| `plays`                  | Complete history of played tracks                                        |
+| `track_availability`     | Stores track availability status and last checked timestamp              |
+| `tracks`                 | Tracks from albums, includes metadata                                    |
+| `unified_tracks`         | Materialized view consolidating tracks, plays, and likes                 |
+| `users`                  | Stores user accounts, Spotify OAuth tokens, and onboarding status        |
 
-Tracks may be orphaned (not liked or in albums) and are cleaned automatically.
+**Relationships:**
+- Orphaned tracks (not liked or in albums) are cleaned automatically
 
 ---
 
@@ -102,18 +132,21 @@ Tracks may be orphaned (not liked or in albums) and are cleaned automatically.
 
 ## 6. GitHub Actions Workflows and Triggers
 
-| Workflow File                  | Trigger / Schedule           | Purpose                                  |
-|-------------------------------|-----------------------------|------------------------------------------|
-| `00_master_sync.yml`           | Daily at 07:07 UTC           | Runs full sync of albums, tracks, likes  |
-| `01_sync_albums.yml`           | Reusable                    | Syncs saved albums                         |
-| `02_sync_album_tracks.yml`     | Reusable                    | Syncs album track details                  |
-| `03a_sync_liked_tracks.yml`    | Reusable                    | Syncs liked tracks incrementally           |
-| `03b_sync_liked_tracks_full.yml` | Reusable                  | Full liked tracks sync                      |
-| `04_check_track_availability.yml` | Manual / Reusable        | Checks if tracks are still available     |
-| `05_sync_exclusions.yml`       | Reusable                    | Syncs tracks added to manual exclusions playlist |
-| `06_build_unified_tracks.yml`  | Manual / Scheduled           | Builds and refreshes materialized views    |
-| `track_plays.yml`              | Every 10 minutes             | Syncs recent play history                   |
-| `update_dynamic_playlists.yml` | Daily at 10:00 UTC          | Regenerates all smart playlists             |
+All sync and playlist jobs are orchestrated via **GitHub Actions** workflows, located in `.github/workflows/`:
+
+| Workflow File                     | Trigger / Schedule            | Purpose                                                      |
+|-----------------------------------|------------------------------|--------------------------------------------------------------|
+| `00_master_sync.yml`              | Daily at 07:07 UTC            | Runs the full sync pipeline for all users                    |
+| `01_sync_albums.yml`              | Reusable workflow             | Syncs saved albums                                           |
+| `02_sync_album_tracks.yml`        | Reusable workflow             | Syncs album track details                                    |
+| `03a_sync_liked_tracks.yml`       | Reusable workflow             | Incremental sync of liked tracks                             |
+| `03b_sync_liked_tracks_full.yml`  | Reusable workflow             | **Full** liked tracks sync (used for initial onboarding)     |
+| `04_check_track_availability.yml` | Manual / Reusable workflow    | Checks if tracks are still available on Spotify              |
+| `05_sync_exclusions.yml`          | Reusable workflow             | Syncs tracks added to the manual exclusions playlist         |
+| `06_build_unified_tracks.yml`     | Manual / Scheduled            | Builds and refreshes materialized views (`unified_tracks`)   |
+| `08_match_canonical_albums.yml`   | Reusable workflow             | Matches albums to canonical versions for deduplication       |
+| `track_plays.yml`                 | Every 10 minutes              | Syncs recent play history                                    |
+| `update_dynamic_playlists.yml`    | Daily at 10:00 UTC            | Regenerates all smart playlists for all users                |
 
 ---
 
@@ -136,54 +169,95 @@ Tracks may be orphaned (not liked or in albums) and are cleaned automatically.
 
 ## 8. Setup Instructions
 
-### Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/confidentjohn/spotify-oauth-tracker.git
 cd spotify-oauth-tracker
 ```
 
-### Register a Spotify Developer App
+### 2. Register a Spotify Developer App
 
-- Create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)  
-- Set Redirect URI to `https://<your-app>.onrender.com/callback`  
+- Create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)
+- Set the Redirect URI to:  
+  ```
+  https://<your-app>.onrender.com/callback
+  ```
 
-### Deploy to Render.com
+### 3. Deploy to Render.com
 
-- Add a new Web Service pointing to `app/app.py`  
-- Set all required environment variables listed above  
-- Enable auto-deploy from GitHub  
+- Create a new Web Service and point it to `app/app.py`
+- Set all required environment variables (see above)
+- Enable auto-deploy from GitHub
 
-### Obtain Refresh Token
+### 4. Complete Onboarding via Web UI
 
-- Visit `/login` on your deployed site  
-- Authenticate with Spotify  
-- Copy the refresh token from the `/callback` response  
+- **All onboarding is handled in the browser**:
+  - Admin/user creation
+  - Spotify OAuth and refresh token storage
+  - Initial sync detection and launch
+- **No need to manually call `/init-db` or hit `/callback`**; the UI guides you through every step.
 
-### Initialize the Database
+### 5. Create Smart Playlists
 
-- Visit `/init-db` endpoint to create necessary tables and constraints  
-
-### Create Playlists
-
-Use the web UI (`/dashboard/playlists`) to:
-- Define playlist rules
-- Auto-generate the playlist in Spotify
-- Automatically store the mapping in the database
-
----
-
-## 9. Sync Triggers via Flask UI
-
-⚠️ Note: As of the latest update, sync jobs are no longer triggered via direct URL routes for security and simplicity. All automation is now handled via scheduled GitHub Actions workflows.
-
-If you need to run a job manually, trigger the corresponding workflow in GitHub Actions or run the script locally.
-
-Previously available routes like `/sync-saved-albums`, `/sync-liked-tracks`, and `/run-tracker` have been deprecated from the web UI.
+- Use the web UI (`/dashboard/playlists`):
+  - Define playlist rules (JSON editor)
+  - Auto-generate the playlist in Spotify
+  - All playlist mappings and rules are stored automatically
 
 ---
 
-## 10. Architecture Diagram
+## 9. Onboarding Flow
+
+The onboarding flow for a new user is **fully automated via the web UI**:
+
+1. **Visit `/create-admin`**  
+   - Creates the first admin account and allows login.
+
+2. **Authenticate with Spotify**  
+   - The UI triggers the Spotify OAuth flow; tokens are stored securely in the `users` table.
+
+3. **Exclusions Playlist Creation**  
+   - After auth, the system checks for an `exclusions` playlist and creates it if missing.
+
+4. **Initial Sync Detection**  
+   - On first login, the homepage (`/`) shows a **"Run Initial Sync"** button if the `unified_tracks` materialized view is missing or empty for the user.
+   - On subsequent visits (after sync), the button changes to **"Sync Now"** (incremental update).
+   - Detection is based on presence/absence of user data in `unified_tracks`.
+
+5. **Initial Sync Pipeline**  
+   - Clicking "Run Initial Sync" launches:
+     - `sync_saved_albums.py`
+     - `sync_album_tracks.py`
+     - `sync_liked_tracks_full.py`
+     - `check_track_availability.py`
+     - `sync_exclusions.py`
+     - `materialized_views.py`
+
+6. **After Sync Completion**  
+   - Data and playlists are available via:
+     - `/dashboard/playlists`
+     - `/logs`
+
+---
+
+## 10. Sync Triggers via Flask UI
+
+The **homepage** displays a sync button based on onboarding state:
+- **"Run Initial Sync"**: Appears if the user's `unified_tracks` view is missing or empty (first-time setup)
+- **"Sync Now"**: Appears after initial sync, for manual incremental syncs
+
+Clicking these buttons triggers the appropriate backend Python scripts:
+- First run: full pipeline (as above)
+- Subsequent runs: incremental sync scripts only
+
+All regular syncs and playlist updates are handled by **scheduled GitHub Actions** workflows for security and reliability.
+
+Manual sync routes such as `/sync-saved-albums`, `/sync-liked-tracks`, `/run-tracker`, and `/init-db` **no longer exist** on the web UI.
+
+---
+
+## 11. Architecture Diagram
 
 ```mermaid
 graph TD
@@ -238,7 +312,7 @@ graph TD
 
 ---
 
-## 11. Rate Limit Handling
+## 12. Rate Limit Handling
 
 All Spotify API requests are wrapped with logic to:
 
@@ -250,47 +324,43 @@ This ensures smooth syncing without manual intervention despite Spotify rate lim
 
 ---
 
-## 12. Testing Instructions
+## 13. Testing Instructions
 
-- Run individual sync scripts locally, e.g.:
-
+- To test backend sync logic, run scripts from the `api_syncs/` folder, e.g.:
   ```bash
   python api_syncs/sync_liked_tracks.py
+  python api_syncs/sync_liked_tracks_full.py
+  python api_syncs/check_track_availability.py
   ```
-
-- Use Flask routes to test UI-triggered syncs and observe logs, e.g.:
-
-  - `/sync-saved-albums`  
-  - `/sync-album-tracks`  
-  - `/sync-liked-tracks`  
-
-- Inspect the `logs` table for detailed output and errors  
-- Verify materialized views and `unified_tracks` table for correct data aggregation  
-- Test track availability updates by running `check_track_availability.py`  
-- Simulate rate limiting by mocking `429` responses and confirm retry behavior  
+- For manual testing of onboarding and playlist creation:
+  - Use the web UI (`/create-admin`, `/dashboard/playlists`, etc.)
+  - Observe logs and sync status in `/logs`
+- Inspect the `logs` table for sync output and errors
+- Verify `unified_tracks` and materialized views for data correctness
+- To simulate rate limiting, mock `429` responses in the API layer and observe retry logic
 
 ---
 
-## 13. Maintenance Notes
+## 14. Maintenance Notes
 
-- `init_db.py` creates tables and enforces constraints  
-- `sync_album_tracks.py` only syncs albums missing track details  
-- `track_plays.py` runs every 10 minutes and logs play history  
-- Orphan tracks (not liked and not in albums) are cleaned automatically  
-- Play history (`plays` table) is never deleted, even if tracks are removed from library  
-- Materialized views are refreshed regularly to optimize queries  
-- Playlist update scripts rely on `playlist_mappings` for Spotify playlist IDs  
--- Playlists are only removed if deleted directly in Spotify and detected during sync; no playlist deletions occur via the web UI  
-- Playlists can no longer be deleted via the web UI; they are removed from the database only when deleted in Spotify
-- The web UI manages playlist creation and stores metadata in `playlist_mappings`
-- Playlist `rules` are stored as a `jsonb` field in the database and used for dynamic sync logic
+- `init_db.py` sets up all tables, constraints, and user relationships
+- `sync_album_tracks.py` only processes albums missing track details
+- `sync_liked_tracks_full.py` is used for initial onboarding; `sync_liked_tracks.py` is for incremental updates
+- `track_plays.py` runs every 10 minutes and logs play history
+- Orphan tracks (not liked and not in albums) are cleaned automatically
+- Play history (`plays` table) is never deleted, even if tracks are removed from library
+- Materialized views are refreshed regularly for query performance
+- Playlist update scripts (`playlist_sync.py`, `update_dynamic_playlists.py`) use `playlist_mappings` for Spotify playlist IDs and ownership
+- Playlists are only removed from the DB if deleted directly in Spotify (detected during sync); **no playlist deletions occur via the web UI**
+- The web UI manages playlist creation, rule editing, and stores all metadata in `playlist_mappings`
+- Playlist `rules` are stored as a `jsonb` field and parsed for dynamic sync logic
 
 ---
 
 
 ---
 
-## 14. Playlist Rules Format
+## 15. Playlist Rules Format
 
 Rules are stored in the database as `jsonb` and are used to dynamically select tracks for each playlist. These rules are editable and parsed during playlist generation.
 
@@ -321,7 +391,7 @@ Supported fields include:
 
 ---
 
-## 15. Playlist Sync Logic
+## 16. Playlist Sync Logic
 
 Smart playlists in this system follow the logic:
 
@@ -337,7 +407,7 @@ Smart playlists in this system follow the logic:
 
 ---
 
-## 16. Example Log Entry
+## 17. Example Log Entry
 
 Logs are stored in the `logs` table to help with debugging and automation tracking.
 
@@ -350,7 +420,7 @@ Logs are stored in the `logs` table to help with debugging and automation tracki
 ---
 
 
-## 17. Known Limitations
+## 18. Known Limitations
 
 - ⚠️ **Rate-limited API**: While handled via retries, high-frequency jobs may still delay
 - 🔍 **Missing metadata**: Tracks with no `album_id` or orphaned metadata may be skipped
@@ -359,34 +429,32 @@ Logs are stored in the `logs` table to help with debugging and automation tracki
 
 ---
 
-## 18. Web UI Overview
+## 19. Web UI Overview
 
-The Flask-based Web UI provides a user-friendly dashboard to manage Spotify syncing and smart playlists without needing to run scripts manually. It's designed to make playlist generation, rule editing, and log viewing simple and accessible.
-
+The Flask-based Web UI is the central hub for onboarding, playlist management, and diagnostics. It supports secure Spotify OAuth and dynamic playlist rule editing.
 
 ### Key Features
 
 - 🎛️ **Playlist Dashboard** (`/dashboard/playlists`)
-  - View all playlists stored in the database
-  - Create new playlists with custom rules
-  - View playlist metadata and last synced status
-  - Launch manual syncs
+  - View all playlists for the current user
+  - Create new playlists with custom rules (JSON editor)
+  - View playlist metadata, last synced status, and sync history
+  - Launch manual syncs (if enabled)
 
 - 🧩 **Rule-Based Playlist Builder**
-  - Enter JSON-formatted rules directly into the UI
-  - Rules are stored in the database (`jsonb` field)
-  - Used to generate playlists dynamically via backend sync
+  - Enter and edit JSON-formatted rules directly in the UI
+  - Rules are stored as `jsonb` and parsed for dynamic playlist generation
 
-- 🔐 **OAuth Management**
-  - Handles token refresh and authorization securely
-  - Refresh token stored and reused for all backend tasks
-
-The UI is hosted via Render and can be used both as a trigger surface for GitHub Actions-based automation and a control center for playlist logic and diagnostics.
+- 🔐 **OAuth and User Management**
+  - **Single-user admin onboarding and Spotify OAuth via `/create-admin`**
+  - Refresh tokens are securely stored and used for all backend syncs
 
 ### Web UI Pages
 
-| URL Path                   | Purpose                                                                 |
-|----------------------------|-------------------------------------------------------------------------|
-| `/logs`                    | 📜 View the most recent sync logs and errors for debugging              |
-| `/dashboard/playlists`     | 🎛️ View and manage all smart playlists with their sync status and rules |
-| `/dashboard/create-playlist` | ➕ Create a new smart playlist and define its rule set                  |
+| URL Path                     | Purpose                                                               |
+|------------------------------|-----------------------------------------------------------------------|
+| `/logs`                      | 📜 View recent sync logs and errors for debugging                     |
+| `/dashboard/playlists`       | 🎛️ View/manage all smart playlists, their sync status, and rules      |
+| `/dashboard/create-playlist` | ➕ Create a new smart playlist and define its rule set                 |
+| `/create-admin`              | 👤 Onboard new admin                                                  |
+| `/` (home)                   | 🏠 See onboarding state and trigger syncs (Run Initial Sync / Sync Now)|
