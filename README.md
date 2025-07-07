@@ -458,3 +458,10 @@ The Flask-based Web UI is the central hub for onboarding, playlist management, a
 | `/dashboard/create-playlist` | ➕ Create a new smart playlist and define its rule set                 |
 | `/create-admin`              | 👤 Onboard new admin                                                  |
 | `/` (home)                   | 🏠 See onboarding state and trigger syncs (Run Initial Sync / Sync Now)|
+
+---
+
+## 20. Built By
+
+Created with ❤️ by [John Mitchell](https://jmitchell.app) and ChatGPT  
+If you find it useful, consider [buying me a coffee](https://coff.ee/confidentjohn).
