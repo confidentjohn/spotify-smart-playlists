@@ -1,7 +1,16 @@
-<form method="POST">
-  <label>Username: <input type="text" name="username" required></label><br>
-  <label>Password: <input type="password" name="password" required></label><br>
-  <label>Email (optional): <input type="email" name="email"></label><br>
-  <button type="submit">Create Account</button>
-  {% if error %}<p style="color:red">{{ error }}</p>{% endif %}
-</form>
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="form-container">
+    <h2>Create Admin User</h2>
+    <p>This will create the first admin user for the app. After creation, you'll be prompted to connect your Spotify account to generate a refresh token.</p>
+    <form method="POST">
+      <label>Username: <input type="text" name="username" required></label><br>
+      <label>Password: <input type="password" name="password" required></label><br>
+      <label>Email (optional): <input type="email" name="email"></label><br>
+      <button type="submit">Create Account</button>
+      {% if error %}<p style="color:red">{{ error }}</p>{% endif %}
+    </form>
+  </div>
+{% endblock %}
+{% include "footer.html" %}
