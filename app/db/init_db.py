@@ -161,7 +161,7 @@ def run_init_db():
 
     # Build the unified_tracks materialized view
     import subprocess
-    subprocess.run(["python", "api_syncs/materialized_views.py"], check=True)
+    subprocess.run(["python", "-m", "api_syncs.materialized_views"], check=True)
 
     print("✅ Tables created and updated successfully.")
 
