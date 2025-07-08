@@ -149,7 +149,8 @@ def run_init_db():
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         spotify_user_id TEXT UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        spotify_refresh_token TEXT
     );
     """)
 
