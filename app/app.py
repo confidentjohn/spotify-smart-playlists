@@ -14,10 +14,11 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from app import startup
 from utils.spotify_auth import get_spotify_client, get_spotify_oauth
+from utils.db_utils import get_db_connection
+from utils.logger import log_event
 import requests
 from routes import playlist_dashboard
 from routes.create_admin import create_admin_bp
-from utils.db_utils import get_db_connection
 
 
 app = Flask(__name__)
