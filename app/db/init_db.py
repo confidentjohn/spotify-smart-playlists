@@ -71,7 +71,7 @@ def run_init_db():
         status TEXT DEFAULT 'active',
         track_count INTEGER DEFAULT 0,
         rules JSONB,
-        is_dynamic BOOLEAN DEFAULT FALSE
+        is_dynamic BOOLEAN DEFAULT TRUE
     );
     """)
 
