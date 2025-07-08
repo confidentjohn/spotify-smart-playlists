@@ -204,6 +204,18 @@ def logout():
     return redirect(url_for("login"))
 
 # ─────────────────────────────────────────────────────
+from utils.create_exclusions_playlist import ensure_exclusions_playlist
+
+# ─────────────────────────────────────────────────────
+if os.environ.get("SPOTIFY_REFRESH_TOKEN"):
+    try:
+        ensure_exclusions_playlist()
+        log_event("startup", "✅ Ensured exclusions playlist exists")
+    except Exception as e:
+        log_event("startup", f"❌ Failed to ensure exclusions playlist: {e}", level="error")
+else:
+    log_event("startup", "⚠️ Skipping exclusions playlist check. No SPOTIFY_REFRESH_TOKEN found.", level="warning")
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
