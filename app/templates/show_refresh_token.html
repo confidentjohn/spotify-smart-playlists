@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Refresh Token</title>
+</head>
+<body>
+  <h1>✅ Spotify authentication successful</h1>
+  <p>Here is your refresh token:</p>
+  <textarea id="token" rows="6" cols="100">{{ refresh_token }}</textarea>
+  <br><br>
+  <button onclick="copyToken()">Copy to Clipboard</button>
+
+  <script>
+    function copyToken() {
+      const textArea = document.getElementById("token");
+      textArea.select();
+      document.execCommand("copy");
+      alert("Token copied to clipboard");
+    }
+  </script>
+</body>
+</html>

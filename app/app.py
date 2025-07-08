@@ -116,61 +116,21 @@ def login_spotify():
     auth_url = get_spotify_oauth().get_authorize_url()
     return redirect(auth_url)
 
-@app.route('/callback')
+@app.route("/callback")
 def callback():
-    code = request.args.get('code')
+    code = request.args.get("code")
     if not code:
-        return "❌ No authorization code provided", 400
+        return "Missing Spotify code", 400
 
-    try:
-        token_info = get_spotify_oauth().get_access_token(code)
-    except Exception as e:
-        return f"❌ Token exchange failed: {e}", 400
-
+    token_info = get_spotify_oauth().get_access_token(code)
     refresh_token = token_info.get("refresh_token")
-    access_token = token_info.get("access_token")
 
-    if not refresh_token or not access_token:
-        return "❌ Missing Spotify token(s)", 400
+    if not refresh_token:
+        return "Failed to get refresh token from Spotify", 400
 
-    # Use access token to get Spotify user ID
-    sp = get_spotify_client(access_token)
-    spotify_user = sp.current_user()
-    spotify_user_id = spotify_user["id"]
+    log_event("auth", "info", "OAuth success. Displaying refresh token.")
 
-    # Get current app user from session
-    from flask_login import current_user
-    app_user_id = current_user.id if current_user.is_authenticated else session.get("pending_user")
-
-    # Store Spotify info in DB
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE users
-            SET spotify_user_id = %s, spotify_refresh_token = %s
-            WHERE id = %s
-        """, (spotify_user_id, refresh_token, app_user_id))
-        conn.commit()
-        cur.close()
-        conn.close()
-        flash("Spotify authentication successful!", "success")
-    except Exception as e:
-        import traceback
-        print("❌ Exception in /callback DB update:")
-        traceback.print_exc()
-        return f"&lt;pre&gt;❌ Failed to save Spotify info: {e}&lt;/pre&gt;", 500
-
-    # Create exclusions playlist if not already present
-    try:
-        from utils.create_exclusions_playlist import ensure_exclusions_playlist
-        ensure_exclusions_playlist(sp)
-    except Exception as e:
-        import traceback
-        print("❌ Failed to create exclusions playlist:")
-        traceback.print_exc()
-
-    return redirect(url_for("home"))
+    return render_template("show_refresh_token.html", refresh_token=refresh_token)
 
 # ─────────────────────────────────────────────────────
 @app.route('/logs')
