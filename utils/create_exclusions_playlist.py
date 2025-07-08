@@ -26,7 +26,7 @@ def ensure_exclusions_playlist(sp):
         playlist_url = playlist["external_urls"]["spotify"]
         log_event("init", f"📋 Created Spotify playlist: {playlist_url}")
 
-        log_event("init", f"📌 Inserting playlist: slug='exclusions', name='Exclusions'")
+        log_event("init", f"📌 Inserting playlist: slug='exclusions', name='exclusions'")
         log_event("init", "📝 Inserting new playlist record into DB.")
         cur.execute("""
             INSERT INTO playlist_mappings (slug, name, playlist_id, status, rules, track_count, last_synced_at, is_dynamic)

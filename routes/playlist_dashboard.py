@@ -35,8 +35,9 @@ def run_initial_syncs(user_id: int, is_initial=True):
 
     # Check if exclusions playlist exists; create it if missing
     from utils.create_exclusions_playlist import ensure_exclusions_playlist
+    from utils.spotify_auth import get_spotify_client
     try:
-        ensure_exclusions_playlist()
+        ensure_exclusions_playlist(get_spotify_client())
         log_event("initial_sync", f"✅ Ensured exclusions playlist exists for user {user_id}")
     except Exception as e:
         log_event("initial_sync", f"❌ Failed to ensure exclusions playlist: {e}", level="error")
