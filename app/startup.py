@@ -1,11 +1,12 @@
 from app.db.init_db import run_init_db
-from utils.db_utils import get_db_connection
-from utils.spotify_auth import get_spotify_client
-from utils.create_exclusions_playlist import ensure_exclusions_playlist
-from utils.logger import log_event
 
 def run_startup_tasks():
     run_init_db()
+
+    from utils.db_utils import get_db_connection
+    from utils.spotify_auth import get_spotify_client
+    from utils.create_exclusions_playlist import ensure_exclusions_playlist
+    from utils.logger import log_event
 
     try:
         conn = get_db_connection()
