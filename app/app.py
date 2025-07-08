@@ -209,7 +209,7 @@ from utils.create_exclusions_playlist import ensure_exclusions_playlist
 # ─────────────────────────────────────────────────────
 if os.environ.get("SPOTIFY_REFRESH_TOKEN"):
     try:
-        ensure_exclusions_playlist()
+        ensure_exclusions_playlist(get_spotify_client())
         log_event("startup", "✅ Ensured exclusions playlist exists")
     except Exception as e:
         log_event("startup", f"❌ Failed to ensure exclusions playlist: {e}", level="error")
