@@ -68,7 +68,7 @@ def run_script(script_name):
 def home():
     from flask_login import current_user
     user_id = current_user.get_id() if current_user.is_authenticated else None
-    can_sync = has_refresh_token(user_id) if user_id else False
+    can_sync = bool(os.environ.get("SPOTIFY_REFRESH_TOKEN"))
 
     # Determine if unified_tracks has any records at all
     is_first_sync = True

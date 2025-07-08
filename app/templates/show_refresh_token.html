@@ -7,7 +7,15 @@
   <h1>✅ Spotify authentication successful</h1>
   <p>Here is your refresh token:</p>
   <textarea id="token" rows="6" cols="100">{{ refresh_token }}</textarea>
-  <br><br>
+  <div style="margin-top: 20px; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; max-width: 80%;">
+    <strong>⚠️ Important:</strong> Please save this token now. Add it as <code>SPOTIFY_REFRESH_TOKEN</code> in:
+    <ul>
+      <li><strong>Render:</strong> Environment Variables tab</li>
+      <li><strong>GitHub:</strong> Repository Settings → Secrets → Actions</li>
+    </ul>
+    After updating these, wait for the deployment to complete before clicking the home page button.
+  </div>
+  <br>
   <button onclick="copyToken()">Copy to Clipboard</button>
 
   <br><br>

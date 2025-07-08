@@ -31,9 +31,18 @@ def run_initial_syncs(user_id: int, is_initial=True):
         "sync_album_tracks.py",
         "sync_liked_tracks.py" if not is_initial else "sync_liked_tracks_full.py",
         "check_track_availability.py",
-        "sync_exclusions.py",
-        "materialized_views.py",
     ]
+
+    # Check if exclusions playlist exists; create it if missing
+    from utils.create_exclusions_playlist import ensure_exclusions_playlist
+    try:
+        ensure_exclusions_playlist()
+        log_event("initial_sync", f"✅ Ensured exclusions playlist exists for user {user_id}")
+    except Exception as e:
+        log_event("initial_sync", f"❌ Failed to ensure exclusions playlist: {e}", level="error")
+
+    full_job_sequence.append("sync_exclusions.py")
+    full_job_sequence.append("materialized_views.py")
 
     for job in full_job_sequence:
         try:
