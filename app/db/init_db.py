@@ -21,8 +21,7 @@ def run_init_db():
         total_tracks INTEGER,
         is_saved BOOLEAN DEFAULT TRUE,
         added_at TIMESTAMP,
-        tracks_synced BOOLEAN DEFAULT FALSE,
-        user_id INTEGER REFERENCES users(id)
+        tracks_synced BOOLEAN DEFAULT FALSE
     );
     """)
 
@@ -39,8 +38,7 @@ def run_init_db():
         from_album BOOLEAN DEFAULT FALSE,
         track_number INTEGER,
         disc_number INTEGER,
-        added_at TIMESTAMP,
-        user_id INTEGER REFERENCES users(id)
+        added_at TIMESTAMP
     );
     """)
 
@@ -52,7 +50,6 @@ def run_init_db():
         id SERIAL PRIMARY KEY,
         track_id TEXT,
         played_at TIMESTAMP,
-        user_id INTEGER REFERENCES users(id),
         UNIQUE(track_id, played_at)
     );
     """)
@@ -73,8 +70,7 @@ def run_init_db():
         last_synced_at TIMESTAMP,
         status TEXT DEFAULT 'active',
         track_count INTEGER DEFAULT 0,
-        rules JSONB,
-        user_id INTEGER REFERENCES users(id)
+        rules JSONB
     );
     """)
 
@@ -83,10 +79,9 @@ def run_init_db():
     # ─────────────────────────────────────────────
     cur.execute("""
     CREATE TABLE IF NOT EXISTS track_availability (
-        track_id TEXT PRIMARY KEY REFERENCES tracks(id),
+        track_id TEXT PRIMARY KEY,
         is_playable BOOLEAN,
-        checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        user_id INTEGER REFERENCES users(id)
+        checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
 
@@ -102,8 +97,7 @@ def run_init_db():
         track_name TEXT,
         track_artist TEXT,
         album_id TEXT,
-        album_in_library BOOLEAN DEFAULT FALSE,
-        user_id INTEGER REFERENCES users(id)
+        album_in_library BOOLEAN DEFAULT FALSE
     );
     """)
 
@@ -112,8 +106,7 @@ def run_init_db():
     # ─────────────────────────────────────────────
     cur.execute("""
     CREATE TABLE IF NOT EXISTS excluded_tracks (
-        track_id TEXT PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id)
+        track_id TEXT PRIMARY KEY
     );
     """)
 
@@ -128,8 +121,7 @@ def run_init_db():
         source TEXT NOT NULL,
         level TEXT DEFAULT 'info',
         message TEXT NOT NULL,
-        extra JSONB,
-        user_id INTEGER REFERENCES users(id)
+        extra JSONB
     );
     """)
 
