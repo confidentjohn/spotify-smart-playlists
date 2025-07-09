@@ -63,7 +63,7 @@
 
       // Listens Over Time
       const dates = data.plays_per_day.map(p => p.date);
-      const counts = data.plays_per_day.map(p => p.count);
+      const counts = data.plays_per_day.map(p => Number(p.count));
       new Chart(document.getElementById('chart-listens-over-time'), {
         type: 'line',
         data: {
