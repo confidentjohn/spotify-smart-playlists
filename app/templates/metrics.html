@@ -12,17 +12,22 @@
       display: flex;
       flex-direction: column;
       gap: 2rem;
-      margin: 2rem;
+      margin: 2rem auto;
+      max-width: 900px;
     }
     .chart-card {
       background: #ffffff;
       padding: 1rem;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
     canvas {
       width: 100% !important;
-      height: auto !important;
+      height: 300px !important;
     }
   </style>
 </head>
