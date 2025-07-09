@@ -9,11 +9,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     .charts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      display: flex;
+      flex-direction: column;
       gap: 2rem;
       margin: 2rem;
-      justify-content: center;
     }
     .chart-card {
       background: #ffffff;
@@ -87,8 +86,8 @@
       });
 
       // Listens Over Time
-      const dates = data.plays_per_day.map(p => p.date);
-      const counts = data.plays_per_day.map(p => Number(p.count));
+      const dates = data.daily_plays.map(p => p.date);
+      const counts = data.daily_plays.map(p => Number(p.count));
       const listensCanvas = document.getElementById('chart-listens-over-time');
       if (listensCanvas) {
         const ctxListens = listensCanvas.getContext('2d');
