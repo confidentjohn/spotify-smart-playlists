@@ -41,7 +41,7 @@
 
       // Top Artists
       const artistNames = data.top_artists.map(a => a.artist);
-      const artistPlays = data.top_artists.map(a => a.plays);
+      const artistPlays = data.top_artists.map(a => a.count);
       new Chart(document.getElementById('chart-top-artists'), {
         type: 'bar',
         data: {
@@ -52,7 +52,7 @@
 
       // Top Tracks
       const trackNames = data.top_tracks.map(t => t.track);
-      const trackPlays = data.top_tracks.map(t => t.plays);
+      const trackPlays = data.top_tracks.map(t => t.count);
       new Chart(document.getElementById('chart-top-tracks'), {
         type: 'bar',
         data: {
