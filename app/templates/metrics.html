@@ -10,9 +10,10 @@
   <style>
     .charts-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 2rem;
       margin: 2rem;
+      justify-content: center;
     }
     .chart-card {
       background: #ffffff;
@@ -88,24 +89,27 @@
       // Listens Over Time
       const dates = data.plays_per_day.map(p => p.date);
       const counts = data.plays_per_day.map(p => Number(p.count));
-      const ctxListens = document.getElementById('chart-listens-over-time').getContext('2d');
-      new Chart(ctxListens, {
-        type: 'line',
-        data: {
-          labels: dates,
-          datasets: [{
-            label: 'Listens',
-            data: counts,
-            fill: false,
-            borderColor: '#1DB954',
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false
-        }
-      });
+      const listensCanvas = document.getElementById('chart-listens-over-time');
+      if (listensCanvas) {
+        const ctxListens = listensCanvas.getContext('2d');
+        new Chart(ctxListens, {
+          type: 'line',
+          data: {
+            labels: dates,
+            datasets: [{
+              label: 'Listens',
+              data: counts,
+              fill: false,
+              borderColor: '#1DB954',
+              tension: 0.1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false
+          }
+        });
+      }
     }
 
     loadMetrics();
