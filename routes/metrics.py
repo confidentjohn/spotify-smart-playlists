@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, render_template
 from utils.db_utils import get_db_connection
 from datetime import datetime, timedelta
 
@@ -46,3 +46,7 @@ def metrics_data():
         "top_tracks": top_tracks,
         "daily_plays": daily_plays,
     })
+
+@metrics_bp.route("/metrics")
+def metrics_page():
+    return render_template("metrics.html")
