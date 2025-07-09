@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your Listening Stats</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <h1>📊 Your Listening Stats</h1>
+    <p>A fun look at your Spotify data — like your own Wrapped!</p>
+    <div style="margin-top:1rem;">
+      <a href="/" style="color:#1DB954;font-weight:600;">← Back to Home</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="top-artists">
+      <h2>🎤 Top Artists</h2>
+      <canvas id="chart-top-artists" height="200"></canvas>
+    </section>
+
+    <section id="top-tracks">
+      <h2>🎵 Most Played Tracks</h2>
+      <canvas id="chart-top-tracks" height="200"></canvas>
+    </section>
+
+    <section id="listens-over-time">
+      <h2>📈 Listening Over Time</h2>
+      <canvas id="chart-listens-over-time" height="200"></canvas>
+    </section>
+  </main>
+
+  <script>
+    async function loadMetrics() {
+      const res = await fetch('/metrics-data');
+      const data = await res.json();
+
+      // Top Artists
+      const artistNames = data.top_artists.map(a => a.artist);
+      const artistPlays = data.top_artists.map(a => a.plays);
+      new Chart(document.getElementById('chart-top-artists'), {
+        type: 'bar',
+        data: {
+          labels: artistNames,
+          datasets: [{ label: 'Plays', data: artistPlays }]
+        }
+      });
+
+      // Top Tracks
+      const trackNames = data.top_tracks.map(t => t.track);
+      const trackPlays = data.top_tracks.map(t => t.plays);
+      new Chart(document.getElementById('chart-top-tracks'), {
+        type: 'bar',
+        data: {
+          labels: trackNames,
+          datasets: [{ label: 'Plays', data: trackPlays }]
+        }
+      });
+
+      // Listens Over Time
+      const dates = data.plays_per_day.map(p => p.date);
+      const counts = data.plays_per_day.map(p => p.count);
+      new Chart(document.getElementById('chart-listens-over-time'), {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [{ label: 'Listens', data: counts, fill: false }]
+        }
+      });
+    }
+
+    loadMetrics();
+  </script>
+</body>
+</html>
