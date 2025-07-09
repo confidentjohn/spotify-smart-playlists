@@ -7,6 +7,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin: 2rem;
+    }
+    .chart-card {
+      background: #ffffff;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -18,20 +36,26 @@
   </header>
 
   <main>
-    <section id="top-artists">
-      <h2>🎤 Top Artists</h2>
-      <canvas id="chart-top-artists" height="200"></canvas>
-    </section>
-
-    <section id="top-tracks">
-      <h2>🎵 Most Played Tracks</h2>
-      <canvas id="chart-top-tracks" height="200"></canvas>
-    </section>
-
-    <section id="listens-over-time">
-      <h2>📈 Listening Over Time</h2>
-      <canvas id="chart-listens-over-time" height="200"></canvas>
-    </section>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <section id="top-artists">
+          <h2>🎤 Top Artists</h2>
+          <canvas id="chart-top-artists" height="200"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
+        <section id="top-tracks">
+          <h2>🎵 Most Played Tracks</h2>
+          <canvas id="chart-top-tracks" height="200"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
+        <section id="listens-over-time">
+          <h2>📈 Listening Over Time</h2>
+          <canvas id="chart-listens-over-time" height="200"></canvas>
+        </section>
+      </div>
+    </div>
   </main>
 
   <script>
@@ -64,11 +88,22 @@
       // Listens Over Time
       const dates = data.plays_per_day.map(p => p.date);
       const counts = data.plays_per_day.map(p => Number(p.count));
-      new Chart(document.getElementById('chart-listens-over-time'), {
+      const ctxListens = document.getElementById('chart-listens-over-time').getContext('2d');
+      new Chart(ctxListens, {
         type: 'line',
         data: {
           labels: dates,
-          datasets: [{ label: 'Listens', data: counts, fill: false }]
+          datasets: [{
+            label: 'Listens',
+            data: counts,
+            fill: false,
+            borderColor: '#1DB954',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
         }
       });
     }
