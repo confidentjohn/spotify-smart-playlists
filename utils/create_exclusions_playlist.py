@@ -33,7 +33,7 @@ def ensure_exclusions_playlist(sp):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             "exclusions",
-            "Exclusions",
+            "exclusions",
             playlist_url,
             "active",
             "{}",
