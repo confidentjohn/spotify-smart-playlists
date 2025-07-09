@@ -38,6 +38,36 @@ def metrics_data():
     """)
     daily_plays = [{"date": row[0].isoformat(), "count": row[1]} for row in cur.fetchall()]
 
+    # Top Albums
+    cur.execute("""
+        SELECT album_name, artist, SUM(play_count) as total_plays
+        FROM unified_tracks
+        GROUP BY album_name, artist
+        ORDER BY total_plays DESC
+        LIMIT 10
+    """)
+    top_albums = [{"album": f"{row[0]} - {row[1]}", "count": row[2]} for row in cur.fetchall()]
+
+    # First Played
+    cur.execute("""
+        SELECT track_name, artist, first_played_at
+        FROM unified_tracks
+        WHERE first_played_at IS NOT NULL
+        ORDER BY first_played_at ASC
+        LIMIT 10
+    """)
+    first_played = [{"track": f"{row[0]} - {row[1]}", "date": row[2].isoformat()} for row in cur.fetchall()]
+
+    # Recently Played
+    cur.execute("""
+        SELECT track_name, artist, last_played_at
+        FROM unified_tracks
+        WHERE last_played_at IS NOT NULL
+        ORDER BY last_played_at DESC
+        LIMIT 10
+    """)
+    recent_plays = [{"track": f"{row[0]} - {row[1]}", "date": row[2].isoformat()} for row in cur.fetchall()]
+
     cur.close()
     conn.close()
 
@@ -45,6 +75,9 @@ def metrics_data():
         "top_artists": top_artists,
         "top_tracks": top_tracks,
         "daily_plays": daily_plays,
+        "top_albums": top_albums,
+        "first_played": first_played,
+        "recent_plays": recent_plays,
     })
 
 @metrics_bp.route("/metrics")

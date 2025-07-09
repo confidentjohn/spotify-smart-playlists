@@ -11,7 +11,7 @@
     .charts-grid {
       display: flex;
       flex-direction: column;
-      gap: 2rem;
+      gap: 3rem;
       margin: 2rem auto;
       max-width: 900px;
     }
@@ -58,6 +58,42 @@
         <section id="listens-over-time">
           <h2>📈 Listening Over Time</h2>
           <canvas id="chart-listens-over-time" style="height:300px;"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
+        <section id="plays-by-day">
+          <h2>📅 Listening by Day of Week</h2>
+          <canvas id="chart-plays-by-day"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
+        <section id="plays-by-hour">
+          <h2>🕓 Listening by Hour of Day</h2>
+          <canvas id="chart-plays-by-hour"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
+        <section id="plays-by-month">
+          <h2>🗓️ Listening by Month</h2>
+          <canvas id="chart-plays-by-month"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
+        <section id="added-tracks-over-time">
+          <h2>➕ Tracks Added Over Time</h2>
+          <canvas id="chart-added-tracks"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
+        <section id="top-liked-artists">
+          <h2>❤️ Top Liked Artists</h2>
+          <canvas id="chart-top-liked-artists"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
+        <section id="unplayable-tracks">
+          <h2>🚫 Unavailable Tracks Over Time</h2>
+          <canvas id="chart-unavailable-tracks"></canvas>
         </section>
       </div>
     </div>
@@ -119,6 +155,77 @@
           }
         });
       }
+
+      // Listening by Day of Week
+      const dayLabels = data.plays_by_day.map(p => p.day.trim());
+      const dayCounts = data.plays_by_day.map(p => Number(p.count));
+      new Chart(document.getElementById('chart-plays-by-day'), {
+        type: 'bar',
+        data: {
+          labels: dayLabels,
+          datasets: [{ label: 'Plays', data: dayCounts }]
+        }
+      });
+
+      // Listening by Hour of Day
+      const hourLabels = data.plays_by_hour.map(p => `${p.hour}:00`);
+      const hourCounts = data.plays_by_hour.map(p => Number(p.count));
+      new Chart(document.getElementById('chart-plays-by-hour'), {
+        type: 'bar',
+        data: {
+          labels: hourLabels,
+          datasets: [{ label: 'Plays', data: hourCounts }]
+        }
+      });
+
+      // Listening by Month
+      const monthLabels = data.plays_by_month.map(p => p.month);
+      const monthCounts = data.plays_by_month.map(p => Number(p.count));
+      new Chart(document.getElementById('chart-plays-by-month'), {
+        type: 'line',
+        data: {
+          labels: monthLabels,
+          datasets: [{ label: 'Plays', data: monthCounts }]
+        }
+      });
+
+      // Tracks Added Over Time
+      const addedDates = data.tracks_added.map(p => p.date);
+      const addedCounts = data.tracks_added.map(p => Number(p.count));
+      new Chart(document.getElementById('chart-added-tracks'), {
+        type: 'line',
+        data: {
+          labels: addedDates,
+          datasets: [{ label: 'Tracks Added', data: addedCounts }]
+        }
+      });
+
+      // Top Liked Artists
+      const likedArtists = data.top_liked_artists.map(p => p.artist);
+      const likedCounts = data.top_liked_artists.map(p => Number(p.count));
+      new Chart(document.getElementById('chart-top-liked-artists'), {
+        type: 'bar',
+        data: {
+          labels: likedArtists,
+          datasets: [{ label: 'Liked Songs', data: likedCounts }]
+        }
+      });
+
+      // Unavailable Tracks Over Time
+      const unavailableDates = data.unplayable_tracks.map(p => p.date);
+      const unavailableCounts = data.unplayable_tracks.map(p => Number(p.count));
+      new Chart(document.getElementById('chart-unavailable-tracks'), {
+        type: 'line',
+        data: {
+          labels: unavailableDates,
+          datasets: [{
+            label: 'Unavailable Tracks',
+            data: unavailableCounts,
+            fill: false,
+            borderColor: '#ff0000'
+          }]
+        }
+      });
     }
 
     loadMetrics();
