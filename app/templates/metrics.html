@@ -10,7 +10,7 @@
   <style>
     .charts-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 2rem;
       margin: 2rem;
       justify-content: center;
@@ -53,7 +53,7 @@
       <div class="chart-card">
         <section id="listens-over-time">
           <h2>📈 Listening Over Time</h2>
-          <canvas id="chart-listens-over-time" height="200"></canvas>
+          <canvas id="chart-listens-over-time" style="height:300px;"></canvas>
         </section>
       </div>
     </div>
@@ -106,7 +106,12 @@
           },
           options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
           }
         });
       }
