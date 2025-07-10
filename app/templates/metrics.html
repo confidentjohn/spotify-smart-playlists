@@ -102,6 +102,24 @@
           <canvas id="chart-unavailable-tracks"></canvas>
         </section>
       </div>
+      <div class="chart-card">
+        <section id="release-to-play-distribution">
+          <h2>⏱️ Time to First Play</h2>
+          <canvas id="chart-release-to-play"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
+        <section id="monthly-library-growth">
+          <h2>📚 Monthly Library Growth</h2>
+          <canvas id="chart-library-growth"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
+        <section id="top-artist-monthly">
+          <h2>🏆 Top Artist Each Month</h2>
+          <canvas id="chart-top-artist-monthly"></canvas>
+        </section>
+      </div>
     </div>
   </main>
 
@@ -241,6 +259,45 @@
             fill: false,
             borderColor: '#ff0000'
           }]
+        }
+      });
+
+      // Time to First Play from Release
+      const rtpLabels = data.release_to_play.map(p => p.bucket);
+      const rtpCounts = data.release_to_play.map(p => Number(p.count));
+      new Chart(document.getElementById('chart-release-to-play'), {
+        type: 'bar',
+        data: {
+          labels: rtpLabels,
+          datasets: [{ label: 'Tracks', data: rtpCounts }]
+        }
+      });
+
+      // Monthly Library Growth
+      const growthLabels = data.library_growth.map(p => p.month);
+      const growthCounts = data.library_growth.map(p => Number(p.added));
+      new Chart(document.getElementById('chart-library-growth'), {
+        type: 'line',
+        data: {
+          labels: growthLabels,
+          datasets: [{
+            label: 'Tracks Added',
+            data: growthCounts,
+            borderColor: '#0074D9',
+            fill: false
+          }]
+        }
+      });
+
+      // Top Artist by Month
+      const topArtistMonthLabels = data.top_artist_by_month.map(p => p.month);
+      const topArtistNames = data.top_artist_by_month.map(p => p.artist);
+      const topArtistPlays = data.top_artist_by_month.map(p => Number(p.plays));
+      new Chart(document.getElementById('chart-top-artist-monthly'), {
+        type: 'bar',
+        data: {
+          labels: topArtistMonthLabels.map((m, i) => `${m} (${topArtistNames[i]})`),
+          datasets: [{ label: 'Plays', data: topArtistPlays }]
         }
       });
     }

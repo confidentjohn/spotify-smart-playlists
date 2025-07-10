@@ -70,7 +70,8 @@ def metrics_data():
 
     # Plays by Hour of Day
     cur.execute("""
-        SELECT EXTRACT(HOUR FROM last_played_at) AS hour, SUM(play_count)
+        SELECT EXTRACT(HOUR FROM last_played_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') AS hour,
+        SUM(play_count)
         FROM unified_tracks
         WHERE last_played_at IS NOT NULL
         GROUP BY hour
@@ -120,6 +121,77 @@ def metrics_data():
     """)
     unplayable_tracks = [{"date": row[0].isoformat(), "count": row[1]} for row in cur.fetchall()]
 
+    # Time from Release to First Play
+    cur.execute("""
+        SELECT bucket, COUNT(*) AS count
+        FROM (
+          SELECT
+            CASE
+              WHEN EXTRACT(DAY FROM MIN(last_played_at) - parsed_release_date) <= 1 THEN '0-1 days'
+              WHEN EXTRACT(DAY FROM MIN(last_played_at) - parsed_release_date) <= 7 THEN '2-7 days'
+              WHEN EXTRACT(DAY FROM MIN(last_played_at) - parsed_release_date) <= 30 THEN '8-30 days'
+              WHEN EXTRACT(DAY FROM MIN(last_played_at) - parsed_release_date) <= 90 THEN '31-90 days'
+              ELSE '90+ days'
+            END AS bucket
+          FROM (
+            SELECT
+              track_name,
+              artist,
+              last_played_at,
+              CASE
+                WHEN LENGTH(release_date) = 4 THEN TO_DATE(release_date || '-01-01', 'YYYY-MM-DD')
+                WHEN LENGTH(release_date) = 7 THEN TO_DATE(release_date || '-01', 'YYYY-MM-DD')
+                WHEN LENGTH(release_date) = 10 THEN TO_DATE(release_date, 'YYYY-MM-DD')
+                ELSE NULL
+              END AS parsed_release_date
+            FROM unified_tracks
+            WHERE last_played_at IS NOT NULL
+              AND release_date IS NOT NULL
+              AND play_count > 0
+          ) normalized
+          WHERE parsed_release_date IS NOT NULL
+            AND last_played_at >= parsed_release_date
+          GROUP BY parsed_release_date, track_name, artist
+        ) sub
+        GROUP BY bucket
+        ORDER BY
+          CASE bucket
+            WHEN '0-1 days' THEN 1
+            WHEN '2-7 days' THEN 2
+            WHEN '8-30 days' THEN 3
+            WHEN '31-90 days' THEN 4
+            ELSE 5
+          END
+    """)
+    release_to_play = [{"bucket": row[0], "count": row[1]} for row in cur.fetchall()]
+
+    # Monthly Increase in Library Size
+    cur.execute("""
+        SELECT DATE_TRUNC('month', added_at) AS month, COUNT(*) AS added
+        FROM unified_tracks
+        WHERE added_at IS NOT NULL
+        GROUP BY month
+        ORDER BY month
+    """)
+    monthly_library_growth = [{"month": row[0].isoformat(), "count": row[1]} for row in cur.fetchall()]
+
+    # Top Artist by Month
+    cur.execute("""
+        SELECT artist, month, plays FROM (
+            SELECT
+                artist,
+                TO_CHAR(last_played_at, 'YYYY-MM') AS month,
+                SUM(play_count) AS plays,
+                ROW_NUMBER() OVER (PARTITION BY TO_CHAR(last_played_at, 'YYYY-MM') ORDER BY SUM(play_count) DESC) AS rank
+            FROM unified_tracks
+            WHERE last_played_at IS NOT NULL
+            GROUP BY artist, TO_CHAR(last_played_at, 'YYYY-MM')
+        ) ranked
+        WHERE rank = 1
+        ORDER BY month
+    """)
+    top_artist_by_month = [{"month": row[1], "artist": row[0], "count": row[2]} for row in cur.fetchall()]
+
     cur.close()
     conn.close()
 
@@ -134,6 +206,9 @@ def metrics_data():
         "tracks_added": tracks_added,
         "top_liked_artists": top_liked_artists,
         "unplayable_tracks": unplayable_tracks,
+        "release_to_play": release_to_play,
+        "monthly_library_growth": monthly_library_growth,
+        "top_artist_by_month": top_artist_by_month,
     })
 
 @metrics_bp.route("/metrics")
