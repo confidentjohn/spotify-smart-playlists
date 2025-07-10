@@ -1,10 +1,17 @@
 
 
+
+import decimal
 import json
 from datetime import datetime
 from utils.db_utils import get_db_connection
 from utils.logger import log_event
 from routes.metrics import collect_metrics_payload
+
+# Function to handle Decimal serialization
+def decimal_converter(obj):
+    if isinstance(obj, decimal.Decimal):
+        return float(obj)
 
 # SQL to create the table if it doesn't exist
 METRICS_CACHE_TABLE = """
@@ -32,7 +39,7 @@ if __name__ == "__main__":
     # Insert into cache
     cur.execute(
         "INSERT INTO daily_metrics_cache (snapshot_date, data) VALUES (%s, %s)",
-        (datetime.utcnow().date(), json.dumps(metrics))
+        (datetime.utcnow().date(), json.dumps(metrics, default=decimal_converter))
     )
 
     conn.commit()
