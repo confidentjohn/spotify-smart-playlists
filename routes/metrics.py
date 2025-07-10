@@ -192,6 +192,23 @@ def metrics_data():
     """)
     top_artist_by_month = [{"month": row[1], "artist": row[0], "count": row[2]} for row in cur.fetchall()]
 
+    # Summary Stats
+    cur.execute("""
+        SELECT 
+            COUNT(DISTINCT artist),
+            COUNT(*),
+            COUNT(*) FILTER (WHERE is_liked = TRUE),
+            SUM(play_count)
+        FROM unified_tracks
+    """)
+    row = cur.fetchone()
+    summary_stats = {
+        "total_artists": row[0],
+        "total_tracks": row[1],
+        "total_liked": row[2],
+        "total_plays": row[3]
+    }
+
     cur.close()
     conn.close()
 
@@ -209,6 +226,7 @@ def metrics_data():
         "release_to_play": release_to_play,
         "monthly_library_growth": monthly_library_growth,
         "top_artist_by_month": top_artist_by_month,
+        "summary_stats": summary_stats,
     })
 
 @metrics_bp.route("/metrics")

@@ -29,6 +29,29 @@
       width: 100% !important;
       height: 300px !important;
     }
+    .summary-cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin: 2rem auto 1rem;
+      max-width: 900px;
+    }
+    .summary-cards .card {
+      flex: 1 1 200px;
+      text-align: center;
+      background: #f9f9f9;
+      padding: 1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      box-shadow: 0 0 5px rgba(0,0,0,0.05);
+    }
+    .summary-cards .card span {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -41,6 +64,12 @@
   </header>
 
   <main>
+    <div class="summary-cards">
+      <div class="card" id="summary-artists">🎤 Artists<br><span>...</span></div>
+      <div class="card" id="summary-tracks">🎵 Tracks<br><span>...</span></div>
+      <div class="card" id="summary-liked">❤️ Liked Songs<br><span>...</span></div>
+      <div class="card" id="summary-plays">▶️ Total Plays<br><span>...</span></div>
+    </div>
     <div class="charts-grid">
       <div class="chart-card">
         <section id="top-artists">
@@ -127,6 +156,10 @@
     async function loadMetrics() {
       const res = await fetch('/metrics-data');
       const data = await res.json();
+      document.getElementById('summary-artists').querySelector('span').textContent = data.summary.total_artists;
+      document.getElementById('summary-tracks').querySelector('span').textContent = data.summary.total_tracks;
+      document.getElementById('summary-liked').querySelector('span').textContent = data.summary.total_liked;
+      document.getElementById('summary-plays').querySelector('span').textContent = data.summary.total_plays;
 
       // Top Artists
       const artistNames = data.top_artists.map(a => a.artist);
