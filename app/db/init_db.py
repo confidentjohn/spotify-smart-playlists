@@ -163,6 +163,9 @@ def run_init_db():
     import subprocess
     subprocess.run(["python", "-m", "api_syncs.materialized_views"], check=True)
 
+    # Build the daily_metrics_cache table
+    subprocess.run(["python", "-m", "api_syncs.materialized_metrics"], check=True)
+
     print("✅ Tables created and updated successfully.")
 
 if __name__ == "__main__":
