@@ -103,8 +103,18 @@ jobs:
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
-  update-dynamic-playlists:
+  build-unified-metrics:
     needs: build-unified-tracks
+    uses: ./.github/workflows/07_build_metrics.yml
+    secrets:
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+  update-dynamic-playlists:
+    needs: build-unified-metrics
     uses: ./.github/workflows/update_dynamic_playlists.yml
     secrets:
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
@@ -116,3 +126,5 @@ jobs:
       DB_NAME: ${{ secrets.DB_NAME }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+    
