@@ -21,9 +21,40 @@ def run_init_db():
         total_tracks INTEGER,
         is_saved BOOLEAN DEFAULT TRUE,
         added_at TIMESTAMP,
-        tracks_synced BOOLEAN DEFAULT FALSE
+        tracks_synced BOOLEAN DEFAULT FALSE,
+        album_type TEXT,
+        album_image_url TEXT,
+        total_duration INTEGER,
+        genre TEXT,
+        artist_image_url TEXT
     );
     """)
+
+    # Ensure all expected columns exist in the albums table
+    expected_album_columns = {
+        "id": "TEXT",
+        "name": "TEXT",
+        "artist": "TEXT",
+        "artist_id": "TEXT",
+        "release_date": "TEXT",
+        "total_tracks": "INTEGER",
+        "is_saved": "BOOLEAN DEFAULT TRUE",
+        "added_at": "TIMESTAMP",
+        "tracks_synced": "BOOLEAN DEFAULT FALSE",
+        "album_type": "TEXT",
+        "album_image_url": "TEXT",
+        "total_duration": "INTEGER",
+        "genre": "TEXT",
+        "artist_image_url": "TEXT"
+    }
+
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'albums';")
+    existing_album_columns = {row[0] for row in cur.fetchall()}
+
+    for col_name, col_type in expected_album_columns.items():
+        if col_name not in existing_album_columns:
+            print(f"🛠 Adding missing column to albums: {col_name}")
+            cur.execute(f"ALTER TABLE albums ADD COLUMN {col_name} {col_type};")
 
     # ─────────────────────────────────────────────
     # Tracks table (UPDATED — is_liked removed)
