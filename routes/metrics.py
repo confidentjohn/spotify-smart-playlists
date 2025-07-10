@@ -51,10 +51,20 @@ def metrics_data():
 
     # Plays by Day of Week
     cur.execute("""
-        SELECT TO_CHAR(last_played_at, 'Day') AS day, SUM(play_count)
+        SELECT TRIM(TO_CHAR(last_played_at, 'Day')) AS day, SUM(play_count)
         FROM unified_tracks
-        GROUP BY day
-        ORDER BY MIN(DATE(last_played_at))
+        WHERE last_played_at IS NOT NULL
+        GROUP BY TRIM(TO_CHAR(last_played_at, 'Day'))
+        ORDER BY 
+            CASE TRIM(TO_CHAR(last_played_at, 'Day'))
+                WHEN 'Sunday' THEN 1
+                WHEN 'Monday' THEN 2
+                WHEN 'Tuesday' THEN 3
+                WHEN 'Wednesday' THEN 4
+                WHEN 'Thursday' THEN 5
+                WHEN 'Friday' THEN 6
+                WHEN 'Saturday' THEN 7
+        END
     """)
     plays_by_day = [{"day": row[0].strip(), "count": row[1]} for row in cur.fetchall()]
 
@@ -62,6 +72,7 @@ def metrics_data():
     cur.execute("""
         SELECT EXTRACT(HOUR FROM last_played_at) AS hour, SUM(play_count)
         FROM unified_tracks
+        WHERE last_played_at IS NOT NULL
         GROUP BY hour
         ORDER BY hour
     """)
@@ -71,7 +82,8 @@ def metrics_data():
     cur.execute("""
         SELECT TO_CHAR(last_played_at, 'YYYY-MM') AS month, SUM(play_count)
         FROM unified_tracks
-        GROUP BY month
+        WHERE last_played_at IS NOT NULL
+        GROUP BY TO_CHAR(last_played_at, 'YYYY-MM')
         ORDER BY month
     """)
     plays_by_month = [{"month": row[0], "count": row[1]} for row in cur.fetchall()]
@@ -99,12 +111,12 @@ def metrics_data():
 
     # Unavailable Tracks Over Time
     cur.execute("""
-        SELECT DATE(last_checked_at), COUNT(*)
+        SELECT DATE(last_checked_at) AS check_date, COUNT(*)
         FROM unified_tracks
         WHERE is_playable = FALSE
         AND last_checked_at IS NOT NULL
-        GROUP BY DATE(last_checked_at)
-        ORDER BY DATE(last_checked_at)
+        GROUP BY check_date
+        ORDER BY check_date
     """)
     unplayable_tracks = [{"date": row[0].isoformat(), "count": row[1]} for row in cur.fetchall()]
 
