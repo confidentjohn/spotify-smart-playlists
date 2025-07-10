@@ -55,7 +55,7 @@ def run_init_db():
             cur.execute(f"ALTER TABLE albums ADD COLUMN {col_name} {col_type};")
 
     # ─────────────────────────────────────────────
-    # Tracks table (UPDATED — is_liked removed, new audio features columns added)
+    # Tracks table
     # ─────────────────────────────────────────────
     cur.execute("""
     CREATE TABLE IF NOT EXISTS tracks (
@@ -69,17 +69,7 @@ def run_init_db():
         disc_number INTEGER,
         added_at TIMESTAMP,
         duration_ms INTEGER,
-        acousticness REAL,
-        danceability REAL,
-        energy REAL,
-        instrumentalness REAL,
-        key INTEGER,
-        liveness REAL,
-        loudness REAL,
-        mode INTEGER,
-        speechiness REAL,
-        tempo REAL,
-        time_signature INTEGER
+        popularity INTEGER
     );
     """)
 
@@ -95,17 +85,7 @@ def run_init_db():
         "disc_number": "INTEGER",
         "added_at": "TIMESTAMP",
         "duration_ms": "INTEGER",
-        "acousticness": "REAL",
-        "danceability": "REAL",
-        "energy": "REAL",
-        "instrumentalness": "REAL",
-        "key": "INTEGER",
-        "liveness": "REAL",
-        "loudness": "REAL",
-        "mode": "INTEGER",
-        "speechiness": "REAL",
-        "tempo": "REAL",
-        "time_signature": "INTEGER"
+        "popularity": "INTEGER"
     }
 
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'tracks';")
