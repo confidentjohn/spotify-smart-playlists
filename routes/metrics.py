@@ -4,8 +4,7 @@ from datetime import datetime, timedelta
 
 metrics_bp = Blueprint("metrics", __name__)
 
-@metrics_bp.route("/metrics-data")
-def metrics_data():
+def collect_metrics_payload():
     conn = get_db_connection()
     cur = conn.cursor()
 
@@ -212,7 +211,7 @@ def metrics_data():
     cur.close()
     conn.close()
 
-    return jsonify({
+    return {
         "top_artists": top_artists,
         "top_tracks": top_tracks,
         "daily_plays": daily_plays,
@@ -227,7 +226,11 @@ def metrics_data():
         "monthly_library_growth": monthly_library_growth,
         "top_artist_by_month": top_artist_by_month,
         "summary_stats": summary_stats,
-    })
+    }
+
+@metrics_bp.route("/metrics-data")
+def metrics_data():
+    return jsonify(collect_metrics_payload())
 
 @metrics_bp.route("/metrics")
 def metrics_page():
