@@ -68,13 +68,12 @@ while True:
         # Extract new album data
         album_type = album.get('album_type')
         album_image_url = album['images'][0]['url'] if album.get('images') else None
-        total_duration = sum(track['duration_ms'] for track in safe_spotify_call(sp.album_tracks, album_id)['items']) if album.get('total_tracks') else None
         artist_info = safe_spotify_call(sp.artist, album['artists'][0]['id'])
         genre = ', '.join(artist_info.get('genres', [])) if artist_info.get('genres') else None
         artist_image_url = artist_info['images'][0]['url'] if artist_info.get('images') else None
 
         cur.execute("""
-            INSERT INTO albums (id, name, artist, artist_id, release_date, total_tracks, is_saved, added_at, tracks_synced, album_type, album_image_url, total_duration, genre, artist_image_url)
+            INSERT INTO albums (id, name, artist, artist_id, release_date, total_tracks, is_saved, added_at, tracks_synced, album_type, album_image_url, genre, artist_image_url)
             VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, FALSE, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE
             SET is_saved = TRUE,
@@ -82,7 +81,6 @@ while True:
                 artist_id = EXCLUDED.artist_id,
                 album_type = EXCLUDED.album_type,
                 album_image_url = EXCLUDED.album_image_url,
-                total_duration = EXCLUDED.total_duration,
                 genre = EXCLUDED.genre,
                 artist_image_url = EXCLUDED.artist_image_url;
         """, (
@@ -95,7 +93,6 @@ while True:
             added_at,
             album_type,
             album_image_url,
-            total_duration,
             genre,
             artist_image_url
         ))

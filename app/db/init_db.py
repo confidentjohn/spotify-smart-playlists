@@ -24,7 +24,6 @@ def run_init_db():
         tracks_synced BOOLEAN DEFAULT FALSE,
         album_type TEXT,
         album_image_url TEXT,
-        total_duration INTEGER,
         genre TEXT,
         artist_image_url TEXT
     );
@@ -43,7 +42,6 @@ def run_init_db():
         "tracks_synced": "BOOLEAN DEFAULT FALSE",
         "album_type": "TEXT",
         "album_image_url": "TEXT",
-        "total_duration": "INTEGER",
         "genre": "TEXT",
         "artist_image_url": "TEXT"
     }
