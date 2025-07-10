@@ -46,7 +46,7 @@
 
     canvas {
       width: 100% !important;
-      height: 300px !important;
+      height: 400px !important;
     }
 
     .summary-cards {
@@ -131,7 +131,7 @@
       <div class="chart-card">
         <section id="listens-over-time">
           <h2>📈 Listening Over Time</h2>
-          <canvas id="chart-listens-over-time" style="height:300px;"></canvas>
+          <canvas id="chart-listens-over-time" style="height:400px;"></canvas>
         </section>
       </div>
       <div class="chart-card">
@@ -213,7 +213,7 @@
         });
 
         // Top Tracks
-        const trackNames = data.top_tracks.map(t => t.track);
+        const trackNames = data.top_tracks.map(t => t.track.split(" - "));
         const trackPlays = data.top_tracks.map(t => t.count);
         new Chart(document.getElementById('chart-top-tracks'), {
           type: 'bar',
