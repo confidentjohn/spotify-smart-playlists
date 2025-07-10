@@ -68,8 +68,7 @@ def run_init_db():
         track_number INTEGER,
         disc_number INTEGER,
         added_at TIMESTAMP,
-        duration_ms INTEGER,
-        popularity INTEGER
+        duration_ms INTEGER
     );
     """)
 
@@ -84,8 +83,7 @@ def run_init_db():
         "track_number": "INTEGER",
         "disc_number": "INTEGER",
         "added_at": "TIMESTAMP",
-        "duration_ms": "INTEGER",
-        "popularity": "INTEGER"
+        "duration_ms": "INTEGER"
     }
 
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'tracks';")

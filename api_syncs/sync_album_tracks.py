@@ -67,16 +67,15 @@ for album_id, album_name, album_added_at in saved_albums:
         disc_number = track.get('disc_number') or 1
 
         duration_ms = track.get('duration_ms')
-        popularity = enriched_metadata.get(track_id, {}).get('popularity')
 
         cur.execute("""
             INSERT INTO tracks (
                 id, name, artist, album, album_id,
                 from_album, track_number, disc_number, added_at,
-                duration_ms, popularity
+                duration_ms
             )
             VALUES (%s, %s, %s, %s, %s, TRUE, %s, %s, %s,
-                    %s, %s)
+                    %s)
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 artist = EXCLUDED.artist,
@@ -86,12 +85,11 @@ for album_id, album_name, album_added_at in saved_albums:
                 track_number = EXCLUDED.track_number,
                 disc_number = EXCLUDED.disc_number,
                 added_at = COALESCE(tracks.added_at, EXCLUDED.added_at),
-                duration_ms = EXCLUDED.duration_ms,
-                popularity = EXCLUDED.popularity
+                duration_ms = EXCLUDED.duration_ms
         """, (
             track_id, track_name, track_artist, album_name, album_id,
             track_number, disc_number, album_added_at,
-            duration_ms, popularity
+            duration_ms
         ))
 
     cur.execute("""
