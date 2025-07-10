@@ -12,9 +12,9 @@ def cached_metrics_data():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
-        SELECT payload
+        SELECT data
         FROM daily_metrics_cache
-        WHERE date = CURRENT_DATE
+        WHERE snapshot_date = CURRENT_DATE
         LIMIT 1
     """)
     row = cur.fetchone()
@@ -22,7 +22,7 @@ def cached_metrics_data():
     conn.close()
 
     if row:
-        return jsonify(json.loads(row["payload"]))
+        return jsonify(row["data"])
     else:
         return jsonify({"error": "No cached metrics found."}), 404
 
