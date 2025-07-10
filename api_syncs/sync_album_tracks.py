@@ -51,6 +51,13 @@ for album_id, album_name, album_added_at in saved_albums:
         log_event("sync_album_tracks", f"No tracks found for album: {album_name} ({album_id})")
         continue
 
+    track_ids = [t['id'] for t in album_tracks if t.get('id')]
+    enriched_metadata = {}
+    for i in range(0, len(track_ids), 50):
+        batch_ids = track_ids[i:i+50]
+        response = safe_spotify_call(sp.tracks, batch_ids)
+        for item in response.get('tracks', []):
+            enriched_metadata[item['id']] = item
 
     for track in album_tracks:
         track_id = track['id']
@@ -60,7 +67,7 @@ for album_id, album_name, album_added_at in saved_albums:
         disc_number = track.get('disc_number') or 1
 
         duration_ms = track.get('duration_ms')
-        popularity = track.get('popularity')
+        popularity = enriched_metadata.get(track_id, {}).get('popularity')
 
         cur.execute("""
             INSERT INTO tracks (
