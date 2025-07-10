@@ -51,15 +51,6 @@ for album_id, album_name, album_added_at in saved_albums:
         log_event("sync_album_tracks", f"No tracks found for album: {album_name} ({album_id})")
         continue
 
-    album_type = album_data.get("album_type")
-    album_images = album_data.get("images", [])
-    album_image_url = album_images[0]["url"] if album_images else None
-    total_duration = sum(track["duration_ms"] for track in album_data["tracks"]["items"])
-
-    artist_id = album_data["artists"][0]["id"]
-    artist_data = safe_spotify_call(sp.artist, artist_id)
-    genres = artist_data.get("genres", [])
-    artist_image_url = artist_data.get("images", [{}])[0].get("url")
 
     for track in album_tracks:
         track_id = track['id']
@@ -87,23 +78,9 @@ for album_id, album_name, album_added_at in saved_albums:
 
     cur.execute("""
         UPDATE albums SET
-            album_type = %s,
-            album_image_url = %s,
-            total_duration = %s,
-            genre = %s,
-            artist_image_url = %s,
-            artist_id = %s,
             tracks_synced = TRUE
         WHERE id = %s
-    """, (
-        album_type,
-        album_image_url,
-        total_duration,
-        genres[0] if genres else None,
-        artist_image_url,
-        artist_id,
-        album_id
-    ))
+    """, (album_id,))
     conn.commit()
 
 # 2️⃣ Remove albums and their tracks if they are no longer saved
