@@ -8,6 +8,14 @@
   <link rel="stylesheet" href="/static/css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fa;
+      margin: 0;
+      padding: 2rem;
+      color: #222;
+    }
+
     .charts-grid {
       display: flex;
       flex-direction: column;
@@ -15,20 +23,32 @@
       margin: 2rem auto;
       max-width: 900px;
     }
+
     .chart-card {
       background: #ffffff;
-      padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
-      min-height: 400px;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
     }
+
+    .chart-card h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #20232a;
+      letter-spacing: 0.01em;
+    }
+
     canvas {
       width: 100% !important;
       height: 300px !important;
     }
+
     .summary-cards {
       display: flex;
       flex-wrap: wrap;
@@ -37,20 +57,39 @@
       margin: 2rem auto 1rem;
       max-width: 900px;
     }
+
     .summary-cards .card {
       flex: 1 1 200px;
       text-align: center;
-      background: #f9f9f9;
-      padding: 1rem;
+      background: #ffffff;
+      padding: 1.5rem 1rem;
       border-radius: 10px;
       font-weight: 600;
-      box-shadow: 0 0 5px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      color: #333;
+      transition: box-shadow 0.15s, transform 0.15s;
+      border: 1px solid #e8ecef;
     }
+    .summary-cards .card:hover {
+      box-shadow: 0 4px 16px rgba(30,185,84,0.09);
+      transform: translateY(-2px) scale(1.02);
+    }
+
     .summary-cards .card span {
       display: block;
-      font-size: 1.5rem;
+      font-size: 1.75rem;
       font-weight: 700;
       margin-top: 0.5rem;
+      color: #1DB954;
+      letter-spacing: -0.5px;
+    }
+
+    header h1 {
+      margin-bottom: 0.25rem;
+    }
+    header p {
+      margin-top: 0;
+      color: #555;
     }
   </style>
 </head>
