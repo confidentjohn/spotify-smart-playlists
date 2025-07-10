@@ -1,8 +1,30 @@
+import json
+from psycopg2.extras import RealDictCursor
 from flask import Blueprint, jsonify, render_template
 from utils.db_utils import get_db_connection
 from datetime import datetime, timedelta
 
 metrics_bp = Blueprint("metrics", __name__)
+
+@metrics_bp.route("/cached-metrics-data")
+def cached_metrics_data():
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT payload
+        FROM daily_metrics_cache
+        WHERE date = CURRENT_DATE
+        LIMIT 1
+    """)
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if row:
+        return jsonify(json.loads(row["payload"]))
+    else:
+        return jsonify({"error": "No cached metrics found."}), 404
 
 def collect_metrics_payload():
     conn = get_db_connection()

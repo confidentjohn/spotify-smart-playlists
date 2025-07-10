@@ -155,7 +155,7 @@
   <script>
     async function loadMetrics() {
       try {
-        const res = await fetch('/metrics-data');
+        const res = await fetch('/cached-metrics-data');
         const data = await res.json();
         document.getElementById('summary-artists').querySelector('span').textContent = data.summary_stats.total_artists;
         document.getElementById('summary-tracks').querySelector('span').textContent = data.summary_stats.total_tracks;
