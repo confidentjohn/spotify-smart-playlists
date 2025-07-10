@@ -48,25 +48,65 @@ def metrics_data():
     """)
     top_albums = [{"album": f"{row[0]} - {row[1]}", "count": row[2]} for row in cur.fetchall()]
 
-    # First Played
-    cur.execute("""
-        SELECT track_name, artist, first_played_at
-        FROM unified_tracks
-        WHERE first_played_at IS NOT NULL
-        ORDER BY first_played_at ASC
-        LIMIT 10
-    """)
-    first_played = [{"track": f"{row[0]} - {row[1]}", "date": row[2].isoformat()} for row in cur.fetchall()]
 
-    # Recently Played
+    # Plays by Day of Week
     cur.execute("""
-        SELECT track_name, artist, last_played_at
+        SELECT TO_CHAR(last_played_at, 'Day') AS day, SUM(play_count)
         FROM unified_tracks
-        WHERE last_played_at IS NOT NULL
-        ORDER BY last_played_at DESC
+        GROUP BY day
+        ORDER BY MIN(DATE(last_played_at))
+    """)
+    plays_by_day = [{"day": row[0].strip(), "count": row[1]} for row in cur.fetchall()]
+
+    # Plays by Hour of Day
+    cur.execute("""
+        SELECT EXTRACT(HOUR FROM last_played_at) AS hour, SUM(play_count)
+        FROM unified_tracks
+        GROUP BY hour
+        ORDER BY hour
+    """)
+    plays_by_hour = [{"hour": int(row[0]), "count": row[1]} for row in cur.fetchall()]
+
+    # Plays by Month
+    cur.execute("""
+        SELECT TO_CHAR(last_played_at, 'YYYY-MM') AS month, SUM(play_count)
+        FROM unified_tracks
+        GROUP BY month
+        ORDER BY month
+    """)
+    plays_by_month = [{"month": row[0], "count": row[1]} for row in cur.fetchall()]
+
+    # Tracks Added Over Time
+    cur.execute("""
+        SELECT DATE(added_at), COUNT(*)
+        FROM unified_tracks
+        WHERE added_at IS NOT NULL
+        GROUP BY DATE(added_at)
+        ORDER BY DATE(added_at)
+    """)
+    tracks_added = [{"date": row[0].isoformat(), "count": row[1]} for row in cur.fetchall()]
+
+    # Top Liked Artists
+    cur.execute("""
+        SELECT artist, COUNT(*) as liked_count
+        FROM unified_tracks
+        WHERE is_liked = TRUE
+        GROUP BY artist
+        ORDER BY liked_count DESC
         LIMIT 10
     """)
-    recent_plays = [{"track": f"{row[0]} - {row[1]}", "date": row[2].isoformat()} for row in cur.fetchall()]
+    top_liked_artists = [{"artist": row[0], "count": row[1]} for row in cur.fetchall()]
+
+    # Unavailable Tracks Over Time
+    cur.execute("""
+        SELECT DATE(last_checked_at), COUNT(*)
+        FROM unified_tracks
+        WHERE is_playable = FALSE
+        AND last_checked_at IS NOT NULL
+        GROUP BY DATE(last_checked_at)
+        ORDER BY DATE(last_checked_at)
+    """)
+    unplayable_tracks = [{"date": row[0].isoformat(), "count": row[1]} for row in cur.fetchall()]
 
     cur.close()
     conn.close()
@@ -76,8 +116,12 @@ def metrics_data():
         "top_tracks": top_tracks,
         "daily_plays": daily_plays,
         "top_albums": top_albums,
-        "first_played": first_played,
-        "recent_plays": recent_plays,
+        "plays_by_day": plays_by_day,
+        "plays_by_hour": plays_by_hour,
+        "plays_by_month": plays_by_month,
+        "tracks_added": tracks_added,
+        "top_liked_artists": top_liked_artists,
+        "unplayable_tracks": unplayable_tracks,
     })
 
 @metrics_bp.route("/metrics")

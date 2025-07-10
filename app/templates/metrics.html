@@ -55,6 +55,12 @@
         </section>
       </div>
       <div class="chart-card">
+        <section id="top-albums">
+          <h2>💿 Top Albums</h2>
+          <canvas id="chart-top-albums" height="200"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
         <section id="listens-over-time">
           <h2>📈 Listening Over Time</h2>
           <canvas id="chart-listens-over-time" style="height:300px;"></canvas>
@@ -123,6 +129,17 @@
         data: {
           labels: trackNames,
           datasets: [{ label: 'Plays', data: trackPlays }]
+        }
+      });
+
+      // Top Albums
+      const albumNames = data.top_albums.map(a => a.album);
+      const albumPlays = data.top_albums.map(a => a.count);
+      new Chart(document.getElementById('chart-top-albums'), {
+        type: 'bar',
+        data: {
+          labels: albumNames,
+          datasets: [{ label: 'Plays', data: albumPlays }]
         }
       });
 
