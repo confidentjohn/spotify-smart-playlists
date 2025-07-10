@@ -55,7 +55,7 @@ def run_init_db():
             cur.execute(f"ALTER TABLE albums ADD COLUMN {col_name} {col_type};")
 
     # ─────────────────────────────────────────────
-    # Tracks table (UPDATED — is_liked removed)
+    # Tracks table (UPDATED — is_liked removed, new audio features columns added)
     # ─────────────────────────────────────────────
     cur.execute("""
     CREATE TABLE IF NOT EXISTS tracks (
@@ -67,9 +67,54 @@ def run_init_db():
         from_album BOOLEAN DEFAULT FALSE,
         track_number INTEGER,
         disc_number INTEGER,
-        added_at TIMESTAMP
+        added_at TIMESTAMP,
+        duration_ms INTEGER,
+        acousticness REAL,
+        danceability REAL,
+        energy REAL,
+        instrumentalness REAL,
+        key INTEGER,
+        liveness REAL,
+        loudness REAL,
+        mode INTEGER,
+        speechiness REAL,
+        tempo REAL,
+        time_signature INTEGER
     );
     """)
+
+    # Ensure all expected columns exist in the tracks table
+    expected_track_columns = {
+        "id": "TEXT",
+        "name": "TEXT",
+        "artist": "TEXT",
+        "album": "TEXT",
+        "album_id": "TEXT",
+        "from_album": "BOOLEAN DEFAULT FALSE",
+        "track_number": "INTEGER",
+        "disc_number": "INTEGER",
+        "added_at": "TIMESTAMP",
+        "duration_ms": "INTEGER",
+        "acousticness": "REAL",
+        "danceability": "REAL",
+        "energy": "REAL",
+        "instrumentalness": "REAL",
+        "key": "INTEGER",
+        "liveness": "REAL",
+        "loudness": "REAL",
+        "mode": "INTEGER",
+        "speechiness": "REAL",
+        "tempo": "REAL",
+        "time_signature": "INTEGER"
+    }
+
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'tracks';")
+    existing_track_columns = {row[0] for row in cur.fetchall()}
+
+    for col_name, col_type in expected_track_columns.items():
+        if col_name not in existing_track_columns:
+            print(f"🛠 Adding missing column to tracks: {col_name}")
+            cur.execute(f"ALTER TABLE tracks ADD COLUMN {col_name} {col_type};")
 
     # ─────────────────────────────────────────────
     # Plays table

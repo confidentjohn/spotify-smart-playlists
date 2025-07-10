@@ -59,12 +59,30 @@ for album_id, album_name, album_added_at in saved_albums:
         track_number = track.get('track_number') or 1
         disc_number = track.get('disc_number') or 1
 
+        track_features = safe_spotify_call(sp.audio_features, [track_id])[0] or {}
+
+        duration_ms = track.get('duration_ms')
+        acousticness = track_features.get('acousticness')
+        danceability = track_features.get('danceability')
+        energy = track_features.get('energy')
+        instrumentalness = track_features.get('instrumentalness')
+        key = track_features.get('key')
+        liveness = track_features.get('liveness')
+        loudness = track_features.get('loudness')
+        mode = track_features.get('mode')
+        speechiness = track_features.get('speechiness')
+        tempo = track_features.get('tempo')
+        time_signature = track_features.get('time_signature')
+
         cur.execute("""
             INSERT INTO tracks (
                 id, name, artist, album, album_id,
-                from_album, track_number, disc_number, added_at
+                from_album, track_number, disc_number, added_at,
+                duration_ms, acousticness, danceability, energy, instrumentalness,
+                key, liveness, loudness, mode, speechiness, tempo, time_signature
             )
-            VALUES (%s, %s, %s, %s, %s, TRUE, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, TRUE, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 artist = EXCLUDED.artist,
@@ -73,8 +91,25 @@ for album_id, album_name, album_added_at in saved_albums:
                 from_album = TRUE,
                 track_number = EXCLUDED.track_number,
                 disc_number = EXCLUDED.disc_number,
-                added_at = COALESCE(tracks.added_at, EXCLUDED.added_at)
-        """, (track_id, track_name, track_artist, album_name, album_id, track_number, disc_number, album_added_at))
+                added_at = COALESCE(tracks.added_at, EXCLUDED.added_at),
+                duration_ms = EXCLUDED.duration_ms,
+                acousticness = EXCLUDED.acousticness,
+                danceability = EXCLUDED.danceability,
+                energy = EXCLUDED.energy,
+                instrumentalness = EXCLUDED.instrumentalness,
+                key = EXCLUDED.key,
+                liveness = EXCLUDED.liveness,
+                loudness = EXCLUDED.loudness,
+                mode = EXCLUDED.mode,
+                speechiness = EXCLUDED.speechiness,
+                tempo = EXCLUDED.tempo,
+                time_signature = EXCLUDED.time_signature
+        """, (
+            track_id, track_name, track_artist, album_name, album_id,
+            track_number, disc_number, album_added_at,
+            duration_ms, acousticness, danceability, energy, instrumentalness,
+            key, liveness, loudness, mode, speechiness, tempo, time_signature
+        ))
 
     cur.execute("""
         UPDATE albums SET
