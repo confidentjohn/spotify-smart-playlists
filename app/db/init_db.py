@@ -23,9 +23,7 @@ def run_init_db():
         added_at TIMESTAMP,
         tracks_synced BOOLEAN DEFAULT FALSE,
         album_type TEXT,
-        album_image_url TEXT,
-        genre TEXT,
-        artist_image_url TEXT
+        album_image_url TEXT
     );
     """)
 
@@ -41,9 +39,7 @@ def run_init_db():
         "added_at": "TIMESTAMP",
         "tracks_synced": "BOOLEAN DEFAULT FALSE",
         "album_type": "TEXT",
-        "album_image_url": "TEXT",
-        "genre": "TEXT",
-        "artist_image_url": "TEXT"
+        "album_image_url": "TEXT"
     }
 
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'albums';")

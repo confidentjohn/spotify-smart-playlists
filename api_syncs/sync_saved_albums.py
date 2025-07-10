@@ -47,7 +47,6 @@ cur = conn.cursor()
 limit = 50
 offset = 0
 current_album_ids = set()
-artist_metadata_cache = {}
 
 log_event("sync_saved_albums", "Starting saved albums sync")
 
@@ -70,25 +69,16 @@ while True:
         album_type = album.get('album_type')
         album_image_url = album['images'][0]['url'] if album.get('images') else None
         artist_id = album['artists'][0]['id']
-        if artist_id in artist_metadata_cache:
-            genre, artist_image_url = artist_metadata_cache[artist_id]
-        else:
-            artist_info = safe_spotify_call(sp.artist, artist_id)
-            genre = ', '.join(artist_info.get('genres', [])) if artist_info.get('genres') else None
-            artist_image_url = artist_info['images'][0]['url'] if artist_info.get('images') else None
-            artist_metadata_cache[artist_id] = (genre, artist_image_url)
 
         cur.execute("""
-            INSERT INTO albums (id, name, artist, artist_id, release_date, total_tracks, is_saved, added_at, tracks_synced, album_type, album_image_url, genre, artist_image_url)
-            VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, FALSE, %s, %s, %s, %s)
+            INSERT INTO albums (id, name, artist, artist_id, release_date, total_tracks, is_saved, added_at, tracks_synced, album_type, album_image_url)
+            VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, FALSE, %s, %s)
             ON CONFLICT (id) DO UPDATE
             SET is_saved = TRUE,
                 added_at = EXCLUDED.added_at,
                 artist_id = EXCLUDED.artist_id,
                 album_type = EXCLUDED.album_type,
-                album_image_url = EXCLUDED.album_image_url,
-                genre = EXCLUDED.genre,
-                artist_image_url = EXCLUDED.artist_image_url;
+                album_image_url = EXCLUDED.album_image_url;
         """, (
             album_id,
             album['name'],
@@ -98,9 +88,7 @@ while True:
             album.get('total_tracks'),
             added_at,
             album_type,
-            album_image_url,
-            genre,
-            artist_image_url
+            album_image_url
         ))
 
     offset += len(items)
