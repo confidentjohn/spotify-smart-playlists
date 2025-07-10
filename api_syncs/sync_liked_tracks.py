@@ -89,6 +89,9 @@ with open(LOCK_FILE, 'w') as lock_file:
             album = track['album']['name']
             album_id = track['album']['id']
 
+            duration_ms = track.get('duration_ms')
+            popularity = track.get('popularity')
+
             cur.execute("SELECT added_at FROM albums WHERE id = %s", (album_id,))
             album_row = cur.fetchone()
             album_added_at = album_row[0] if album_row else None
@@ -104,9 +107,9 @@ with open(LOCK_FILE, 'w') as lock_file:
             cur.execute("""
                 INSERT INTO liked_tracks (
                     track_id, liked_at, added_at, last_checked_at,
-                    track_name, track_artist, album_id, album_in_library
+                    track_name, track_artist, album_id, album_in_library, duration_ms, popularity
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (track_id) DO UPDATE 
                 SET liked_at = EXCLUDED.liked_at,
                     added_at = EXCLUDED.added_at,
@@ -114,8 +117,10 @@ with open(LOCK_FILE, 'w') as lock_file:
                     track_name = EXCLUDED.track_name,
                     track_artist = EXCLUDED.track_artist,
                     album_id = EXCLUDED.album_id,
-                    album_in_library = EXCLUDED.album_in_library;
-            """, (track_id, liked_added_at, final_added_at, now, track_name, track_artist, album_id, album_in_library))
+                    album_in_library = EXCLUDED.album_in_library,
+                    duration_ms = EXCLUDED.duration_ms,
+                    popularity = EXCLUDED.popularity;
+            """, (track_id, liked_added_at, final_added_at, now, track_name, track_artist, album_id, album_in_library, duration_ms, popularity))
 
             updated_liked_tracks += 1
             counter += 1

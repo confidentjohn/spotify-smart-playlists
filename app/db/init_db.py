@@ -152,9 +152,33 @@ def run_init_db():
         track_name TEXT,
         track_artist TEXT,
         album_id TEXT,
-        album_in_library BOOLEAN DEFAULT FALSE
+        album_in_library BOOLEAN DEFAULT FALSE,
+        duration_ms INTEGER,
+        popularity INTEGER
     );
     """)
+
+    # Ensure all expected columns exist in the liked_tracks table
+    expected_liked_columns = {
+        "track_id": "TEXT",
+        "liked_at": "TIMESTAMP",
+        "added_at": "TIMESTAMP",
+        "last_checked_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+        "track_name": "TEXT",
+        "track_artist": "TEXT",
+        "album_id": "TEXT",
+        "album_in_library": "BOOLEAN DEFAULT FALSE",
+        "duration_ms": "INTEGER",
+        "popularity": "INTEGER"
+    }
+
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'liked_tracks';")
+    existing_liked_columns = {row[0] for row in cur.fetchall()}
+
+    for col_name, col_type in expected_liked_columns.items():
+        if col_name not in existing_liked_columns:
+            print(f"🛠 Adding missing column to liked_tracks: {col_name}")
+            cur.execute(f"ALTER TABLE liked_tracks ADD COLUMN {col_name} {col_type};")
 
     # ─────────────────────────────────────────────
     # Excluded tracks table
