@@ -80,7 +80,7 @@ while True:
 
         cur.execute("""
             INSERT INTO albums (id, name, artist, artist_id, release_date, total_tracks, is_saved, added_at, tracks_synced, album_type, album_image_url, genre, artist_image_url)
-            VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, FALSE, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, TRUE, %s, FALSE, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE
             SET is_saved = TRUE,
                 added_at = EXCLUDED.added_at,
