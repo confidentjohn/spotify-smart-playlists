@@ -308,8 +308,8 @@
         });
 
         // Monthly Library Growth
-        const growthLabels = data.library_growth.map(p => p.month);
-        const growthCounts = data.library_growth.map(p => Number(p.added));
+        const growthLabels = data.monthly_library_growth.map(p => p.month);
+        const growthCounts = data.monthly_library_growth.map(p => Number(p.count));
         new Chart(document.getElementById('chart-library-growth'), {
           type: 'line',
           data: {
@@ -326,7 +326,7 @@
         // Top Artist by Month
         const topArtistMonthLabels = data.top_artist_by_month.map(p => p.month);
         const topArtistNames = data.top_artist_by_month.map(p => p.artist);
-        const topArtistPlays = data.top_artist_by_month.map(p => Number(p.plays));
+        const topArtistPlays = data.top_artist_by_month.map(p => Number(p.count));
         new Chart(document.getElementById('chart-top-artist-monthly'), {
           type: 'bar',
           data: {
