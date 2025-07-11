@@ -18,6 +18,9 @@ This project is a single-user Spotify library and play history tracker with a fo
 - **Track Availability Checks**: Ensures playlists only include playable Spotify tracks
 - **GitHub Actions Automation**: All sync and playlist jobs are scheduled and managed via reusable workflows
 - **Render.com Deployment**: One-click deploy with environment variable configuration and GitHub integration
+- **Artist Metadata Tracking**: Tracks artist information such as genres and images in a dedicated table
+- **Metrics Dashboard**: Visualizes listening trends, top artists, popularity distribution, and library growth over time
+- **Diagnostics Page**: Detects anomalies like duplicate tracks in albums (e.g., caused by reissued album versions)
 
 ---
 
@@ -42,18 +45,20 @@ This project is a single-user Spotify library and play history tracker with a fo
 │       ├── 02_sync_album_tracks.yml
 │       ├── 03a_sync_liked_tracks.yml
 │       ├── 03b_sync_liked_tracks_full.yml
+│       ├── 03c_sync_artists.yml
 │       ├── 04_check_track_availability.yml
 │       ├── 05_sync_exclusions.yml
 │       ├── 06_build_unified_tracks.yml
-│       ├── 08_match_canonical_albums.yml
+│       ├── 07_build_metrics.yml
 │       ├── track_plays.yml
 │       └── update_dynamic_playlists.yml
 ├── api_syncs/
 │   ├── __init__.py
 │   ├── check_track_availability.py
+│   ├── materialized_metrics.py
 │   ├── materialized_views.py
-│   ├── match_canonical_albums.py
 │   ├── sync_album_tracks.py
+│   ├── sync_artists.py
 │   ├── sync_exclusions.py
 │   ├── sync_liked_tracks.py
 │   ├── sync_liked_tracks_full.py
@@ -76,9 +81,13 @@ This project is a single-user Spotify library and play history tracker with a fo
 │       ├── create_admin.html
 │       ├── create_playlist.html
 │       ├── dashboard_playlists.html
+│       ├── diagnostics.html
+│       ├── footer.html
 │       ├── home.html
 │       ├── login.html
-│       └── logs.html
+│       ├── logs.html
+│       ├── metrics.html
+│       └── show_refresh_token.html
 ├── playlists/
 │   ├── __init__.py
 │   ├── generate_playlist.py
@@ -87,12 +96,15 @@ This project is a single-user Spotify library and play history tracker with a fo
 ├── routes/
 │   ├── __init__.py
 │   ├── create_admin.py
+│   ├── metrics.py
 │   ├── playlist_dashboard.py
+│   ├── diagnostics.py
 │   └── rule_parser.py
 └── utils/
     ├── __init__.py
     ├── create_exclusions_playlist.py
     ├── db_utils.py
+    ├── diagnostics.py
     ├── logger.py
     ├── playlist_builder.py
     └── spotify_auth.py
@@ -112,6 +124,7 @@ This project is a single-user Spotify library and play history tracker with a fo
 | `plays`                  | Complete history of played tracks                                        |
 | `track_availability`     | Stores track availability status and last checked timestamp              |
 | `tracks`                 | Tracks from albums, includes metadata                                    |
+| `artists`                | Stores metadata like genre and image for each artist                     |
 | `unified_tracks`         | Materialized view consolidating tracks, plays, and likes                 |
 | `users`                  | Stores user accounts, Spotify OAuth tokens, and onboarding status        |
 
@@ -449,6 +462,9 @@ The Flask-based Web UI is the central hub for onboarding, playlist management, a
   - **Single-user admin onboarding and Spotify OAuth via `/create-admin`**
   - Refresh tokens are securely stored and used for all backend syncs
 
+- 📊 **Metrics Dashboard**: Rich visualizations of listening behavior, track popularity, and genre trends
+- 🧪 **Diagnostics Page**: View auto-detected data issues like duplicated album entries or missing metadata
+
 ### Web UI Pages
 
 | URL Path                     | Purpose                                                               |
@@ -458,6 +474,7 @@ The Flask-based Web UI is the central hub for onboarding, playlist management, a
 | `/dashboard/create-playlist` | ➕ Create a new smart playlist and define its rule set                 |
 | `/create-admin`              | 👤 Onboard new admin                                                  |
 | `/` (home)                   | 🏠 See onboarding state and trigger syncs (Run Initial Sync / Sync Now)|
+| `/diagnostics`               | 🧪 Detects potential issues like duplicate album track entries         |
 
 ---
 
