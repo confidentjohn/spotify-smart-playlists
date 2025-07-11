@@ -1,7 +1,7 @@
-name: 08 - Match Canonical Albums
+name: 03c - Sync Artists
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
   workflow_call:
     secrets:
       SPOTIFY_CLIENT_ID:
@@ -24,7 +24,7 @@ on:
         required: true
 
 jobs:
-  match-canonical-albums:
+  sync-albums:
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repo
@@ -38,8 +38,8 @@ jobs:
       - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
-      - name: 🔍 Run match_canonical_albums.py
-        run: PYTHONPATH=. python api_syncs/match_canonical_albums.py
+      - name: 🚀 Run sync_artists.py
+        run: PYTHONPATH=. python api_syncs/sync_artists.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
