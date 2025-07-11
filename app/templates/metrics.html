@@ -97,6 +97,51 @@
       gap: 1.5rem;
     }
 
+    .top-albums-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .album-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .album-rank {
+      font-size: 1.5rem;
+      font-weight: bold;
+      width: 2rem;
+    }
+
+    .album-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+
+    .album-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .album-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .album-artist {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .album-count {
+      font-size: 0.85rem;
+      color: #999;
+    }
+
     .artist-card {
       display: flex;
       align-items: center;
@@ -201,7 +246,8 @@
       <div class="chart-card">
         <section id="top-albums">
           <h2>💿 Top Albums</h2>
-          <canvas id="chart-top-albums" height="200"></canvas>
+          <!-- <canvas id="chart-top-albums" height="200"></canvas> -->
+          <div class="top-albums-grid" id="top-albums-grid"></div>
         </section>
       </div>
       <div class="chart-card">
@@ -312,14 +358,22 @@
         });
 
         // Top Albums
-        const albumNames = data.top_albums.map(a => a.album);
-        const albumPlays = data.top_albums.map(a => a.count);
-        new Chart(document.getElementById('chart-top-albums'), {
-          type: 'bar',
-          data: {
-            labels: albumNames,
-            datasets: [{ label: 'Plays', data: albumPlays }]
-          }
+        const topAlbumsGrid = document.getElementById('top-albums-grid');
+        data.top_albums.forEach((album, index) => {
+          const albumCard = document.createElement('div');
+          albumCard.className = 'album-card';
+
+          albumCard.innerHTML = `
+            <div class="album-rank">${index + 1}</div>
+            <img class="album-img" src="${album.image_url}" alt="${album.album_name}">
+            <div class="album-meta">
+              <div class="album-name">${album.album_name}</div>
+              <div class="album-artist">${album.artist}</div>
+              <div class="album-count">${album.count} plays</div>
+            </div>
+          `;
+
+          topAlbumsGrid.appendChild(albumCard);
         });
 
         // Listens Over Time

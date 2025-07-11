@@ -69,13 +69,17 @@ def collect_metrics_payload():
 
     # Top Albums
     cur.execute("""
-        SELECT album_name, artist, SUM(play_count) as total_plays
+        SELECT album_name, artist, album_image_url, SUM(play_count) as total_plays
         FROM unified_tracks
-        GROUP BY album_name, artist
+        WHERE album_image_url IS NOT NULL
+        GROUP BY album_name, artist, album_image_url
         ORDER BY total_plays DESC
         LIMIT 10
     """)
-    top_albums = [{"album": f"{row[0]} - {row[1]}", "count": row[2]} for row in cur.fetchall()]
+    top_albums = [
+        {"album_name": row[0], "artist": row[1], "image_url": row[2], "count": row[3]}
+        for row in cur.fetchall()
+    ]
 
 
     # Plays by Day of Week
