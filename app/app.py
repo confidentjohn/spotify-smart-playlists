@@ -20,7 +20,7 @@ import requests
 from routes import playlist_dashboard
 from routes.create_admin import create_admin_bp
 from routes.metrics import metrics_bp
-from routes.diagnostics import diagnostics_bp
+from utils.diagnostics import diagnostics_bp
 
 
 app = Flask(__name__)
