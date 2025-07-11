@@ -9,12 +9,19 @@ SELECT
     t.id AS track_id,
     t.name AS track_name,
     COALESCE(a.artist, lt.track_artist) AS artist,
+    COALESCE(a.artist_id, lt.artist_id) AS artist_id,
     t.album_id,
     a.name AS album_name,
+    a.album_type,
+    a.album_image_url AS album_image_url,
     a.release_date,
+    ar.genres,
+    ar.image_url AS artist_image,
     t.track_number,
     COALESCE(t.disc_number, 1) AS disc_number,
     t.added_at,
+    t.duration_ms,
+    COALESCE(lt.popularity, NULL) AS popularity,
     lt.liked_at AS liked_at,
     lt.last_checked_at AS last_checked_at,
     ta.is_playable,
@@ -33,10 +40,11 @@ JOIN albums a ON t.album_id = a.id
 LEFT JOIN liked_tracks lt ON lt.track_id = t.id
 LEFT JOIN track_availability ta ON ta.track_id = t.id
 LEFT JOIN plays p ON p.track_id = t.id
+LEFT JOIN artists ar ON ar.id = COALESCE(a.artist_id, lt.artist_id)
 WHERE a.is_saved = TRUE
 GROUP BY 
-    t.id, t.name, a.artist, lt.track_artist, t.album_id, a.name, a.release_date,
-    t.track_number, COALESCE(t.disc_number, 1), t.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable, excluded
+    t.id, t.name, a.artist, lt.track_artist, COALESCE(a.artist_id, lt.artist_id), t.album_id, a.name, a.album_type, a.album_image_url, a.release_date,
+    ar.genres, ar.image_url, t.track_number, COALESCE(t.disc_number, 1), t.added_at, t.duration_ms, lt.liked_at, lt.last_checked_at, ta.is_playable, popularity, excluded
 
 UNION ALL
 
@@ -45,12 +53,19 @@ SELECT
     lt.track_id,
     lt.track_name,
     lt.track_artist AS artist,
+    lt.artist_id,
     NULL AS album_id,
     NULL AS album_name,
+    NULL AS album_type,
+    NULL AS album_image_url,
     NULL AS release_date,
+    ar.genres,
+    ar.image_url AS artist_image,
     NULL AS track_number,
     1 AS disc_number,
     lt.added_at,
+    lt.duration_ms,
+    lt.popularity,
     lt.liked_at,
     lt.last_checked_at,
     ta.is_playable,
@@ -65,8 +80,9 @@ FROM liked_tracks lt
 LEFT JOIN tracks t ON lt.track_id = t.id
 LEFT JOIN track_availability ta ON ta.track_id = lt.track_id
 LEFT JOIN plays p ON p.track_id = lt.track_id
+LEFT JOIN artists ar ON ar.id = lt.artist_id
 WHERE t.id IS NULL
-GROUP BY lt.track_id, lt.track_name, lt.track_artist, lt.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable, excluded;
+GROUP BY lt.track_id, lt.track_name, lt.track_artist, lt.artist_id, lt.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable, ar.genres, ar.image_url, lt.duration_ms, lt.popularity, excluded;
 """
 
 if __name__ == "__main__":
