@@ -37,7 +37,7 @@ def main():
 
     all_artist_ids = list(album_artists.union(liked_artists))
     if not all_artist_ids:
-        log_event("No artist IDs found.")
+        log_event("sync_artists", "No artist IDs found.")
         return
 
     sp = get_spotify_client()
@@ -57,7 +57,7 @@ def main():
     conn.commit()
     cur.close()
     conn.close()
-    log_event(f"✔️ Synced {len(artists)} artists.")
+    log_event("sync_artists", f"✔️ Synced {len(artists)} artists.")
 
 if __name__ == "__main__":
     main()
