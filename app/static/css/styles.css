@@ -45,7 +45,7 @@ th {
   padding: 12px 24px;
   border: none;
   border-radius: 999px;
-  background: linear-gradient(to right, #FFA500, #FF7F50);
+  background: linear-gradient(to right, #1DB954, #1ed760);
   color: white;
   font-size: 1rem;
   font-weight: 600;
@@ -54,11 +54,7 @@ th {
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   margin-bottom: 12px;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  gap: 0.4rem;
 }
 
 .form-container {
@@ -77,11 +73,11 @@ th {
 }
 
 .btn-secondary {
-  background-color: #FFA500;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 16px;
+  background: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  padding: 10px 20px;
   font-size: 0.95rem;
   font-weight: 600;
   margin: 6px 4px 6px 0;
@@ -89,8 +85,17 @@ th {
   transition: background-color 0.2s ease-in-out;
 }
 
-.btn-secondary:hover {
-  background-color: #e69500;
+.btn:hover, .btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  justify-items: center;
+  margin-top: 2rem;
 }
 .page-container {
   padding-left: 20px;
