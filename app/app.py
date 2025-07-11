@@ -20,6 +20,7 @@ import requests
 from routes import playlist_dashboard
 from routes.create_admin import create_admin_bp
 from routes.metrics import metrics_bp
+from routes.diagnostics import diagnostics_bp
 
 
 app = Flask(__name__)
@@ -27,6 +28,7 @@ app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your prefer
 app.register_blueprint(playlist_dashboard)
 app.register_blueprint(create_admin_bp)
 app.register_blueprint(metrics_bp)
+app.register_blueprint(diagnostics_bp)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
