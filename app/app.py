@@ -224,8 +224,8 @@ from utils.diagnostics import get_duplicate_album_track_counts
 
 @app.route("/diagnostics")
 def diagnostics():
-    diagnostics = get_duplicate_album_track_counts()
-    return render_template("diagnostics.html", diagnostics=diagnostics)
+    duplicates = get_duplicate_album_track_counts()
+    return render_template("diagnostics.html", duplicates=duplicates)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
