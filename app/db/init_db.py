@@ -227,6 +227,19 @@ def run_init_db():
     );
     """)
 
+    # ─────────────────────────────────────────────
+    # Artists table
+    # ─────────────────────────────────────────────
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS artists (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        genres TEXT[],
+        image_url TEXT,
+        last_checked_at TIMESTAMP
+    );
+    """)
+
     conn.commit()
     cur.close()
     conn.close()
