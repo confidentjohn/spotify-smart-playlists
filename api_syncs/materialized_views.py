@@ -20,14 +20,18 @@ SELECT
     t.track_number,
     COALESCE(t.disc_number, 1) AS disc_number,
     t.added_at,
+    t.added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS added_at_est,
     t.duration_ms,
     COALESCE(lt.popularity, NULL) AS popularity,
     lt.liked_at AS liked_at,
+    lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
     lt.last_checked_at AS last_checked_at,
     ta.is_playable,
     COUNT(p.played_at) AS play_count,
     MIN(p.played_at) AS first_played_at,
+    MIN(p.played_at) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS first_played_at_est,
     MAX(p.played_at) AS last_played_at,
+    MAX(p.played_at) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS last_played_at_est,
     CASE 
         WHEN lt.liked_at IS NOT NULL THEN TRUE
         ELSE FALSE
@@ -64,14 +68,18 @@ SELECT
     NULL AS track_number,
     1 AS disc_number,
     lt.added_at,
+    lt.added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS added_at_est,
     lt.duration_ms,
     lt.popularity,
     lt.liked_at,
+    lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
     lt.last_checked_at,
     ta.is_playable,
     COUNT(p.played_at) AS play_count,
     MIN(p.played_at) AS first_played_at,
+    MIN(p.played_at) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS first_played_at_est,
     MAX(p.played_at) AS last_played_at,
+    MAX(p.played_at) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS last_played_at_est,
     TRUE AS is_liked,
     EXISTS (
         SELECT 1 FROM excluded_tracks et WHERE et.track_id = lt.track_id
