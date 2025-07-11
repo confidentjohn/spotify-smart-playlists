@@ -161,6 +161,7 @@ def run_init_db():
         "track_name": "TEXT",
         "track_artist": "TEXT",
         "album_id": "TEXT",
+        "artist_id": "TEXT",
         "album_in_library": "BOOLEAN DEFAULT FALSE",
         "duration_ms": "INTEGER",
         "popularity": "INTEGER"
@@ -173,6 +174,14 @@ def run_init_db():
         if col_name not in existing_liked_columns:
             print(f"🛠 Adding missing column to liked_tracks: {col_name}")
             cur.execute(f"ALTER TABLE liked_tracks ADD COLUMN {col_name} {col_type};")
+
+    # Ensure all columns are populated with fallback values if NULL
+    cur.execute("""
+        UPDATE liked_tracks SET album_in_library = FALSE WHERE album_in_library IS NULL;
+    """)
+    cur.execute("""
+        UPDATE liked_tracks SET last_checked_at = CURRENT_TIMESTAMP WHERE last_checked_at IS NULL;
+    """)
 
     # ─────────────────────────────────────────────
     # Excluded tracks table
