@@ -10,7 +10,11 @@ def fetch_artists_metadata(sp, artist_ids):
     metadata = []
     for i in range(0, len(artist_ids), 50):
         batch = artist_ids[i:i+50]
-        response = sp.artists(batch)
+        valid_batch = [a for a in batch if a]  # Skip None or empty strings
+        if not valid_batch:
+            log_event("sync_artists", "⚠️ Skipping empty artist batch")
+            continue
+        response = sp.artists(valid_batch)
         for artist in response['artists']:
             genres = artist.get('genres', [])
             images = artist.get('images', [])
