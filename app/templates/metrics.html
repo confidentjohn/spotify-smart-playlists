@@ -450,52 +450,28 @@
 
         // Listening by Day of Week (sorted, styled)
         const weekdayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const weekdayColors = [
-          '#A8DADC', // Sunday
-          '#FFADAD', // Monday
-          '#FFD6A5', // Tuesday
-          '#FDFFB6', // Wednesday
-          '#CAFFBF', // Thursday
-          '#9BF6FF', // Friday
-          '#E0E0E0'  // Saturday
-        ];
-
         const playsByDayMap = Object.fromEntries(data.plays_by_day.map(p => [p.day.trim(), Number(p.count)]));
         const sortedDayCounts = weekdayOrder.map(day => playsByDayMap[day] || 0);
-
         new Chart(document.getElementById('chart-plays-by-day'), {
-          type: 'polarArea',
+          type: 'bar',
           data: {
             labels: weekdayOrder,
             datasets: [{
               label: 'Plays',
               data: sortedDayCounts,
-              backgroundColor: weekdayColors,
-              borderWidth: 1
+              backgroundColor: '#007bff'
             }]
           },
           options: {
             responsive: true,
             plugins: {
               legend: {
-                position: 'right',
-                labels: {
-                  color: '#444',
-                  font: {
-                    size: 12
-                  }
-                }
+                display: false
               }
             },
             scales: {
-              r: {
-                ticks: {
-                  color: '#666',
-                  backdropColor: 'transparent'
-                },
-                grid: {
-                  color: '#ccc'
-                }
+              y: {
+                beginAtZero: true
               }
             }
           }
@@ -599,20 +575,17 @@
             datasets: [{ label: 'Plays', data: topArtistPlays }]
           }
         });
-        // Top Genres Radar Chart
+        // Top Genres Bar Chart
         const genreLabels = data.top_genres.map(g => g.genre);
         const genreCounts = data.top_genres.map(g => Number(g.count));
         new Chart(document.getElementById('chart-top-genres'), {
-          type: 'radar',
+          type: 'bar',
           data: {
             labels: genreLabels,
             datasets: [{
               label: 'Plays by Genre',
               data: genreCounts,
-              fill: true,
-              backgroundColor: 'rgba(30,185,84,0.2)',
-              borderColor: '#1DB954',
-              pointBackgroundColor: '#1DB954'
+              backgroundColor: '#1DB954'
             }]
           },
           options: {
@@ -621,9 +594,18 @@
               legend: { display: false }
             },
             scales: {
-              r: {
-                angleLines: { display: false },
-                suggestedMin: 0
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Number of Plays'
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Genre'
+                }
               }
             }
           }
@@ -675,19 +657,3 @@
   </script>
 </body>
 </html>
-    .artist-card,
-    .track-card,
-    .album-card {
-      background-color: #ffffff;
-      border-radius: 10px;
-      padding: 0.75rem;
-      transition: box-shadow 0.2s ease, transform 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    }
-
-    .artist-card:hover,
-    .track-card:hover,
-    .album-card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      transform: translateY(-2px);
-    }
