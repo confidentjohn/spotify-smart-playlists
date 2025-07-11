@@ -143,6 +143,17 @@ def collect_metrics_payload():
     """)
     top_liked_artists = [{"artist": row[0], "count": row[1]} for row in cur.fetchall()]
 
+    # Top Genres by First Genre
+    cur.execute("""
+        SELECT TRIM(SPLIT_PART(genres, ',', 1)) AS primary_genre, SUM(play_count) AS total_plays
+        FROM unified_tracks
+        WHERE play_count > 0 AND genres IS NOT NULL AND genres <> ''
+        GROUP BY primary_genre
+        ORDER BY total_plays DESC
+        LIMIT 10
+    """)
+    top_genres = [{"genre": row[0], "count": row[1]} for row in cur.fetchall()]
+
     # Unavailable Tracks Over Time
     cur.execute("""
         SELECT DATE(last_checked_at) AS check_date, COUNT(*)
@@ -264,6 +275,7 @@ def collect_metrics_payload():
         "plays_by_month": plays_by_month,
         "tracks_added": tracks_added,
         "top_liked_artists": top_liked_artists,
+        "top_genres": top_genres,
         "unplayable_tracks": unplayable_tracks,
         "release_to_play": release_to_play,
         "monthly_library_growth": monthly_library_growth,

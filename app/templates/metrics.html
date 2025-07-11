@@ -288,6 +288,12 @@
         </section>
       </div>
       <div class="chart-card">
+        <section id="top-genres">
+          <h2>🎧 Top Genres (Radar)</h2>
+          <canvas id="chart-top-genres"></canvas>
+        </section>
+      </div>
+      <div class="chart-card">
         <section id="plays-by-hour">
           <h2>🕓 Listening by Hour of Day</h2>
           <canvas id="chart-plays-by-hour"></canvas>
@@ -433,14 +439,56 @@
           });
         }
 
-        // Listening by Day of Week
-        const dayLabels = data.plays_by_day.map(p => p.day.trim());
-        const dayCounts = data.plays_by_day.map(p => Number(p.count));
+        // Listening by Day of Week (sorted, styled)
+        const weekdayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const weekdayColors = [
+          '#A8DADC', // Sunday
+          '#FFADAD', // Monday
+          '#FFD6A5', // Tuesday
+          '#FDFFB6', // Wednesday
+          '#CAFFBF', // Thursday
+          '#9BF6FF', // Friday
+          '#E0E0E0'  // Saturday
+        ];
+
+        const playsByDayMap = Object.fromEntries(data.plays_by_day.map(p => [p.day.trim(), Number(p.count)]));
+        const sortedDayCounts = weekdayOrder.map(day => playsByDayMap[day] || 0);
+
         new Chart(document.getElementById('chart-plays-by-day'), {
           type: 'polarArea',
           data: {
-            labels: dayLabels,
-            datasets: [{ label: 'Plays', data: dayCounts }]
+            labels: weekdayOrder,
+            datasets: [{
+              label: 'Plays',
+              data: sortedDayCounts,
+              backgroundColor: weekdayColors,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: {
+                  color: '#444',
+                  font: {
+                    size: 12
+                  }
+                }
+              }
+            },
+            scales: {
+              r: {
+                ticks: {
+                  color: '#666',
+                  backdropColor: 'transparent'
+                },
+                grid: {
+                  color: '#ccc'
+                }
+              }
+            }
           }
         });
 
@@ -540,6 +588,35 @@
           data: {
             labels: topArtistMonthLabels.map((m, i) => `${m} (${topArtistNames[i]})`),
             datasets: [{ label: 'Plays', data: topArtistPlays }]
+          }
+        });
+        // Top Genres Radar Chart
+        const genreLabels = data.top_genres.map(g => g.genre);
+        const genreCounts = data.top_genres.map(g => Number(g.count));
+        new Chart(document.getElementById('chart-top-genres'), {
+          type: 'radar',
+          data: {
+            labels: genreLabels,
+            datasets: [{
+              label: 'Plays by Genre',
+              data: genreCounts,
+              fill: true,
+              backgroundColor: 'rgba(30,185,84,0.2)',
+              borderColor: '#1DB954',
+              pointBackgroundColor: '#1DB954'
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              r: {
+                angleLines: { display: false },
+                suggestedMin: 0
+              }
+            }
           }
         });
       } catch (err) {
