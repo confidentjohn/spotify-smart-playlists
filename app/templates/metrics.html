@@ -245,6 +245,8 @@
       <div class="card" id="summary-tracks">🎵 Tracks<br><span>...</span></div>
       <div class="card" id="summary-liked">❤️ Liked Songs<br><span>...</span></div>
       <div class="card" id="summary-plays">▶️ Total Plays<br><span>...</span></div>
+      <div class="card" id="summary-unique-plays">🔁 Unique Tracks Played<br><span>...</span></div>
+      <div class="card" id="summary-time-spent">⏱️ Time Spent Listening<br><span>...</span></div>
     </div>
     <div class="charts-grid">
       <div class="top-tiles-grid">
@@ -341,6 +343,8 @@
         document.getElementById('summary-tracks').querySelector('span').textContent = data.summary_stats.total_tracks;
         document.getElementById('summary-liked').querySelector('span').textContent = data.summary_stats.total_liked;
         document.getElementById('summary-plays').querySelector('span').textContent = data.summary_stats.total_plays;
+        document.getElementById('summary-unique-plays').querySelector('span').textContent = data.summary_stats.total_unique_plays;
+        document.getElementById('summary-time-spent').querySelector('span').textContent = data.summary_stats.total_time_spent;
 
         // Top Artists
         const topArtistsGrid = document.getElementById('top-artists-grid');

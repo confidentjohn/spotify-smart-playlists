@@ -231,15 +231,24 @@ def collect_metrics_payload():
             COUNT(DISTINCT artist),
             COUNT(*),
             COUNT(*) FILTER (WHERE is_liked = TRUE),
-            SUM(play_count)
+            SUM(play_count),
+            COUNT(*) FILTER (WHERE play_count > 0),
+            SUM(duration_ms * play_count)
         FROM unified_tracks
     """)
     row = cur.fetchone()
+    total_ms = row[5] or 0
+    total_seconds = total_ms // 1000
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
     summary_stats = {
         "total_artists": row[0],
         "total_tracks": row[1],
         "total_liked": row[2],
-        "total_plays": row[3]
+        "total_plays": row[3],
+        "total_unique_plays": row[4],
+        "total_time_spent": f"{hours:02}:{minutes:02}:{seconds:02}"
     }
 
     cur.close()
