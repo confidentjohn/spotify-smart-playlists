@@ -32,13 +32,17 @@ def collect_metrics_payload():
 
     # Top Artists
     cur.execute("""
-        SELECT artist, SUM(play_count) as play_count
+        SELECT artist, artist_image, SUM(play_count) as play_count
         FROM unified_tracks
-        GROUP BY artist
+        WHERE artist_image IS NOT NULL
+        GROUP BY artist, artist_image
         ORDER BY play_count DESC
         LIMIT 10
     """)
-    top_artists = [{"artist": row[0], "count": row[1]} for row in cur.fetchall()]
+    top_artists = [
+        {"artist": row[0], "image_url": row[1], "count": row[2]}
+        for row in cur.fetchall()
+    ]
 
     # Top Tracks
     cur.execute("""

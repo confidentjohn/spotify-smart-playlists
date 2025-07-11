@@ -91,6 +91,36 @@
       margin-top: 0;
       color: #555;
     }
+    .top-artists-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .artist-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .artist-rank {
+      font-size: 1.5rem;
+      font-weight: bold;
+      width: 2rem;
+    }
+
+    .artist-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+
+    .artist-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #20232a;
+    }
   </style>
 </head>
 <body>
@@ -113,7 +143,8 @@
       <div class="chart-card">
         <section id="top-artists">
           <h2>🎤 Top Artists</h2>
-          <canvas id="chart-top-artists" height="200"></canvas>
+          <!-- <canvas id="chart-top-artists" height="200"></canvas> -->
+          <div class="top-artists-grid" id="top-artists-grid"></div>
         </section>
       </div>
       <div class="chart-card">
@@ -202,14 +233,18 @@
         document.getElementById('summary-plays').querySelector('span').textContent = data.summary_stats.total_plays;
 
         // Top Artists
-        const artistNames = data.top_artists.map(a => a.artist);
-        const artistPlays = data.top_artists.map(a => a.count);
-        new Chart(document.getElementById('chart-top-artists'), {
-          type: 'bar',
-          data: {
-            labels: artistNames,
-            datasets: [{ label: 'Plays', data: artistPlays }]
-          }
+        const topArtistsGrid = document.getElementById('top-artists-grid');
+        data.top_artists.forEach((artist, index) => {
+          const artistCard = document.createElement('div');
+          artistCard.className = 'artist-card';
+
+          artistCard.innerHTML = `
+            <div class="artist-rank">${index + 1}</div>
+            <img class="artist-img" src="${artist.image_url}" alt="${artist.artist}">
+            <div class="artist-name">${artist.artist}</div>
+          `;
+
+          topArtistsGrid.appendChild(artistCard);
         });
 
         // Top Tracks
