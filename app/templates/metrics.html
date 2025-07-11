@@ -223,13 +223,9 @@
 
     @media (min-width: 960px) {
       .top-tiles-grid {
-        flex-direction: row;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
         gap: 2rem;
-      }
-      .top-tiles-grid .chart-card {
-        flex: 1;
-        min-width: 0;
       }
     }
   </style>
