@@ -1,4 +1,4 @@
-from utils.logger import logger
+from utils.logger import log_event
 
 
 import os
@@ -36,22 +36,12 @@ def main():
     liked_artists = {row[0] for row in cur.fetchall()}
 
     all_artist_ids = list(album_artists.union(liked_artists))
-
-    # Filter out artists already checked in the last 30 days
-    cur.execute("""
-        SELECT id FROM artists
-        WHERE last_checked_at IS NOT NULL
-          AND last_checked_at >= NOW() - INTERVAL '30 days'
-    """)
-    recently_checked = {row[0] for row in cur.fetchall()}
-    artist_ids_to_check = [aid for aid in all_artist_ids if aid not in recently_checked]
-
-    if not artist_ids_to_check:
-        logger.info("No new artists to update.")
+    if not all_artist_ids:
+        log_event("No artist IDs found.")
         return
 
     sp = get_spotify_client()
-    artists = fetch_artists_metadata(sp, artist_ids_to_check)
+    artists = fetch_artists_metadata(sp, all_artist_ids)
 
     for artist in artists:
         cur.execute("""
@@ -64,20 +54,10 @@ def main():
                 last_checked_at = EXCLUDED.last_checked_at;
         """, (artist['id'], artist['name'], artist['genres'], artist['image_url'], now))
 
-    # Delete artists no longer referenced in albums or liked_tracks
-    cur.execute("""
-        DELETE FROM artists
-        WHERE id NOT IN (
-            SELECT DISTINCT artist_id FROM albums
-            UNION
-            SELECT DISTINCT artist_id FROM liked_tracks
-        )
-    """)
-
     conn.commit()
     cur.close()
     conn.close()
-    logger.info(f"✔️ Synced {len(artists)} artists. Old unreferenced artists removed.")
+    log_event(f"✔️ Synced {len(artists)} artists.")
 
 if __name__ == "__main__":
     main()
