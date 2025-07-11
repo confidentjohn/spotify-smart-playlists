@@ -103,10 +103,10 @@ def collect_metrics_payload():
 
     # Plays by Hour of Day
     cur.execute("""
-        SELECT EXTRACT(HOUR FROM last_played_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') AS hour,
+        SELECT EXTRACT(HOUR FROM last_played_at_est) AS hour,
         SUM(play_count)
         FROM unified_tracks
-        WHERE last_played_at IS NOT NULL
+        WHERE last_played_at_est IS NOT NULL
         GROUP BY hour
         ORDER BY hour
     """)
@@ -134,14 +134,14 @@ def collect_metrics_payload():
 
     # Top Liked Artists
     cur.execute("""
-        SELECT artist, COUNT(*) as liked_count
+        SELECT artist, artist_image, COUNT(*) as liked_count
         FROM unified_tracks
-        WHERE is_liked = TRUE
-        GROUP BY artist
+        WHERE is_liked = TRUE AND artist_image IS NOT NULL
+        GROUP BY artist, artist_image
         ORDER BY liked_count DESC
         LIMIT 10
     """)
-    top_liked_artists = [{"artist": row[0], "count": row[1]} for row in cur.fetchall()]
+    top_liked_artists = [{"artist": row[0], "image_url": row[1], "count": row[2]} for row in cur.fetchall()]
 
     # Top Genres by First Genre
     cur.execute("""

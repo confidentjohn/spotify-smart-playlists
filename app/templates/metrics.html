@@ -256,7 +256,7 @@
       <div class="top-tiles-grid">
         <div class="chart-card">
           <section id="top-artists">
-            <h2>🎤 Top Artists</h2>
+            <h2>🎤 Most Played Artists</h2>
             <!-- <canvas id="chart-top-artists" height="200"></canvas> -->
             <div class="top-artists-grid" id="top-artists-grid"></div>
           </section>
@@ -272,6 +272,12 @@
             <h2>💿 Top Albums</h2>
             <!-- <canvas id="chart-top-albums" height="200"></canvas> -->
             <div class="top-albums-grid" id="top-albums-grid"></div>
+          </section>
+        </div>
+        <div class="chart-card">
+          <section id="top-liked-artists">
+            <h2>❤️ Top Liked Artists</h2>
+            <div class="top-artists-grid" id="top-liked-artists-grid"></div>
           </section>
         </div>
       </div>
@@ -309,12 +315,6 @@
         <section id="added-tracks-over-time">
           <h2>➕ Tracks Added Over Time</h2>
           <canvas id="chart-added-tracks"></canvas>
-        </section>
-      </div>
-      <div class="chart-card">
-        <section id="top-liked-artists">
-          <h2>❤️ Top Liked Artists</h2>
-          <canvas id="chart-top-liked-artists"></canvas>
         </section>
       </div>
       <div class="chart-card">
@@ -374,7 +374,10 @@
           artistCard.innerHTML = `
             <div class="artist-rank">${index + 1}</div>
             <img class="artist-img" src="${artist.image_url}" alt="${artist.artist}">
-            <div class="artist-name">${artist.artist}</div>
+            <div>
+              <div class="artist-name">${artist.artist}</div>
+              <div class="album-count">${artist.count} plays</div>
+            </div>
           `;
 
           topArtistsGrid.appendChild(artistCard);
@@ -510,15 +513,22 @@
           }
         });
 
-        // Top Liked Artists
-        const likedArtists = data.top_liked_artists.map(p => p.artist);
-        const likedCounts = data.top_liked_artists.map(p => Number(p.count));
-        new Chart(document.getElementById('chart-top-liked-artists'), {
-          type: 'bar',
-          data: {
-            labels: likedArtists,
-            datasets: [{ label: 'Liked Songs', data: likedCounts }]
-          }
+        // Top Liked Artists (Grid View)
+        const topLikedArtistsGrid = document.getElementById('top-liked-artists-grid');
+        data.top_liked_artists.forEach((artist, index) => {
+          const artistCard = document.createElement('div');
+          artistCard.className = 'artist-card';
+
+          artistCard.innerHTML = `
+            <div class="artist-rank">${index + 1}</div>
+            <img class="artist-img" src="${artist.image_url}" alt="${artist.artist}">
+            <div>
+              <div class="artist-name">${artist.artist}</div>
+              <div class="album-count">${artist.count} liked tracks</div>
+            </div>
+          `;
+
+          topLikedArtistsGrid.appendChild(artistCard);
         });
 
         // Unavailable Tracks Over Time
