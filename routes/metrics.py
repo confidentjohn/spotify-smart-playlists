@@ -185,17 +185,6 @@ def collect_metrics_payload():
     """)
     avg_popularity_score = cur.fetchone()[0] or 0
 
-    # Unavailable Tracks Over Time
-    cur.execute("""
-        SELECT DATE(last_checked_at) AS check_date, COUNT(*)
-        FROM unified_tracks
-        WHERE is_playable = FALSE
-        AND last_checked_at IS NOT NULL
-        GROUP BY check_date
-        ORDER BY check_date
-    """)
-    unplayable_tracks = [{"date": row[0].isoformat(), "count": row[1]} for row in cur.fetchall()]
-
     # Time from Release to First Play
     cur.execute("""
         SELECT bucket, COUNT(*) AS count
@@ -309,7 +298,6 @@ def collect_metrics_payload():
         "top_genres": top_genres,
         "popularity_distribution": popularity_distribution,
         "avg_popularity_score": avg_popularity_score,
-        "unplayable_tracks": unplayable_tracks,
         "release_to_play": release_to_play,
         "monthly_library_growth": monthly_library_growth,
         "top_artist_by_month": top_artist_by_month,

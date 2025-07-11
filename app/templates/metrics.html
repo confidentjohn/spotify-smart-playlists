@@ -12,7 +12,7 @@
       font-family: 'Inter', sans-serif;
       background-color: #f7f9fa;
       margin: 0;
-      padding: 1rem 1.5rem;
+      padding: 0.5rem 1rem;
       color: #222;
     }
 
@@ -20,7 +20,7 @@
       display: flex;
       flex-direction: column;
       gap: 3rem;
-      margin: 2rem auto;
+      margin: 1.5rem auto;
       max-width: 1200px;
     }
 
@@ -54,7 +54,7 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 1rem;
-      margin: 2rem auto 1rem;
+      margin: 1rem auto;
       max-width: 1200px;
     }
 
@@ -327,12 +327,6 @@
         </section>
       </div>
       <div class="chart-card">
-        <section id="unplayable-tracks">
-          <h2>🚫 Unavailable Tracks Over Time</h2>
-          <canvas id="chart-unavailable-tracks"></canvas>
-        </section>
-      </div>
-      <div class="chart-card">
         <section id="release-to-play-distribution">
           <h2>⏱️ Time to First Play</h2>
           <canvas id="chart-release-to-play"></canvas>
@@ -531,21 +525,6 @@
           topLikedArtistsGrid.appendChild(artistCard);
         });
 
-        // Unavailable Tracks Over Time
-        const unavailableDates = data.unplayable_tracks.map(p => p.date);
-        const unavailableCounts = data.unplayable_tracks.map(p => Number(p.count));
-        new Chart(document.getElementById('chart-unavailable-tracks'), {
-          type: 'line',
-          data: {
-            labels: unavailableDates,
-            datasets: [{
-              label: 'Unavailable Tracks',
-              data: unavailableCounts,
-              fill: false,
-              borderColor: '#ff0000'
-            }]
-          }
-        });
 
         // Time to First Play from Release
         const rtpLabels = data.release_to_play.map(p => p.bucket);
