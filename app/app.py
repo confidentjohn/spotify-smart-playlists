@@ -20,7 +20,7 @@ import requests
 from routes import playlist_dashboard
 from routes.create_admin import create_admin_bp
 from routes.metrics import metrics_bp
-from utils.diagnostics import diagnostics_bp
+
 
 
 app = Flask(__name__)
@@ -28,7 +28,7 @@ app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your prefer
 app.register_blueprint(playlist_dashboard)
 app.register_blueprint(create_admin_bp)
 app.register_blueprint(metrics_bp)
-app.register_blueprint(diagnostics_bp)
+
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -219,6 +219,13 @@ if os.environ.get("SPOTIFY_REFRESH_TOKEN"):
         log_event("startup", f"❌ Failed to ensure exclusions playlist: {e}", level="error")
 else:
     log_event("startup", "⚠️ Skipping exclusions playlist check. No SPOTIFY_REFRESH_TOKEN found.", level="warning")
+
+from utils.diagnostics import get_duplicate_album_track_counts
+
+@app.route("/diagnostics")
+def diagnostics():
+    diagnostics = get_duplicate_album_track_counts()
+    return render_template("diagnostics.html", diagnostics=diagnostics)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
