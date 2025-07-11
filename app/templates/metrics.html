@@ -601,8 +601,8 @@
         });
 
         // Liked Songs Popularity Chart
-        const popLabels = data.liked_popularity_distribution.map(p => p.bucket);
-        const popCounts = data.liked_popularity_distribution.map(p => Number(p.count));
+        const popLabels = data.popularity_distribution.map(p => p.range);
+        const popCounts = data.popularity_distribution.map(p => Number(p.count));
         document.getElementById("avg-popularity-score").textContent = data.avg_popularity_score.toFixed(1);
 
         new Chart(document.getElementById("chart-liked-popularity"), {
