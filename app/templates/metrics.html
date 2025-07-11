@@ -121,6 +121,51 @@
       font-weight: 600;
       color: #20232a;
     }
+
+    .top-tracks-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .track-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .track-rank {
+      font-size: 1.5rem;
+      font-weight: bold;
+      width: 2rem;
+    }
+
+    .track-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+
+    .track-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .track-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .track-artist {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .track-count {
+      font-size: 0.85rem;
+      color: #999;
+    }
   </style>
 </head>
 <body>
@@ -150,7 +195,7 @@
       <div class="chart-card">
         <section id="top-tracks">
           <h2>🎵 Most Played Tracks</h2>
-          <canvas id="chart-top-tracks" height="200"></canvas>
+          <div class="top-tracks-grid" id="top-tracks-grid"></div>
         </section>
       </div>
       <div class="chart-card">
@@ -248,14 +293,22 @@
         });
 
         // Top Tracks
-        const trackNames = data.top_tracks.map(t => t.track.split(" - "));
-        const trackPlays = data.top_tracks.map(t => t.count);
-        new Chart(document.getElementById('chart-top-tracks'), {
-          type: 'bar',
-          data: {
-            labels: trackNames,
-            datasets: [{ label: 'Plays', data: trackPlays }]
-          }
+        const topTracksGrid = document.getElementById('top-tracks-grid');
+        data.top_tracks.forEach((track, index) => {
+          const trackCard = document.createElement('div');
+          trackCard.className = 'track-card';
+
+          trackCard.innerHTML = `
+            <div class="track-rank">${index + 1}</div>
+            <img class="track-img" src="${track.image_url}" alt="${track.track_name}">
+            <div class="track-meta">
+              <div class="track-name">${track.track_name}</div>
+              <div class="track-artist">${track.artist}</div>
+              <div class="track-count">${track.count} plays</div>
+            </div>
+          `;
+
+          topTracksGrid.appendChild(trackCard);
         });
 
         // Top Albums

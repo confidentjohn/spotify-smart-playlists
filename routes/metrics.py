@@ -46,12 +46,16 @@ def collect_metrics_payload():
 
     # Top Tracks
     cur.execute("""
-        SELECT track_name, artist, play_count
+        SELECT track_name, artist, album_image_url, play_count
         FROM unified_tracks
+        WHERE album_image_url IS NOT NULL
         ORDER BY play_count DESC
         LIMIT 10
     """)
-    top_tracks = [{"track": f"{row[0]} - {row[1]}", "count": row[2]} for row in cur.fetchall()]
+    top_tracks = [
+        {"track_name": row[0], "artist": row[1], "image_url": row[2], "count": row[3]}
+        for row in cur.fetchall()
+    ]
 
     # Plays Per Day (last 30 days)
     cur.execute("""
