@@ -145,14 +145,45 @@ def collect_metrics_payload():
 
     # Top Genres by First Genre
     cur.execute("""
-        SELECT TRIM(SPLIT_PART(genres, ',', 1)) AS primary_genre, SUM(play_count) AS total_plays
+        SELECT TRIM(genres[1]) AS primary_genre, SUM(play_count) AS total_plays
         FROM unified_tracks
-        WHERE play_count > 0 AND genres IS NOT NULL AND genres <> ''
+        WHERE play_count > 0 AND genres IS NOT NULL AND array_length(genres, 1) > 0
         GROUP BY primary_genre
         ORDER BY total_plays DESC
         LIMIT 10
     """)
     top_genres = [{"genre": row[0], "count": row[1]} for row in cur.fetchall()]
+
+    # Popularity Distribution of Liked Tracks
+    cur.execute("""
+        SELECT
+          CASE
+            WHEN popularity >= 90 THEN '90–100'
+            WHEN popularity >= 80 THEN '80–89'
+            WHEN popularity >= 70 THEN '70–79'
+            WHEN popularity >= 60 THEN '60–69'
+            WHEN popularity >= 50 THEN '50–59'
+            WHEN popularity >= 40 THEN '40–49'
+            WHEN popularity >= 30 THEN '30–39'
+            WHEN popularity >= 20 THEN '20–29'
+            WHEN popularity >= 10 THEN '10–19'
+            ELSE '0–9'
+          END AS popularity_range,
+          COUNT(*) AS count
+        FROM unified_tracks
+        WHERE is_liked = TRUE AND popularity IS NOT NULL
+        GROUP BY popularity_range
+        ORDER BY popularity_range
+    """)
+    popularity_distribution = [{"range": row[0], "count": row[1]} for row in cur.fetchall()]
+
+    # Average Popularity Score
+    cur.execute("""
+        SELECT ROUND(AVG(popularity), 1)
+        FROM unified_tracks
+        WHERE is_liked = TRUE AND popularity IS NOT NULL
+    """)
+    avg_popularity_score = cur.fetchone()[0] or 0
 
     # Unavailable Tracks Over Time
     cur.execute("""
@@ -276,6 +307,8 @@ def collect_metrics_payload():
         "tracks_added": tracks_added,
         "top_liked_artists": top_liked_artists,
         "top_genres": top_genres,
+        "popularity_distribution": popularity_distribution,
+        "avg_popularity_score": avg_popularity_score,
         "unplayable_tracks": unplayable_tracks,
         "release_to_play": release_to_play,
         "monthly_library_growth": monthly_library_growth,

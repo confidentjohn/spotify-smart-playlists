@@ -318,6 +318,15 @@
         </section>
       </div>
       <div class="chart-card">
+        <section id="liked-popularity">
+          <h2>🔥 Liked Songs Popularity</h2>
+          <canvas id="chart-liked-popularity"></canvas>
+          <div style="margin-top: 1rem; font-weight: 600; color: #444;">
+            Average Popularity Score: <span id="avg-popularity-score">...</span>
+          </div>
+        </section>
+      </div>
+      <div class="chart-card">
         <section id="unplayable-tracks">
           <h2>🚫 Unavailable Tracks Over Time</h2>
           <canvas id="chart-unavailable-tracks"></canvas>
@@ -615,6 +624,44 @@
               r: {
                 angleLines: { display: false },
                 suggestedMin: 0
+              }
+            }
+          }
+        });
+
+        // Liked Songs Popularity Chart
+        const popLabels = data.liked_popularity_distribution.map(p => p.bucket);
+        const popCounts = data.liked_popularity_distribution.map(p => Number(p.count));
+        document.getElementById("avg-popularity-score").textContent = data.avg_popularity_score.toFixed(1);
+
+        new Chart(document.getElementById("chart-liked-popularity"), {
+          type: 'bar',
+          data: {
+            labels: popLabels,
+            datasets: [{
+              label: 'Liked Songs by Popularity',
+              data: popCounts,
+              backgroundColor: '#1DB954'
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Popularity Bucket'
+                }
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Number of Tracks'
+                }
               }
             }
           }
