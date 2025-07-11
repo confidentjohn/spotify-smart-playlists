@@ -16,11 +16,12 @@
       {% endif %}
     </button>
   </form>
-  <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem;">
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; justify-items: center;">
     <a href="/dashboard/playlists" class="btn">🎛️ Playlist Dashboard</a>
     <a href="/dashboard/create-playlist" class="btn">➕ Create Playlist</a>
     <a href="/metrics" class="btn">📊 View Metrics</a>
     <a href="/logs" class="btn">📜 View Logs</a>
+    <a href="/diagnostics" class="btn">🧪 Diagnostics</a>
   </div>
 </div>
 {% endif %}
