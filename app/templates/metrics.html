@@ -514,30 +514,21 @@
 
         // Top Liked Artists (Grid View)
         const topLikedArtistsGrid = document.getElementById('top-liked-artists-grid');
-        if (data.top_liked_artists.length === 0) {
-          const fallback = document.createElement('p');
-          fallback.textContent = 'No liked tracks yet. Start liking songs to see your top artists here!';
-          fallback.style.color = '#555';
-          fallback.style.textAlign = 'center';
-          fallback.style.marginTop = '1rem';
-          topLikedArtistsGrid.appendChild(fallback);
-        } else {
-          data.top_liked_artists.forEach((artist, index) => {
-            const artistCard = document.createElement('div');
-            artistCard.className = 'artist-card';
+        data.top_liked_artists.forEach((artist, index) => {
+          const artistCard = document.createElement('div');
+          artistCard.className = 'artist-card';
 
-            artistCard.innerHTML = `
-              <div class="artist-rank">${index + 1}</div>
-              <img class="artist-img" src="${artist.image_url}" alt="${artist.artist}">
-              <div>
-                <div class="artist-name">${artist.artist}</div>
-                <div class="album-count">${artist.count} liked tracks</div>
-              </div>
-            `;
+          artistCard.innerHTML = `
+            <div class="artist-rank">${index + 1}</div>
+            <img class="artist-img" src="${artist.image_url}" alt="${artist.artist}">
+            <div>
+              <div class="artist-name">${artist.artist}</div>
+              <div class="album-count">${artist.count} liked tracks</div>
+            </div>
+          `;
 
-            topLikedArtistsGrid.appendChild(artistCard);
-          });
-        }
+          topLikedArtistsGrid.appendChild(artistCard);
+        });
 
 
         // Time to First Play from Release
