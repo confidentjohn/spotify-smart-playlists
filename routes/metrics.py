@@ -34,7 +34,7 @@ def collect_metrics_payload():
     cur.execute("""
         SELECT artist, artist_image, SUM(play_count) as play_count
         FROM unified_tracks
-        WHERE artist_image IS NOT NULL
+        WHERE artist_image IS NOT NULL AND play_count > 0
         GROUP BY artist, artist_image
         ORDER BY play_count DESC
         LIMIT 10
@@ -48,7 +48,7 @@ def collect_metrics_payload():
     cur.execute("""
         SELECT track_name, artist, album_image_url, play_count
         FROM unified_tracks
-        WHERE album_image_url IS NOT NULL
+        WHERE album_image_url IS NOT NULL AND play_count > 0
         ORDER BY play_count DESC
         LIMIT 10
     """)
@@ -71,7 +71,7 @@ def collect_metrics_payload():
     cur.execute("""
         SELECT album_name, artist, album_image_url, SUM(play_count) as total_plays
         FROM unified_tracks
-        WHERE album_image_url IS NOT NULL
+        WHERE album_image_url IS NOT NULL AND play_count > 0
         GROUP BY album_name, artist, album_image_url
         ORDER BY total_plays DESC
         LIMIT 10
