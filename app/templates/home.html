@@ -7,21 +7,34 @@
 
 {% if can_sync %}
 <div style="display: flex; flex-direction: column; align-items: center; margin-top: 2rem;">
-  <form method="POST" action="{{ url_for('playlist_dashboard.run_initial_sync') }}">
-    <button type="submit" class="btn" style="margin-bottom: 2rem;">
-      {% if is_first_sync %}
-        🔁 Run Initial Sync
-      {% else %}
-        🔁 Sync Now
-      {% endif %}
-    </button>
-  </form>
-  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; justify-items: center;">
-    <a href="/dashboard/playlists" class="btn">🎛️ Playlist Dashboard</a>
-    <a href="/dashboard/create-playlist" class="btn">➕ Create Playlist</a>
-    <a href="/metrics" class="btn">📊 View Metrics</a>
-    <a href="/logs" class="btn">📜 View Logs</a>
-    <a href="/diagnostics" class="btn">🧪 Diagnostics</a>
+  <style>
+    @media (max-width: 600px) {
+      .btn-container {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+      .btn-container > * {
+        width: 100% !important;
+      }
+    }
+  </style>
+  <div class="btn-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem;">
+    <form method="POST" action="{{ url_for('playlist_dashboard.run_initial_sync') }}">
+      <button type="submit" class="btn">
+        {% if is_first_sync %}
+          🔁 Run Initial Sync
+        {% else %}
+          🔁 Sync Now
+        {% endif %}
+      </button>
+    </form>
+    {% if not is_first_sync %}
+      <a href="/dashboard/playlists" class="btn">🎛️ Playlist Dashboard</a>
+      <a href="/dashboard/create-playlist" class="btn">➕ Create Playlist</a>
+      <a href="/metrics" class="btn">📊 View Metrics</a>
+      <a href="/logs" class="btn">📜 View Logs</a>
+      <a href="/diagnostics" class="btn">🧪 Diagnostics</a>
+    {% endif %}
   </div>
 </div>
 {% endif %}
