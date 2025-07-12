@@ -30,7 +30,11 @@ def run_initial_syncs(user_id: int, is_initial=True):
         "sync_saved_albums.py",
         "sync_album_tracks.py",
         "sync_liked_tracks.py" if not is_initial else "sync_liked_tracks_full.py",
+        "sync_artists.py",
         "check_track_availability.py",
+        "sync_exclusions.py",
+        "materialized_views.py",
+        "materialized_metrics.py"
     ]
 
     # Check if exclusions playlist exists; create it if missing

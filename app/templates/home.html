@@ -40,4 +40,21 @@
 {% endif %}
 
 {% include "footer.html" %}
+
+{% block scripts %}
+<script>
+  const syncForm = document.querySelector('form[action="{{ url_for("playlist_dashboard.run_initial_sync") }}"]');
+  if (syncForm) {
+    syncForm.addEventListener('submit', function (e) {
+      const button = syncForm.querySelector('button');
+      button.disabled = true;
+      const originalText = button.innerHTML;
+      button.innerHTML = '⏳ Sync in progress...';
+      setTimeout(() => {
+        button.disabled = false;
+        button.innerHTML = originalText;
+      }, 30000); // re-enable after 30s just in case
+    });
+  }
+</script>
 {% endblock %}
