@@ -357,90 +357,131 @@
       try {
         const res = await fetch('/cached-metrics-data');
         const data = await res.json();
-        document.getElementById('summary-artists').querySelector('span').textContent = data.summary_stats.total_artists;
-        document.getElementById('summary-tracks').querySelector('span').textContent = data.summary_stats.total_tracks;
-        document.getElementById('summary-liked').querySelector('span').textContent = data.summary_stats.total_liked;
-        document.getElementById('summary-plays').querySelector('span').textContent = data.summary_stats.total_plays;
-        document.getElementById('summary-unique-plays').querySelector('span').textContent = data.summary_stats.total_unique_plays;
-        document.getElementById('summary-time-spent').querySelector('span').textContent = data.summary_stats.total_time_spent;
+        if (data.summary_stats) {
+          document.getElementById('summary-artists').querySelector('span').textContent = data.summary_stats.total_artists ?? '–';
+          document.getElementById('summary-tracks').querySelector('span').textContent = data.summary_stats.total_tracks ?? '–';
+          document.getElementById('summary-liked').querySelector('span').textContent = data.summary_stats.total_liked ?? '–';
+          document.getElementById('summary-plays').querySelector('span').textContent = data.summary_stats.total_plays ?? '–';
+          document.getElementById('summary-unique-plays').querySelector('span').textContent = data.summary_stats.total_unique_plays ?? '–';
+          document.getElementById('summary-time-spent').querySelector('span').textContent = data.summary_stats.total_time_spent ?? '–';
+        }
 
         // Top Artists
         const topArtistsGrid = document.getElementById('top-artists-grid');
-        data.top_artists.forEach((artist, index) => {
-          const artistCard = document.createElement('div');
-          artistCard.className = 'artist-card';
+        if (Array.isArray(data.top_artists)) {
+          data.top_artists.forEach((artist, index) => {
+            const artistCard = document.createElement('div');
+            artistCard.className = 'artist-card';
 
-          artistCard.innerHTML = `
-            <div class="artist-rank">${index + 1}</div>
-            <img class="artist-img" src="${artist.image_url}" alt="${artist.artist}">
-            <div>
-              <div class="artist-name">${artist.artist}</div>
-              <div class="album-count">${artist.count} plays</div>
-            </div>
-          `;
+            artistCard.innerHTML = `
+              <div class="artist-rank">${index + 1}</div>
+              <img class="artist-img" src="${artist.image_url}" alt="${artist.artist}">
+              <div>
+                <div class="artist-name">${artist.artist}</div>
+                <div class="album-count">${artist.count} plays</div>
+              </div>
+            `;
 
-          topArtistsGrid.appendChild(artistCard);
-        });
+            topArtistsGrid.appendChild(artistCard);
+          });
+        }
 
         // Top Tracks
         const topTracksGrid = document.getElementById('top-tracks-grid');
-        data.top_tracks.forEach((track, index) => {
-          const trackCard = document.createElement('div');
-          trackCard.className = 'track-card';
+        if (Array.isArray(data.top_tracks)) {
+          data.top_tracks.forEach((track, index) => {
+            const trackCard = document.createElement('div');
+            trackCard.className = 'track-card';
 
-          trackCard.innerHTML = `
-            <div class="track-rank">${index + 1}</div>
-            <img class="track-img" src="${track.image_url}" alt="${track.track_name}">
-            <div class="track-meta">
-              <div class="track-name">${track.track_name}</div>
-              <div class="track-artist">${track.artist}</div>
-              <div class="track-count">${track.count} plays</div>
-            </div>
-          `;
+            trackCard.innerHTML = `
+              <div class="track-rank">${index + 1}</div>
+              <img class="track-img" src="${track.image_url}" alt="${track.track_name}">
+              <div class="track-meta">
+                <div class="track-name">${track.track_name}</div>
+                <div class="track-artist">${track.artist}</div>
+                <div class="track-count">${track.count} plays</div>
+              </div>
+            `;
 
-          topTracksGrid.appendChild(trackCard);
-        });
+            topTracksGrid.appendChild(trackCard);
+          });
+        }
 
         // Top Albums
         const topAlbumsGrid = document.getElementById('top-albums-grid');
-        data.top_albums.forEach((album, index) => {
-          const albumCard = document.createElement('div');
-          albumCard.className = 'album-card';
+        if (Array.isArray(data.top_albums)) {
+          data.top_albums.forEach((album, index) => {
+            const albumCard = document.createElement('div');
+            albumCard.className = 'album-card';
 
-          albumCard.innerHTML = `
-            <div class="album-rank">${index + 1}</div>
-            <img class="album-img" src="${album.image_url}" alt="${album.album_name}">
-            <div class="album-meta">
-              <div class="album-name">${album.album_name}</div>
-              <div class="album-artist">${album.artist}</div>
-              <div class="album-count">${album.count} plays</div>
-            </div>
-          `;
+            albumCard.innerHTML = `
+              <div class="album-rank">${index + 1}</div>
+              <img class="album-img" src="${album.image_url}" alt="${album.album_name}">
+              <div class="album-meta">
+                <div class="album-name">${album.album_name}</div>
+                <div class="album-artist">${album.artist}</div>
+                <div class="album-count">${album.count} plays</div>
+              </div>
+            `;
 
-          topAlbumsGrid.appendChild(albumCard);
-        });
+            topAlbumsGrid.appendChild(albumCard);
+          });
+        }
 
         // Listens Over Time
-        const dates = data.daily_plays.map(p => p.date);
-        const counts = data.daily_plays.map(p => Number(p.count));
-        const listensCanvas = document.getElementById('chart-listens-over-time');
-        if (listensCanvas) {
-          const ctxListens = listensCanvas.getContext('2d');
-          new Chart(ctxListens, {
-            type: 'line',
+        if (Array.isArray(data.daily_plays)) {
+          const dates = data.daily_plays.map(p => p.date);
+          const counts = data.daily_plays.map(p => Number(p.count));
+          const listensCanvas = document.getElementById('chart-listens-over-time');
+          if (listensCanvas) {
+            const ctxListens = listensCanvas.getContext('2d');
+            new Chart(ctxListens, {
+              type: 'line',
+              data: {
+                labels: dates,
+                datasets: [{
+                  label: 'Listens',
+                  data: counts,
+                  fill: false,
+                  borderColor: '#1DB954',
+                  tension: 0.1
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true
+                  }
+                }
+              }
+            });
+          }
+        }
+
+        // Listening by Day of Week (sorted, styled)
+        if (Array.isArray(data.plays_by_day)) {
+          const weekdayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const playsByDayMap = Object.fromEntries(data.plays_by_day.map(p => [p.day.trim(), Number(p.count)]));
+          const sortedDayCounts = weekdayOrder.map(day => playsByDayMap[day] || 0);
+          new Chart(document.getElementById('chart-plays-by-day'), {
+            type: 'bar',
             data: {
-              labels: dates,
+              labels: weekdayOrder,
               datasets: [{
-                label: 'Listens',
-                data: counts,
-                fill: false,
-                borderColor: '#1DB954',
-                tension: 0.1
+                label: 'Plays',
+                data: sortedDayCounts,
+                backgroundColor: '#007bff'
               }]
             },
             options: {
               responsive: true,
-              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: false
+                }
+              },
               scales: {
                 y: {
                   beginAtZero: true
@@ -450,198 +491,192 @@
           });
         }
 
-        // Listening by Day of Week (sorted, styled)
-        const weekdayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const playsByDayMap = Object.fromEntries(data.plays_by_day.map(p => [p.day.trim(), Number(p.count)]));
-        const sortedDayCounts = weekdayOrder.map(day => playsByDayMap[day] || 0);
-        new Chart(document.getElementById('chart-plays-by-day'), {
-          type: 'bar',
-          data: {
-            labels: weekdayOrder,
-            datasets: [{
-              label: 'Plays',
-              data: sortedDayCounts,
-              backgroundColor: '#007bff'
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: {
-                display: false
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true
-              }
-            }
-          }
-        });
-
         // Listening by Hour of Day
-        const hourLabels = data.plays_by_hour.map(p => `${p.hour}:00`);
-        const hourCounts = data.plays_by_hour.map(p => Number(p.count));
-        new Chart(document.getElementById('chart-plays-by-hour'), {
-          type: 'bar',
-          data: {
-            labels: hourLabels,
-            datasets: [{ label: 'Plays', data: hourCounts }]
-          }
-        });
+        if (Array.isArray(data.plays_by_hour)) {
+          const hourLabels = data.plays_by_hour.map(p => `${p.hour}:00`);
+          const hourCounts = data.plays_by_hour.map(p => Number(p.count));
+          new Chart(document.getElementById('chart-plays-by-hour'), {
+            type: 'bar',
+            data: {
+              labels: hourLabels,
+              datasets: [{ label: 'Plays', data: hourCounts }]
+            }
+          });
+        }
 
         // Listening by Month
-        const monthLabels = data.plays_by_month.map(p => p.month);
-        const monthCounts = data.plays_by_month.map(p => Number(p.count));
-        new Chart(document.getElementById('chart-plays-by-month'), {
-          type: 'line',
-          data: {
-            labels: monthLabels,
-            datasets: [{ label: 'Plays', data: monthCounts }]
-          }
-        });
+        if (Array.isArray(data.plays_by_month)) {
+          const monthLabels = data.plays_by_month.map(p => p.month);
+          const monthCounts = data.plays_by_month.map(p => Number(p.count));
+          new Chart(document.getElementById('chart-plays-by-month'), {
+            type: 'line',
+            data: {
+              labels: monthLabels,
+              datasets: [{ label: 'Plays', data: monthCounts }]
+            }
+          });
+        }
 
         // Tracks Added Over Time
-        const addedDates = data.tracks_added.map(p => p.date);
-        const addedCounts = data.tracks_added.map(p => Number(p.count));
-        new Chart(document.getElementById('chart-added-tracks'), {
-          type: 'line',
-          data: {
-            labels: addedDates,
-            datasets: [{ label: 'Tracks Added', data: addedCounts }]
-          }
-        });
+        if (Array.isArray(data.tracks_added)) {
+          const addedDates = data.tracks_added.map(p => p.date);
+          const addedCounts = data.tracks_added.map(p => Number(p.count));
+          new Chart(document.getElementById('chart-added-tracks'), {
+            type: 'line',
+            data: {
+              labels: addedDates,
+              datasets: [{ label: 'Tracks Added', data: addedCounts }]
+            }
+          });
+        }
 
         // Top Liked Artists (Grid View)
         const topLikedArtistsGrid = document.getElementById('top-liked-artists-grid');
-        data.top_liked_artists.forEach((artist, index) => {
-          const artistCard = document.createElement('div');
-          artistCard.className = 'artist-card';
+        if (Array.isArray(data.top_liked_artists)) {
+          data.top_liked_artists.forEach((artist, index) => {
+            const artistCard = document.createElement('div');
+            artistCard.className = 'artist-card';
 
-          artistCard.innerHTML = `
-            <div class="artist-rank">${index + 1}</div>
-            <img class="artist-img" src="${artist.image_url}" alt="${artist.artist}">
-            <div>
-              <div class="artist-name">${artist.artist}</div>
-              <div class="album-count">${artist.count} liked tracks</div>
-            </div>
-          `;
+            artistCard.innerHTML = `
+              <div class="artist-rank">${index + 1}</div>
+              <img class="artist-img" src="${artist.image_url}" alt="${artist.artist}">
+              <div>
+                <div class="artist-name">${artist.artist}</div>
+                <div class="album-count">${artist.count} liked tracks</div>
+              </div>
+            `;
 
-          topLikedArtistsGrid.appendChild(artistCard);
-        });
+            topLikedArtistsGrid.appendChild(artistCard);
+          });
+        }
 
 
         // Time to First Play from Release
-        const rtpLabels = data.release_to_play.map(p => p.bucket);
-        const rtpCounts = data.release_to_play.map(p => Number(p.count));
-        new Chart(document.getElementById('chart-release-to-play'), {
-          type: 'bar',
-          data: {
-            labels: rtpLabels,
-            datasets: [{ label: 'Tracks', data: rtpCounts }]
-          }
-        });
+        if (Array.isArray(data.release_to_play)) {
+          const rtpLabels = data.release_to_play.map(p => p.bucket);
+          const rtpCounts = data.release_to_play.map(p => Number(p.count));
+          new Chart(document.getElementById('chart-release-to-play'), {
+            type: 'bar',
+            data: {
+              labels: rtpLabels,
+              datasets: [{ label: 'Tracks', data: rtpCounts }]
+            }
+          });
+        }
 
         // Monthly Library Growth
-        const growthLabels = data.monthly_library_growth.map(p => p.month);
-        const growthCounts = data.monthly_library_growth.map(p => Number(p.count));
-        new Chart(document.getElementById('chart-library-growth'), {
-          type: 'line',
-          data: {
-            labels: growthLabels,
-            datasets: [{
-              label: 'Tracks Added',
-              data: growthCounts,
-              borderColor: '#0074D9',
-              fill: false
-            }]
-          }
-        });
+        if (Array.isArray(data.monthly_library_growth)) {
+          const growthLabels = data.monthly_library_growth.map(p => p.month);
+          const growthCounts = data.monthly_library_growth.map(p => Number(p.count));
+          new Chart(document.getElementById('chart-library-growth'), {
+            type: 'line',
+            data: {
+              labels: growthLabels,
+              datasets: [{
+                label: 'Tracks Added',
+                data: growthCounts,
+                borderColor: '#0074D9',
+                fill: false
+              }]
+            }
+          });
+        }
 
         // Top Artist by Month
-        const topArtistMonthLabels = data.top_artist_by_month.map(p => p.month);
-        const topArtistNames = data.top_artist_by_month.map(p => p.artist);
-        const topArtistPlays = data.top_artist_by_month.map(p => Number(p.count));
-        new Chart(document.getElementById('chart-top-artist-monthly'), {
-          type: 'bar',
-          data: {
-            labels: topArtistMonthLabels.map((m, i) => `${m} (${topArtistNames[i]})`),
-            datasets: [{ label: 'Plays', data: topArtistPlays }]
-          }
-        });
+        if (Array.isArray(data.top_artist_by_month)) {
+          const topArtistMonthLabels = data.top_artist_by_month.map(p => p.month);
+          const topArtistNames = data.top_artist_by_month.map(p => p.artist);
+          const topArtistPlays = data.top_artist_by_month.map(p => Number(p.count));
+          new Chart(document.getElementById('chart-top-artist-monthly'), {
+            type: 'bar',
+            data: {
+              labels: topArtistMonthLabels.map((m, i) => `${m} (${topArtistNames[i]})`),
+              datasets: [{ label: 'Plays', data: topArtistPlays }]
+            }
+          });
+        }
         // Top Genres Bar Chart
-        const genreLabels = data.top_genres.map(g => g.genre);
-        const genreCounts = data.top_genres.map(g => Number(g.count));
-        new Chart(document.getElementById('chart-top-genres'), {
-          type: 'bar',
-          data: {
-            labels: genreLabels,
-            datasets: [{
-              label: 'Plays by Genre',
-              data: genreCounts,
-              backgroundColor: '#1DB954'
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { display: false }
+        if (Array.isArray(data.top_genres)) {
+          const genreLabels = data.top_genres.map(g => g.genre);
+          const genreCounts = data.top_genres.map(g => Number(g.count));
+          new Chart(document.getElementById('chart-top-genres'), {
+            type: 'bar',
+            data: {
+              labels: genreLabels,
+              datasets: [{
+                label: 'Plays by Genre',
+                data: genreCounts,
+                backgroundColor: '#1DB954'
+              }]
             },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Number of Plays'
-                }
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: false }
               },
-              x: {
-                title: {
-                  display: true,
-                  text: 'Genre'
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: 'Number of Plays'
+                  }
+                },
+                x: {
+                  title: {
+                    display: true,
+                    text: 'Genre'
+                  }
                 }
               }
             }
-          }
-        });
+          });
+        }
 
         // Liked Songs Popularity Chart
-        const popLabels = data.popularity_distribution.map(p => p.range);
-        const popCounts = data.popularity_distribution.map(p => Number(p.count));
-        document.getElementById("avg-popularity-score").textContent = data.avg_popularity_score.toFixed(1);
-
-        new Chart(document.getElementById("chart-liked-popularity"), {
-          type: 'bar',
-          data: {
-            labels: popLabels,
-            datasets: [{
-              label: 'Liked Songs by Popularity',
-              data: popCounts,
-              backgroundColor: '#1DB954'
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { display: false }
+        if (Array.isArray(data.popularity_distribution)) {
+          const popLabels = data.popularity_distribution.map(p => p.range);
+          const popCounts = data.popularity_distribution.map(p => Number(p.count));
+          if (typeof data.avg_popularity_score === 'number') {
+            document.getElementById("avg-popularity-score").textContent = data.avg_popularity_score.toFixed(1);
+          }
+          new Chart(document.getElementById("chart-liked-popularity"), {
+            type: 'bar',
+            data: {
+              labels: popLabels,
+              datasets: [{
+                label: 'Liked Songs by Popularity',
+                data: popCounts,
+                backgroundColor: '#1DB954'
+              }]
             },
-            scales: {
-              x: {
-                title: {
-                  display: true,
-                  text: 'Popularity Bucket'
-                }
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: false }
               },
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Number of Tracks'
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: 'Popularity Bucket'
+                  }
+                },
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: 'Number of Tracks'
+                  }
                 }
               }
             }
+          });
+        } else {
+          if (typeof data.avg_popularity_score === 'number') {
+            document.getElementById("avg-popularity-score").textContent = data.avg_popularity_score.toFixed(1);
           }
-        });
+        }
       } catch (err) {
         console.error("⚠️ Failed to load metrics:", err);
       }
