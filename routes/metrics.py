@@ -14,7 +14,7 @@ def cached_metrics_data():
     cur.execute("""
         SELECT data
         FROM daily_metrics_cache
-        WHERE snapshot_date = CURRENT_DATE
+        ORDER BY snapshot_date DESC
         LIMIT 1
     """)
     row = cur.fetchone()
