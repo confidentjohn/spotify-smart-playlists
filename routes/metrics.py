@@ -298,10 +298,11 @@ def collect_metrics_payload():
 
     cur.execute("""
         SELECT
-            COUNT(*) FILTER (WHERE COALESCE(album_type, 'single') = 'album'),
-            COUNT(*) FILTER (WHERE COALESCE(album_type, 'single') = 'single'),
-            COUNT(*) FILTER (WHERE COALESCE(album_type, 'single') = 'compilation')
-        FROM unified_tracks
+      COUNT(DISTINCT album_id) FILTER (WHERE COALESCE(album_type, 'single') = 'album'),
+      COUNT(DISTINCT album_id) FILTER (WHERE COALESCE(album_type, 'single') = 'single'),
+      COUNT(DISTINCT album_id) FILTER (WHERE COALESCE(album_type, 'single') = 'compilation')
+    FROM unified_tracks
+    WHERE album_id IS NOT NULL
     """)
     album_counts = cur.fetchone()
 
