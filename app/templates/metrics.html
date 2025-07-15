@@ -260,7 +260,8 @@
       <div class="card" id="summary-time-spent">⏱️ Time Spent Listening<br><span>...</span></div>
       <div class="card" id="summary-dynamic-playlists">📋 Dynamic Playlists<br><span>...</span></div>
       <div class="card" id="summary-streak">🔥 Longest Streak<br><span>...</span></div>
-      <div class="card" id="summary-active-days">📆 Avg Days/Week<br><span>...</span></div>
+      <div class="card" id="summary-avg-daily">📈 Avg Listens/Day<br><span>...</span></div>
+      <div class="card" id="summary-avg-monthly">🗓️ Avg Listens/Month<br><span>...</span></div>
     </div>
     <div class="charts-grid">
       <div class="top-tiles-grid">
@@ -373,7 +374,8 @@
           document.getElementById('summary-compilations').querySelector('span').textContent = data.summary_stats.total_compilations ?? '–';
           document.getElementById('summary-dynamic-playlists').querySelector('span').textContent = data.summary_stats.total_dynamic_playlists ?? '–';
           document.getElementById('summary-streak').querySelector('span').textContent = data.summary_stats.longest_listening_streak ?? '–';
-          document.getElementById('summary-active-days').querySelector('span').textContent = data.summary_stats.avg_active_days_per_week ?? '–';
+          document.getElementById('summary-avg-daily').querySelector('span').textContent = data.summary_stats.avg_listens_per_day ?? '–';
+          document.getElementById('summary-avg-monthly').querySelector('span').textContent = data.summary_stats.avg_listens_per_month ?? '–';
         }
 
         // Top Artists

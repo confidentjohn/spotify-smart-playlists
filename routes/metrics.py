@@ -340,6 +340,27 @@ def collect_metrics_payload():
     weekly_active_days = [row[1] for row in cur.fetchall()]
     avg_active_days_per_week = round(sum(weekly_active_days) / len(weekly_active_days), 1) if weekly_active_days else 0
 
+    # Average Listens per Day
+    cur.execute("""
+        SELECT COUNT(*)
+        FROM unified_tracks
+        WHERE last_played_at IS NOT NULL
+    """)
+    total_listens = cur.fetchone()[0] or 0
+
+    cur.execute("""
+        SELECT MIN(DATE(last_played_at)), MAX(DATE(last_played_at))
+        FROM unified_tracks
+        WHERE last_played_at IS NOT NULL
+    """)
+    min_date, max_date = cur.fetchone()
+    day_span = (max_date - min_date).days + 1 if min_date and max_date else 1
+    avg_listens_per_day = round(total_listens / day_span, 1)
+
+    # Average Listens per Month
+    month_span = ((max_date.year - min_date.year) * 12 + max_date.month - min_date.month + 1) if min_date and max_date else 1
+    avg_listens_per_month = round(total_listens / month_span, 1)
+
     summary_stats = {
         "total_artists": row[0],
         "total_tracks": row[1],
@@ -352,7 +373,8 @@ def collect_metrics_payload():
         "total_compilations": album_counts[2],
         "total_dynamic_playlists": dynamic_playlists_count,
         "longest_listening_streak": max_streak,
-        "avg_active_days_per_week": avg_active_days_per_week,
+        "avg_listens_per_day": avg_listens_per_day,
+        "avg_listens_per_month": avg_listens_per_month,
     }
 
     cur.close()
