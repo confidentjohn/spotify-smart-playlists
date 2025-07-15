@@ -251,14 +251,13 @@
   <main>
     <div class="summary-cards">
       <div class="card" id="summary-artists">🎤 Artists<br><span>...</span></div>
-      <div class="card" id="summary-tracks">🎵 Tracks<br><span>...</span></div>
-      <div class="card" id="summary-liked">❤️ Liked Songs<br><span>...</span></div>
-      <div class="card" id="summary-plays">▶️ Total Plays<br><span>...</span></div>
-      <div class="card" id="summary-unique-plays">🔁 Unique Tracks Played<br><span>...</span></div>
-      <div class="card" id="summary-time-spent">⏱️ Time Spent Listening<br><span>...</span></div>
       <div class="card" id="summary-albums">💿 Albums<br><span>...</span></div>
       <div class="card" id="summary-singles">🎶 Singles<br><span>...</span></div>
       <div class="card" id="summary-compilations">📀 Compilations<br><span>...</span></div>
+      <div class="card" id="summary-tracks">🎵 Tracks<br><span>...</span></div>
+      <div class="card" id="summary-liked">❤️ Liked Songs<br><span>...</span></div>
+      <div class="card" id="summary-plays">▶️ Total Plays<br><span>...</span></div>
+      <div class="card" id="summary-time-spent">⏱️ Time Spent Listening<br><span>...</span></div>
     </div>
     <div class="charts-grid">
       <div class="top-tiles-grid">
@@ -365,7 +364,6 @@
           document.getElementById('summary-tracks').querySelector('span').textContent = data.summary_stats.total_tracks ?? '–';
           document.getElementById('summary-liked').querySelector('span').textContent = data.summary_stats.total_liked ?? '–';
           document.getElementById('summary-plays').querySelector('span').textContent = data.summary_stats.total_plays ?? '–';
-          document.getElementById('summary-unique-plays').querySelector('span').textContent = data.summary_stats.total_unique_plays ?? '–';
           document.getElementById('summary-time-spent').querySelector('span').textContent = data.summary_stats.total_time_spent ?? '–';
           document.getElementById('summary-albums').querySelector('span').textContent = data.summary_stats.total_albums ?? '–';
           document.getElementById('summary-singles').querySelector('span').textContent = data.summary_stats.total_singles ?? '–';
