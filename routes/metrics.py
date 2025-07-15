@@ -306,6 +306,40 @@ def collect_metrics_payload():
     """)
     album_counts = cur.fetchone()
 
+    cur.execute("""
+        SELECT COUNT(slug)
+        FROM playlist_mappings
+        WHERE is_dynamic IS TRUE
+    """)
+    dynamic_playlists_count = cur.fetchone()[0] or 0
+
+    # Longest consecutive listening streak
+    cur.execute("""
+        SELECT DATE(last_played_at) AS day
+        FROM unified_tracks
+        WHERE last_played_at IS NOT NULL
+        GROUP BY DATE(last_played_at)
+        ORDER BY day
+    """)
+    dates = [row[0] for row in cur.fetchall()]
+    streak = max_streak = 1 if dates else 0
+    for i in range(1, len(dates)):
+        if (dates[i] - dates[i-1]).days == 1:
+            streak += 1
+            max_streak = max(max_streak, streak)
+        else:
+            streak = 1
+
+    # Active days per week (weekly average of distinct days)
+    cur.execute("""
+        SELECT DATE_TRUNC('week', last_played_at) AS week, COUNT(DISTINCT DATE(last_played_at)) AS active_days
+        FROM unified_tracks
+        WHERE last_played_at IS NOT NULL
+        GROUP BY week
+    """)
+    weekly_active_days = [row[1] for row in cur.fetchall()]
+    avg_active_days_per_week = round(sum(weekly_active_days) / len(weekly_active_days), 1) if weekly_active_days else 0
+
     summary_stats = {
         "total_artists": row[0],
         "total_tracks": row[1],
@@ -316,6 +350,9 @@ def collect_metrics_payload():
         "total_albums": album_counts[0],
         "total_singles": album_counts[1],
         "total_compilations": album_counts[2],
+        "total_dynamic_playlists": dynamic_playlists_count,
+        "longest_listening_streak": max_streak,
+        "avg_active_days_per_week": avg_active_days_per_week,
     }
 
     cur.close()
