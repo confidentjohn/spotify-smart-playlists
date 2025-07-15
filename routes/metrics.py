@@ -296,13 +296,25 @@ def collect_metrics_payload():
     time_parts.append(f"{hours}h {minutes}m {seconds}s")
     formatted_time_spent = ' '.join(time_parts)
 
+    cur.execute("""
+        SELECT
+            COUNT(*) FILTER (WHERE COALESCE(album_type, 'single') = 'album'),
+            COUNT(*) FILTER (WHERE COALESCE(album_type, 'single') = 'single'),
+            COUNT(*) FILTER (WHERE COALESCE(album_type, 'single') = 'compilation')
+        FROM unified_tracks
+    """)
+    album_counts = cur.fetchone()
+
     summary_stats = {
         "total_artists": row[0],
         "total_tracks": row[1],
         "total_liked": row[2],
         "total_plays": row[3],
         "total_unique_plays": row[4],
-        "total_time_spent": formatted_time_spent
+        "total_time_spent": formatted_time_spent,
+        "total_albums": album_counts[0],
+        "total_singles": album_counts[1],
+        "total_compilations": album_counts[2],
     }
 
     cur.close()

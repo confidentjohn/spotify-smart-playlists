@@ -256,6 +256,9 @@
       <div class="card" id="summary-plays">▶️ Total Plays<br><span>...</span></div>
       <div class="card" id="summary-unique-plays">🔁 Unique Tracks Played<br><span>...</span></div>
       <div class="card" id="summary-time-spent">⏱️ Time Spent Listening<br><span>...</span></div>
+      <div class="card" id="summary-albums">💿 Albums<br><span>...</span></div>
+      <div class="card" id="summary-singles">🎶 Singles<br><span>...</span></div>
+      <div class="card" id="summary-compilations">📀 Compilations<br><span>...</span></div>
     </div>
     <div class="charts-grid">
       <div class="top-tiles-grid">
@@ -364,6 +367,9 @@
           document.getElementById('summary-plays').querySelector('span').textContent = data.summary_stats.total_plays ?? '–';
           document.getElementById('summary-unique-plays').querySelector('span').textContent = data.summary_stats.total_unique_plays ?? '–';
           document.getElementById('summary-time-spent').querySelector('span').textContent = data.summary_stats.total_time_spent ?? '–';
+          document.getElementById('summary-albums').querySelector('span').textContent = data.summary_stats.total_albums ?? '–';
+          document.getElementById('summary-singles').querySelector('span').textContent = data.summary_stats.total_singles ?? '–';
+          document.getElementById('summary-compilations').querySelector('span').textContent = data.summary_stats.total_compilations ?? '–';
         }
 
         // Top Artists
