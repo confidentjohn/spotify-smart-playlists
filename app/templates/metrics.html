@@ -712,7 +712,12 @@
     loadMetrics();
     function sharePanel(panelId) {
       const panel = document.getElementById(panelId);
-      html2canvas(panel).then(canvas => {
+      html2canvas(panel, {
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#fff',
+        scale: 2
+      }).then(canvas => {
         const link = document.createElement('a');
         link.download = `${panelId}.png`;
         link.href = canvas.toDataURL();
