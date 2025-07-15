@@ -7,7 +7,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
+    .share-button {
+      margin-left: auto;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: #888;
+    }
+    .share-button:hover {
+      color: #1DB954;
+    }
     body {
       font-family: 'Inter', sans-serif;
       background-color: #f7f9fa;
@@ -267,7 +279,10 @@
       <div class="top-tiles-grid">
         <div class="chart-card">
           <section id="top-artists">
-            <h2>🎤 Most Played Artists</h2>
+            <h2>
+              🎤 Most Played Artists
+              <button class="share-button" onclick="sharePanel('top-artists')">📸</button>
+            </h2>
             <!-- <canvas id="chart-top-artists" height="200"></canvas> -->
             <div class="top-artists-grid" id="top-artists-grid"></div>
           </section>
@@ -695,6 +710,15 @@
     }
 
     loadMetrics();
+    function sharePanel(panelId) {
+      const panel = document.getElementById(panelId);
+      html2canvas(panel).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `${panelId}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
   </script>
 </body>
 </html>
