@@ -99,7 +99,12 @@ def collect_metrics_payload():
                 WHEN 'Saturday' THEN 7
         END
     """)
-    plays_by_day = [{"day": row[0].strip(), "count": row[1]} for row in cur.fetchall()]
+    rows = cur.fetchall()
+    total_daily_plays = sum(row[1] for row in rows)
+    plays_by_day = [
+        {"day": row[0].strip(), "percentage": round((row[1] / total_daily_plays) * 100, 1)}
+        for row in rows
+    ]
 
     # Plays by Hour of Day
     cur.execute("""
@@ -110,7 +115,12 @@ def collect_metrics_payload():
         GROUP BY hour
         ORDER BY hour
     """)
-    plays_by_hour = [{"hour": int(row[0]), "count": row[1]} for row in cur.fetchall()]
+    rows = cur.fetchall()
+    total_hourly_plays = sum(row[1] for row in rows)
+    plays_by_hour = [
+        {"hour": int(row[0]), "percentage": round((row[1] / total_hourly_plays) * 100, 1)}
+        for row in rows
+    ]
 
     # Plays by Month
     cur.execute("""
@@ -270,16 +280,21 @@ def collect_metrics_payload():
     row = cur.fetchone()
     total_ms = row[5] or 0
     total_seconds = total_ms // 1000
-    hours = total_seconds // 3600
-    minutes = (total_seconds % 3600) // 60
-    seconds = total_seconds % 60
+    years = total_seconds // (365 * 86400)
+    remaining = total_seconds % (365 * 86400)
+    days = remaining // 86400
+    remaining %= 86400
+    hours = remaining // 3600
+    minutes = (remaining % 3600) // 60
+    seconds = remaining % 60
     summary_stats = {
         "total_artists": row[0],
         "total_tracks": row[1],
         "total_liked": row[2],
         "total_plays": row[3],
         "total_unique_plays": row[4],
-        "total_time_spent": f"{hours:02}:{minutes:02}:{seconds:02}"
+        "total_time_spent": f"{years}y {days}d {hours}h {minutes}m {seconds}s"
+        
     }
 
     cur.close()
