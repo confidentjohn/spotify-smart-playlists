@@ -463,14 +463,14 @@
         // Listening by Day of Week (sorted, styled)
         if (Array.isArray(data.plays_by_day)) {
           const weekdayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-          const playsByDayMap = Object.fromEntries(data.plays_by_day.map(p => [p.day.trim(), Number(p.count)]));
+          const playsByDayMap = Object.fromEntries(data.plays_by_day.map(p => [p.day.trim(), Number(p.percentage)]));
           const sortedDayCounts = weekdayOrder.map(day => playsByDayMap[day] || 0);
           new Chart(document.getElementById('chart-plays-by-day'), {
             type: 'bar',
             data: {
               labels: weekdayOrder,
               datasets: [{
-                label: 'Plays',
+                label: '% of Plays',
                 data: sortedDayCounts,
                 backgroundColor: '#007bff'
               }]
@@ -494,12 +494,12 @@
         // Listening by Hour of Day
         if (Array.isArray(data.plays_by_hour)) {
           const hourLabels = data.plays_by_hour.map(p => `${p.hour}:00`);
-          const hourCounts = data.plays_by_hour.map(p => Number(p.count));
+          const hourCounts = data.plays_by_hour.map(p => Number(p.percentage));
           new Chart(document.getElementById('chart-plays-by-hour'), {
             type: 'bar',
             data: {
               labels: hourLabels,
-              datasets: [{ label: 'Plays', data: hourCounts }]
+              datasets: [{ label: '% of Plays', data: hourCounts }]
             }
           });
         }
