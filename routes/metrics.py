@@ -287,14 +287,22 @@ def collect_metrics_payload():
     hours = remaining // 3600
     minutes = (remaining % 3600) // 60
     seconds = remaining % 60
+    # Conditional formatting for total_time_spent to omit zero units at the beginning
+    time_parts = []
+    if years > 0:
+        time_parts.append(f"{years}y")
+    if years > 0 or days > 0:
+        time_parts.append(f"{days}d")
+    time_parts.append(f"{hours}h {minutes}m {seconds}s")
+    formatted_time_spent = ' '.join(time_parts)
+
     summary_stats = {
         "total_artists": row[0],
         "total_tracks": row[1],
         "total_liked": row[2],
         "total_plays": row[3],
         "total_unique_plays": row[4],
-        "total_time_spent": f"{years}y {days}d {hours}h {minutes}m {seconds}s"
-        
+        "total_time_spent": formatted_time_spent
     }
 
     cur.close()
