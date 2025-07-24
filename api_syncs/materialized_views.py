@@ -3,7 +3,24 @@ from utils.logger import log_event
 from utils.db_utils import get_db_connection
 
 UNIFIED_TRACKS_VIEW = """
-CREATE MATERIALIZED VIEW IF NOT EXISTS unified_tracks AS
+-- Step 0: Classify plays with resume detection
+WITH classified_plays AS (
+  SELECT
+    p.*,
+    COALESCE(t.duration_ms, lt.duration_ms) AS duration_ms,
+    LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at) AS previous_played_at,
+    CASE
+      WHEN LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at) IS NOT NULL
+           AND EXTRACT(EPOCH FROM (p.played_at - LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at))) * 1000
+               < COALESCE(t.duration_ms, lt.duration_ms)
+      THEN TRUE
+      ELSE FALSE
+    END AS is_resume
+  FROM plays p
+  LEFT JOIN tracks t ON p.track_id = t.id
+  LEFT JOIN liked_tracks lt ON p.track_id = lt.track_id
+)
+
 -- Step 1: Tracks from albums (with enriched metadata and merged liked info)
 SELECT 
     t.id AS track_id,
@@ -27,7 +44,9 @@ SELECT
     lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
     lt.last_checked_at AS last_checked_at,
     ta.is_playable,
-    COUNT(p.played_at) AS play_count,
+    COUNT(p.played_at) AS real_play_count,
+    SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END) AS resume_count,
+    (COUNT(p.played_at) - SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END)) AS play_count,
     MIN(p.played_at) AS first_played_at,
     MIN(p.played_at) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS first_played_at_est,
     MAX(p.played_at) AS last_played_at,
@@ -43,7 +62,7 @@ FROM tracks t
 JOIN albums a ON t.album_id = a.id
 LEFT JOIN liked_tracks lt ON lt.track_id = t.id
 LEFT JOIN track_availability ta ON ta.track_id = t.id
-LEFT JOIN plays p ON p.track_id = t.id
+LEFT JOIN classified_plays p ON p.track_id = t.id
 LEFT JOIN artists ar ON ar.id = COALESCE(a.artist_id, lt.artist_id)
 WHERE a.is_saved = TRUE
 GROUP BY 
@@ -75,7 +94,9 @@ SELECT
     lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
     lt.last_checked_at,
     ta.is_playable,
-    COUNT(p.played_at) AS play_count,
+    COUNT(p.played_at) AS real_play_count,
+    SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END) AS resume_count,
+    (COUNT(p.played_at) - SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END)) AS play_count,
     MIN(p.played_at) AS first_played_at,
     MIN(p.played_at) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS first_played_at_est,
     MAX(p.played_at) AS last_played_at,
@@ -87,7 +108,7 @@ SELECT
 FROM liked_tracks lt
 LEFT JOIN tracks t ON lt.track_id = t.id
 LEFT JOIN track_availability ta ON ta.track_id = lt.track_id
-LEFT JOIN plays p ON p.track_id = lt.track_id
+LEFT JOIN classified_plays p ON p.track_id = lt.track_id
 LEFT JOIN artists ar ON ar.id = lt.artist_id
 WHERE t.id IS NULL
 GROUP BY lt.track_id, lt.track_name, lt.track_artist, lt.artist_id, lt.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable, ar.genres, ar.image_url, lt.duration_ms, lt.popularity, excluded;
