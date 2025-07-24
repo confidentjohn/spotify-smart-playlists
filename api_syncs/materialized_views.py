@@ -3,6 +3,7 @@ from utils.logger import log_event
 from utils.db_utils import get_db_connection
 
 UNIFIED_TRACKS_VIEW = """
+CREATE MATERIALIZED VIEW unified_tracks AS
 -- Step 0: Classify plays with resume detection
 WITH classified_plays AS (
   SELECT
