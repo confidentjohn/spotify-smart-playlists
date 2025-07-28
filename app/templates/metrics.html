@@ -330,7 +330,7 @@
       </div>
       <div class="chart-card">
         <section id="top-genres">
-          <h2>🎧 Top Genres (Radar)</h2>
+          <h2>🎧 Top Genres</h2>
           <canvas id="chart-top-genres"></canvas>
         </section>
       </div>
@@ -631,7 +631,7 @@
             }
           });
         }
-        // Top Genres Bar Chart
+        // Top Genres Bar Chart (Horizontal)
         if (Array.isArray(data.top_genres)) {
           const genreLabels = data.top_genres.map(g => g.genre);
           const genreCounts = data.top_genres.map(g => Number(g.count));
@@ -646,19 +646,20 @@
               }]
             },
             options: {
+              indexAxis: 'y',
               responsive: true,
               plugins: {
                 legend: { display: false }
               },
               scales: {
-                y: {
+                x: {
                   beginAtZero: true,
                   title: {
                     display: true,
                     text: 'Number of Plays'
                   }
                 },
-                x: {
+                y: {
                   title: {
                     display: true,
                     text: 'Genre'
