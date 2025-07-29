@@ -58,8 +58,7 @@ SELECT
     SUM(CASE WHEN p.is_skipped THEN 1 ELSE 0 END) AS skip_count,
     GREATEST(
     COUNT(p.played_at) - 
-    SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END) - 
-    SUM(CASE WHEN p.is_skipped THEN 1 ELSE 0 END),
+    SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END),
     0
     ) AS play_count,
     MIN(p.played_at) AS first_played_at,
@@ -109,7 +108,10 @@ SELECT
     COUNT(p.played_at) AS real_play_count,
     SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END) AS resume_count,
     SUM(CASE WHEN p.is_skipped THEN 1 ELSE 0 END) AS skip_count,
-    (COUNT(p.played_at) - SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END) - SUM(CASE WHEN p.is_skipped THEN 1 ELSE 0 END)) AS play_count,
+    GREATEST(
+    COUNT(p.played_at) - SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END),
+    0
+    ) AS play_count,
     MIN(p.played_at) AS first_played_at,
     MIN(p.played_at) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS first_played_at_est,
     MAX(p.played_at) AS last_played_at,
