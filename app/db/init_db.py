@@ -227,7 +227,7 @@ def run_init_db():
     # ─────────────────────────────────────────────
     cur.execute("""
     CREATE TABLE IF NOT EXISTS resolved_fuzzy_matches (
-        play_id TEXT PRIMARY KEY,
+        track_id TEXT PRIMARY KEY,
         resolved_at TIMESTAMP DEFAULT NOW()
     );
     """)
