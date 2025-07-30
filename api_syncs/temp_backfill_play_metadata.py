@@ -4,7 +4,7 @@ import time
 import logging
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-from db_utils import get_conn
+from utils.db_utils import get_db_connection as get_conn
 from utils.spotify_auth import get_spotify_client
 
 logging.basicConfig(level=logging.INFO)
