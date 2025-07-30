@@ -220,12 +220,13 @@ if os.environ.get("SPOTIFY_REFRESH_TOKEN"):
 else:
     log_event("startup", "⚠️ Skipping exclusions playlist check. No SPOTIFY_REFRESH_TOKEN found.", level="warning")
 
-from utils.diagnostics import get_duplicate_album_track_counts
+from utils.diagnostics import get_duplicate_album_track_counts, get_fuzzy_matched_plays
 
 @app.route("/diagnostics")
 def diagnostics():
     duplicates = get_duplicate_album_track_counts()
-    return render_template("diagnostics.html", duplicates=duplicates)
+    fuzzy_matches = get_fuzzy_matched_plays()
+    return render_template("diagnostics.html", duplicates=duplicates, fuzzy_matches=fuzzy_matches)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
