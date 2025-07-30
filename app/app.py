@@ -233,23 +233,23 @@ def diagnostics():
 # Route to resolve fuzzy matched plays
 @app.route("/resolve_fuzzy_matches", methods=["POST"])
 def resolve_fuzzy_matches():
-    selected_play_ids = request.form.getlist("selected_play_ids")
-    if not selected_play_ids:
+    selected_track_ids = request.form.getlist("selected_track_ids")
+    if not selected_track_ids:
         flash("No matches selected.", "warning")
         return redirect(url_for("diagnostics"))
 
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        for play_id in selected_play_ids:
+        for track_id in selected_track_ids:
             cur.execute(
-                "INSERT INTO resolved_fuzzy_plays (play_id) VALUES (%s) ON CONFLICT DO NOTHING",
-                (play_id,)
+                "INSERT INTO resolved_fuzzy_matches (track_id) VALUES (%s) ON CONFLICT DO NOTHING",
+                (track_id,)
             )
         conn.commit()
         cur.close()
         conn.close()
-        flash(f"Resolved {len(selected_play_ids)} fuzzy match(es).", "success")
+        flash(f"Resolved {len(selected_track_ids)} fuzzy match(es).", "success")
     except Exception as e:
         flash(f"Error resolving fuzzy matches: {e}", "error")
 
