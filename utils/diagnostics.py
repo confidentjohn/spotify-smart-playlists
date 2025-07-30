@@ -22,3 +22,46 @@ def get_duplicate_album_track_counts():
     cur.close()
     conn.close()
     return results
+
+
+def get_fuzzy_matched_plays():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            p.id AS play_id,
+            p.track_id AS original_track_id,
+            p.track_name AS original_track_name,
+            p.artist_name AS original_artist_name,
+            p.played_at,
+
+            t.id AS library_track_id,
+            t.name AS library_track_name,
+            t.artist AS library_artist_name,
+            t.album_id AS library_album_id,
+            a.name AS library_album_name
+
+        FROM plays p
+        JOIN (
+            SELECT 
+                p.id AS play_id,
+                t.id AS matched_track_id
+            FROM plays p
+            JOIN tracks t
+              ON LOWER(p.track_name) = LOWER(t.name)
+             AND LOWER(p.artist_name) = LOWER(t.artist)
+             AND ABS(COALESCE(p.duration_ms, 0) - COALESCE(t.duration_ms, 0)) <= 1000
+            WHERE p.track_id != t.id
+        ) fmt ON fmt.play_id = p.id
+
+        JOIN tracks t ON t.id = fmt.matched_track_id
+        LEFT JOIN albums a ON t.album_id = a.id
+
+        ORDER BY p.played_at DESC;
+    """)
+
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return results

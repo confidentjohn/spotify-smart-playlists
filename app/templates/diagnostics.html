@@ -1,5 +1,3 @@
-
-
 {% extends "base.html" %}
 
 {% block content %}
@@ -34,6 +32,48 @@
     {% else %}
         <div class="alert alert-success text-center" role="alert">
             🎉 No duplicate album track issues found!
+        </div>
+    {% endif %}
+</div>
+<div class="container mt-5">
+    <h2 class="text-center mb-4">🕵️ Fuzzy Matched Plays</h2>
+
+    {% if fuzzy_matches %}
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Play Time</th>
+                        <th>Original Track ID</th>
+                        <th>Original Track Name</th>
+                        <th>Original Artist</th>
+                        <th>Matched Track ID</th>
+                        <th>Library Track Name</th>
+                        <th>Library Artist</th>
+                        <th>Library Album ID</th>
+                        <th>Library Album Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in fuzzy_matches %}
+                    <tr>
+                        <td>{{ row[4] }}</td>
+                        <td><code>{{ row[1] }}</code></td>
+                        <td>{{ row[2] }}</td>
+                        <td>{{ row[3] }}</td>
+                        <td><code>{{ row[5] }}</code></td>
+                        <td>{{ row[6] }}</td>
+                        <td>{{ row[7] }}</td>
+                        <td><code>{{ row[8] }}</code></td>
+                        <td>{{ row[9] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-success text-center" role="alert">
+            ✅ No fuzzy matched plays found!
         </div>
     {% endif %}
 </div>
