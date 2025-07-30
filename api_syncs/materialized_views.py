@@ -4,17 +4,31 @@ from utils.db_utils import get_db_connection
 
 UNIFIED_TRACKS_VIEW = """
 CREATE MATERIALIZED VIEW unified_tracks AS
--- Step 0: Classify plays with resume and skip detection
-WITH classified_plays AS (
+-- Step 0: Fuzzy match plays to tracks
+WITH fuzzy_matched_tracks AS (
+  SELECT 
+    p.id AS play_id,
+    t.id AS matched_track_id
+  FROM plays p
+  JOIN tracks t
+    ON LOWER(p.track_name) = LOWER(t.name)
+   AND LOWER(p.artist_name) = LOWER(t.artist)
+   AND ABS(COALESCE(p.duration_ms, 0) - COALESCE(t.duration_ms, 0)) <= 1000
+  WHERE p.track_id != t.id
+),
+
+-- Step 1: Classify plays with resume and skip detection
+classified_plays AS (
   SELECT
     p.*,
+    fmt.matched_track_id,
     COALESCE(t.duration_ms, lt.duration_ms) AS duration_ms,
-    LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at) AS previous_played_at,
+    LAG(p.played_at) OVER (PARTITION BY COALESCE(fmt.matched_track_id, p.track_id) ORDER BY p.played_at) AS previous_played_at,
     LEAD(p.track_id) OVER (ORDER BY p.played_at) AS next_track_id,
     LEAD(p.played_at) OVER (ORDER BY p.played_at) AS next_played_at,
     CASE
-      WHEN LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at) IS NOT NULL
-           AND EXTRACT(EPOCH FROM (p.played_at - LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at))) * 1000
+      WHEN LAG(p.played_at) OVER (PARTITION BY COALESCE(fmt.matched_track_id, p.track_id) ORDER BY p.played_at) IS NOT NULL
+           AND EXTRACT(EPOCH FROM (p.played_at - LAG(p.played_at) OVER (PARTITION BY COALESCE(fmt.matched_track_id, p.track_id) ORDER BY p.played_at))) * 1000
                < COALESCE(t.duration_ms, lt.duration_ms)
       THEN TRUE ELSE FALSE
     END AS is_resume,
@@ -26,11 +40,12 @@ WITH classified_plays AS (
       THEN TRUE ELSE FALSE
     END AS is_skipped
   FROM plays p
-  LEFT JOIN tracks t ON p.track_id = t.id
-  LEFT JOIN liked_tracks lt ON p.track_id = lt.track_id
+  LEFT JOIN fuzzy_matched_tracks fmt ON fmt.play_id = p.id
+  LEFT JOIN tracks t ON COALESCE(fmt.matched_track_id, p.track_id) = t.id
+  LEFT JOIN liked_tracks lt ON COALESCE(fmt.matched_track_id, p.track_id) = lt.track_id
 )
 
--- Step 1: Tracks from albums (with enriched metadata and merged liked info)
+-- Step 2: Tracks from albums (with enriched metadata and merged liked info)
 SELECT 
     t.id AS track_id,
     t.name AS track_name,
@@ -53,9 +68,10 @@ SELECT
     lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
     lt.last_checked_at,
     ta.is_playable,
-    COUNT(p.played_at) AS real_play_count,
+    COUNT(CASE WHEN p.matched_track_id IS NULL THEN 1 END) AS real_play_count,
     SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END) AS resume_count,
     SUM(CASE WHEN p.is_skipped THEN 1 ELSE 0 END) AS skip_count,
+    COUNT(CASE WHEN p.matched_track_id IS NOT NULL THEN 1 END) AS fuzzy_match_play_count,
     GREATEST(
     COUNT(p.played_at) - 
     SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END),
@@ -73,7 +89,7 @@ FROM tracks t
 JOIN albums a ON t.album_id = a.id
 LEFT JOIN liked_tracks lt ON lt.track_id = t.id
 LEFT JOIN track_availability ta ON ta.track_id = t.id
-LEFT JOIN classified_plays p ON p.track_id = t.id
+LEFT JOIN classified_plays p ON COALESCE(p.matched_track_id, p.track_id) = t.id
 LEFT JOIN artists ar ON ar.id = COALESCE(a.artist_id, lt.artist_id)
 WHERE a.is_saved = TRUE
 GROUP BY 
@@ -82,7 +98,7 @@ GROUP BY
 
 UNION ALL
 
--- Step 2: Liked tracks not in album-based `tracks` table
+-- Step 3: Liked tracks not in album-based `tracks` table
 SELECT 
     lt.track_id,
     lt.track_name,
@@ -105,9 +121,10 @@ SELECT
     lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
     lt.last_checked_at,
     ta.is_playable,
-    COUNT(p.played_at) AS real_play_count,
+    COUNT(CASE WHEN p.matched_track_id IS NULL THEN 1 END) AS real_play_count,
     SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END) AS resume_count,
     SUM(CASE WHEN p.is_skipped THEN 1 ELSE 0 END) AS skip_count,
+    COUNT(CASE WHEN p.matched_track_id IS NOT NULL THEN 1 END) AS fuzzy_match_play_count,
     GREATEST(
     COUNT(p.played_at) - SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END),
     0
@@ -123,7 +140,7 @@ SELECT
 FROM liked_tracks lt
 LEFT JOIN tracks t ON lt.track_id = t.id
 LEFT JOIN track_availability ta ON ta.track_id = lt.track_id
-LEFT JOIN classified_plays p ON p.track_id = lt.track_id
+LEFT JOIN classified_plays p ON COALESCE(p.matched_track_id, p.track_id) = lt.track_id
 LEFT JOIN artists ar ON ar.id = lt.artist_id
 WHERE t.id IS NULL
 GROUP BY lt.track_id, lt.track_name, lt.track_artist, lt.artist_id, lt.added_at, lt.liked_at, lt.last_checked_at, ta.is_playable, ar.genres, ar.image_url, lt.duration_ms, lt.popularity, excluded;
