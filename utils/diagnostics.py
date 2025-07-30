@@ -57,7 +57,7 @@ def get_fuzzy_matched_plays():
 
         JOIN tracks t ON t.id = fmt.matched_track_id
         LEFT JOIN albums a ON t.album_id = a.id
-        LEFT JOIN resolved_fuzzy_matches rfm ON rfm.play_id = p.id
+        LEFT JOIN resolved_fuzzy_matches rfm ON rfm.play_id::INT = p.id
         WHERE rfm.play_id IS NULL
         ORDER BY p.played_at DESC;
     """)
