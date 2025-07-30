@@ -223,6 +223,16 @@ def run_init_db():
 
 
     # ─────────────────────────────────────────────
+    # Resolved fuzzy matches table
+    # ─────────────────────────────────────────────
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS resolved_fuzzy_matches (
+        play_id TEXT PRIMARY KEY,
+        resolved_at TIMESTAMP DEFAULT NOW()
+    );
+    """)
+
+    # ─────────────────────────────────────────────
     # Logging table (MATCHES logger.py)
     # ─────────────────────────────────────────────
     cur.execute("""
