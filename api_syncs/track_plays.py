@@ -64,15 +64,20 @@ for item in recent_plays:
     from dateutil import parser
     played_at_dt = parser.isoparse(played_at)
 
+    # Extract additional fields
+    track_name = track["name"]
+    artist_id = track["artists"][0]["id"] if track["artists"] else None
+    duration_ms = track.get("duration_ms")
+
     cur.execute("SELECT 1 FROM plays WHERE track_id = %s AND played_at = %s", (track_id, played_at_dt))
     if cur.fetchone():
         continue
 
     cur.execute("""
-        INSERT INTO plays (track_id, played_at)
-        VALUES (%s, %s)
+        INSERT INTO plays (track_id, played_at, track_name, artist_id, duration_ms)
+        VALUES (%s, %s, %s, %s, %s)
         ON CONFLICT (track_id, played_at) DO NOTHING;
-    """, (track_id, played_at_dt))
+    """, (track_id, played_at_dt, track_name, artist_id, duration_ms))
     new_count += 1
     time.sleep(0.1)  # optional light throttle
 

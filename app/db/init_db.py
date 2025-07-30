@@ -98,6 +98,9 @@ def run_init_db():
         id SERIAL PRIMARY KEY,
         track_id TEXT,
         played_at TIMESTAMP,
+        track_name TEXT,
+        artist_id TEXT,
+        duration_ms INTEGER,
         UNIQUE(track_id, played_at)
     );
     """)
@@ -106,6 +109,24 @@ def run_init_db():
     cur.execute("""
     CREATE UNIQUE INDEX IF NOT EXISTS idx_plays_unique ON plays (track_id, played_at);
     """)
+
+    # Ensure all expected columns exist in the plays table
+    expected_play_columns = {
+        "id": "SERIAL",
+        "track_id": "TEXT",
+        "played_at": "TIMESTAMP",
+        "track_name": "TEXT",
+        "artist_id": "TEXT",
+        "duration_ms": "INTEGER"
+    }
+
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'plays';")
+    existing_play_columns = {row[0] for row in cur.fetchall()}
+
+    for col_name, col_type in expected_play_columns.items():
+        if col_name not in existing_play_columns:
+            print(f"🛠 Adding missing column to plays: {col_name}")
+            cur.execute(f"ALTER TABLE plays ADD COLUMN {col_name} {col_type};")
 
     # ─────────────────────────────────────────────
     # Playlist mapping table
