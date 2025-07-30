@@ -101,6 +101,10 @@ def run_init_db():
         track_name TEXT,
         artist_id TEXT,
         duration_ms INTEGER,
+        artist_name TEXT,
+        album_id TEXT,
+        album_name TEXT,
+        album_type TEXT,
         UNIQUE(track_id, played_at)
     );
     """)
@@ -117,7 +121,11 @@ def run_init_db():
         "played_at": "TIMESTAMP",
         "track_name": "TEXT",
         "artist_id": "TEXT",
-        "duration_ms": "INTEGER"
+        "duration_ms": "INTEGER",
+        "artist_name": "TEXT",
+        "album_id": "TEXT",
+        "album_name": "TEXT",
+        "album_type": "TEXT"
     }
 
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'plays';")

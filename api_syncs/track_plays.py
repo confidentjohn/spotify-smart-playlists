@@ -67,17 +67,21 @@ for item in recent_plays:
     # Extract additional fields
     track_name = track["name"]
     artist_id = track["artists"][0]["id"] if track["artists"] else None
+    artist_name = track["artists"][0]["name"] if track["artists"] else None
     duration_ms = track.get("duration_ms")
+    album_id = track["album"]["id"] if track.get("album") else None
+    album_name = track["album"]["name"] if track.get("album") else None
+    album_type = track["album"]["album_type"] if track.get("album") else None
 
     cur.execute("SELECT 1 FROM plays WHERE track_id = %s AND played_at = %s", (track_id, played_at_dt))
     if cur.fetchone():
         continue
 
     cur.execute("""
-        INSERT INTO plays (track_id, played_at, track_name, artist_id, duration_ms)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO plays (track_id, played_at, track_name, artist_id, artist_name, duration_ms, album_id, album_name, album_type)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (track_id, played_at) DO NOTHING;
-    """, (track_id, played_at_dt, track_name, artist_id, duration_ms))
+    """, (track_id, played_at_dt, track_name, artist_id, artist_name, duration_ms, album_id, album_name, album_type))
     new_count += 1
     time.sleep(0.1)  # optional light throttle
 
