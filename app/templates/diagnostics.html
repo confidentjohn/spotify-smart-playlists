@@ -41,19 +41,19 @@
     {% if fuzzy_matches %}
     <form method="POST" action="/resolve_fuzzy_matches">
         <div class="table-responsive">
-            <table class="table table-striped table-bordered">
+            <table class="table table-striped table-bordered sortable">
                 <thead class="thead-dark">
                     <tr>
-                        <th>Select</th>
-                        <th>Play Time</th>
-                        <th>Original Track ID</th>
-                        <th>Original Track Name</th>
-                        <th>Original Artist</th>
-                        <th>Matched Track ID</th>
-                        <th>Library Track Name</th>
-                        <th>Library Artist</th>
-                        <th>Library Album ID</th>
-                        <th>Library Album Name</th>
+                        <th onclick="sortTable(this.cellIndex)">Select</th>
+                        <th onclick="sortTable(this.cellIndex)">Play Time</th>
+                        <th onclick="sortTable(this.cellIndex)">Original Track ID</th>
+                        <th onclick="sortTable(this.cellIndex)">Original Track Name</th>
+                        <th onclick="sortTable(this.cellIndex)">Original Artist</th>
+                        <th onclick="sortTable(this.cellIndex)">Matched Track ID</th>
+                        <th onclick="sortTable(this.cellIndex)">Library Track Name</th>
+                        <th onclick="sortTable(this.cellIndex)">Library Artist</th>
+                        <th onclick="sortTable(this.cellIndex)">Library Album ID</th>
+                        <th onclick="sortTable(this.cellIndex)">Library Album Name</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -84,4 +84,23 @@
         </div>
     {% endif %}
 </div>
+<script>
+function sortTable(columnIndex) {
+    var table = document.querySelector(".sortable");
+    var rows = Array.from(table.rows).slice(1);
+    var header = table.rows[0].cells[columnIndex];
+    var ascending = header.classList.toggle("asc");
+
+    rows.sort((a, b) => {
+        let aText = a.cells[columnIndex].innerText.trim();
+        let bText = b.cells[columnIndex].innerText.trim();
+
+        return ascending
+            ? aText.localeCompare(bText, undefined, {numeric: true})
+            : bText.localeCompare(aText, undefined, {numeric: true});
+    });
+
+    rows.forEach(row => table.tBodies[0].appendChild(row));
+}
+</script>
 {% endblock %}
