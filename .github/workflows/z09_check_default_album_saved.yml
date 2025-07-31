@@ -1,6 +1,7 @@
 name: z09 - Check Default Album Saved
+
 on:
-  workflow_dispatch:  
+  workflow_dispatch:
   workflow_call:
     secrets:
       SPOTIFY_CLIENT_ID:
@@ -35,15 +36,19 @@ jobs:
       - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
+      - name: 📝 Log sync start
+        run: echo "🔄 Starting check_canonical_albums.py run..."
+
       - name: 🛠️ check canonical albums
-        run: PYTHONPATH=. python api_syncs/check_canonical_albums.py
+        run: |
+          PYTHONPATH=. python api_syncs/check_canonical_albums.py
+          echo "✅ check_canonical_albums.py run completed."
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
           SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
