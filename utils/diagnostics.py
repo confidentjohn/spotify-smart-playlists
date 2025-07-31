@@ -66,3 +66,27 @@ def get_fuzzy_matched_plays():
     cur.close()
     conn.close()
     return results
+
+
+# Function to get outdated albums
+def get_outdated_albums():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT 
+            artist_id,
+            artist_name,
+            album_name,
+            saved_album_id,
+            newer_album_id,
+            first_detected_at,
+            last_checked_at
+        FROM outdated_albums
+        ORDER BY last_checked_at DESC
+    """)
+
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return results
