@@ -41,7 +41,17 @@
 </div>
 <div class="container mt-5">
     <h2 class="text-center mb-4">🕵️ Fuzzy Matched Plays</h2>
-    <p class="text-center text-muted mb-4">These plays were matched to tracks in your library using fuzzy logic (e.g., artist and track name), but the track IDs don't match. You can mark them as resolved if they’ve been addressed in your library.</p>
+    <p class="text-center text-muted mb-4">
+      This table is showing tracks played that don't match the 
+      <span data-toggle="tooltip" title="The track version stored in your personal library — typically from a specific album you've saved.">stored album version</span> 
+      in your library.<br>
+      <strong>Options:</strong> Check in Spotify that you have the 
+      <span data-toggle="tooltip" title="Spotify often links multiple versions of the same album — make sure you're using the most up-to-date or canonical version.">correct (default) album version</span> 
+      added and remove any incorrect or duplicate versions. Once sorted, you can mark the row as resolved.<br>
+      Or, simply ignore — the plays are tracked, but your 
+      <span data-toggle="tooltip" title="Automatically generated playlists based on your library and listening activity.">smart playlists</span> 
+      will only show tracks from your saved library, meaning you'll see the stored version but Spotify will likely play the newer one.
+    </p>
 
     {% if fuzzy_matches %}
     <form method="POST" action="/resolve_fuzzy_matches">
@@ -107,5 +117,13 @@ function sortTable(columnIndex) {
 
     rows.forEach(row => table.tBodies[0].appendChild(row));
 }
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+  });
 </script>
 {% endblock %}
