@@ -284,9 +284,28 @@ def run_init_db():
         name TEXT,
         genres TEXT[],
         image_url TEXT,
-        last_checked_at TIMESTAMP
+        last_checked_at TIMESTAMP,
+        last_album_checked_at TIMESTAMP
     );
     """)
+
+    # Ensure all expected columns exist in the artists table
+    expected_artist_columns = {
+        "id": "TEXT",
+        "name": "TEXT",
+        "genres": "TEXT[]",
+        "image_url": "TEXT",
+        "last_checked_at": "TIMESTAMP",
+        "last_album_checked_at": "TIMESTAMP"
+    }
+
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'artists';")
+    existing_artist_columns = {row[0] for row in cur.fetchall()}
+
+    for col_name, col_type in expected_artist_columns.items():
+        if col_name not in existing_artist_columns:
+            print(f"🛠 Adding missing column to artists: {col_name}")
+            cur.execute(f"ALTER TABLE artists ADD COLUMN {col_name} {col_type};")
 
     conn.commit()
     cur.close()
