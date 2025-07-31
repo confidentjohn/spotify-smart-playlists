@@ -275,6 +275,7 @@ def run_init_db():
     );
     """)
 
+
     # ─────────────────────────────────────────────
     # Artists table
     # ─────────────────────────────────────────────
@@ -306,6 +307,22 @@ def run_init_db():
         if col_name not in existing_artist_columns:
             print(f"🛠 Adding missing column to artists: {col_name}")
             cur.execute(f"ALTER TABLE artists ADD COLUMN {col_name} {col_type};")
+
+    # ─────────────────────────────────────────────
+    # Outdated albums table
+    # ─────────────────────────────────────────────
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS outdated_albums (
+        artist_id TEXT NOT NULL,
+        artist_name TEXT NOT NULL,
+        album_name TEXT NOT NULL,
+        saved_album_id TEXT NOT NULL,
+        newer_album_id TEXT NOT NULL,
+        first_detected_at TIMESTAMP DEFAULT NOW(),
+        last_checked_at TIMESTAMP DEFAULT NOW(),
+        PRIMARY KEY (saved_album_id, newer_album_id)
+    );
+    """)
 
     conn.commit()
     cur.close()
