@@ -1,4 +1,4 @@
-name: 00 - Full Library Sync
+name: 001 - Full Library Sync
 
 on:
   schedule:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   sync-albums:
-    uses: ./.github/workflows/01_sync_albums.yml
+    uses: ./.github/workflows/z01_sync_albums.yml
     secrets:
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -21,7 +21,7 @@ jobs:
 
   sync-album-tracks:
     needs: sync-albums
-    uses: ./.github/workflows/02_sync_album_tracks.yml
+    uses: ./.github/workflows/z02_sync_album_tracks.yml
     secrets:
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -68,7 +68,7 @@ jobs:
   
   sync-artists:
     needs: sync-liked-tracks
-    uses: ./.github/workflows/03c_sync_artists.yml
+    uses: ./.github/workflows/z04_sync_artists.yml
     secrets:
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -82,7 +82,7 @@ jobs:
 
   check-availability:
     needs: sync-artists
-    uses: ./.github/workflows/04_check_track_availability.yml
+    uses: ./.github/workflows/z05_check_track_availability.yml
     secrets:
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -96,7 +96,7 @@ jobs:
 
   sync-exclusions:
     needs: check-availability
-    uses: ./.github/workflows/05_sync_exclusions.yml
+    uses: ./.github/workflows/z06_sync_exclusions.yml
     secrets:
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
@@ -109,7 +109,7 @@ jobs:
 
   build-unified-tracks:
     needs: sync-exclusions
-    uses: ./.github/workflows/06_build_unified_tracks.yml
+    uses: ./.github/workflows/z07_build_unified_tracks.yml
     secrets:
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_PORT: ${{ secrets.DB_PORT }}
@@ -119,7 +119,17 @@ jobs:
 
   build-unified-metrics:
     needs: build-unified-tracks
-    uses: ./.github/workflows/07_build_metrics.yml
+    uses: ./.github/workflows/z08_build_metrics.yml
+    secrets:
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+  check-default-album-saved:
+    needs: build-unified-metrics
+    uses: ./.github/workflows/z09_check_default_album_saved.yml
     secrets:
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_PORT: ${{ secrets.DB_PORT }}
@@ -128,8 +138,8 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
   update-dynamic-playlists:
-    needs: build-unified-metrics
-    uses: ./.github/workflows/update_dynamic_playlists.yml
+    needs: check-default-album-saved
+    uses: ./.github/workflows/z10_update_dynamic_playlists.yml
     secrets:
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}

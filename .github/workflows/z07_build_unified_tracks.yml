@@ -1,4 +1,4 @@
-name: 07 - Build Metrics
+name: z07 - Build Unified Tracks
 
 on:
   workflow_dispatch:  
@@ -16,7 +16,7 @@ on:
         required: true
 
 jobs:
-  build-unified-metrics:
+  build-unified-view:
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repo
@@ -30,8 +30,8 @@ jobs:
       - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
-      - name: 🛠️ Build materialized_metrics view
-        run: PYTHONPATH=. python api_syncs/materialized_metrics.py
+      - name: 🛠️ Build unified_tracks view
+        run: PYTHONPATH=. python api_syncs/materialized_views.py
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}

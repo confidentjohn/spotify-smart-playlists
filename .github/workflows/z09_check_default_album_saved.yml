@@ -1,5 +1,4 @@
-name: 06 - Build Unified Tracks
-
+name: z09 - Check Default Album Saved
 on:
   workflow_dispatch:  
   workflow_call:
@@ -16,7 +15,7 @@ on:
         required: true
 
 jobs:
-  build-unified-view:
+  check-default-album-saved:
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repo
@@ -30,8 +29,8 @@ jobs:
       - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
-      - name: 🛠️ Build unified_tracks view
-        run: PYTHONPATH=. python api_syncs/materialized_views.py
+      - name: 🛠️ check canonical albums
+        run: PYTHONPATH=. python api_syncs/check_canonical_albums.py
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}

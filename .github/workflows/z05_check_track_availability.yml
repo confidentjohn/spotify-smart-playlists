@@ -1,4 +1,4 @@
-name: 02 - Sync Spotify Album Tracks
+name: z05 - Check Track Availability
 
 on:
   workflow_dispatch:
@@ -7,8 +7,6 @@ on:
       SPOTIFY_CLIENT_ID:
         required: true
       SPOTIFY_CLIENT_SECRET:
-        required: true
-      SPOTIFY_REDIRECT_URI:
         required: true
       SPOTIFY_REFRESH_TOKEN:
         required: true
@@ -24,29 +22,25 @@ on:
         required: true
 
 jobs:
-  sync-albums:
+  check-availability:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: ⬇️ Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Add root to PYTHONPATH
-        run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
-
-      - name: Run sync_album_tracks
-        run: python api_syncs/sync_album_tracks.py
+      - name: 🚀 Run check_track_availability.py
+        run: PYTHONPATH=. python -u api_syncs/check_track_availability.py
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
           SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
