@@ -80,7 +80,7 @@ def main():
                         if not row:
                             continue
                         album_type, release_date = row
-                        release_year = release_date.year if release_date else None
+                        release_year = release_date[:4] if release_date else None
                         if not release_year:
                             continue
 
