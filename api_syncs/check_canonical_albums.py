@@ -10,9 +10,16 @@ BATCH_SIZE = 30
 def get_stale_artists(conn):
     with conn.cursor() as cur:
         cur.execute("""
-            SELECT id, name FROM artists
-            ORDER BY COALESCE(last_album_checked_at, '2000-01-01') ASC
-            LIMIT %s;
+            (
+              SELECT id, name FROM artists
+              WHERE id IN (SELECT DISTINCT artist_id FROM outdated_albums)
+            )
+            UNION
+            (
+              SELECT id, name FROM artists
+              ORDER BY COALESCE(last_album_checked_at, '2000-01-01') ASC
+              LIMIT %s
+            );
         """, (BATCH_SIZE,))
         return cur.fetchall()
 
