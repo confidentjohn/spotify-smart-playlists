@@ -74,7 +74,7 @@ SELECT
     COUNT(CASE WHEN p.matched_track_id IS NOT NULL THEN 1 END) AS fuzzy_match_play_count,
     GREATEST(
     COUNT(p.played_at) - 
-    SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END),
+    COALESCE(SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END), 0),
     0
     ) AS play_count,
     MIN(p.played_at) AS first_played_at,
@@ -126,7 +126,7 @@ SELECT
     SUM(CASE WHEN p.is_skipped THEN 1 ELSE 0 END) AS skip_count,
     COUNT(CASE WHEN p.matched_track_id IS NOT NULL THEN 1 END) AS fuzzy_match_play_count,
     GREATEST(
-    COUNT(p.played_at) - SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END),
+    COUNT(p.played_at) - COALESCE(SUM(CASE WHEN p.is_resume THEN 1 ELSE 0 END), 0),
     0
     ) AS play_count,
     MIN(p.played_at) AS first_played_at,
