@@ -1,3 +1,37 @@
+# ─────────────────────────────────────────────────────
+# Route to mark an album as outdated
+@app.route("/mark_outdated_album", methods=["POST"])
+def mark_outdated_album():
+    artist_id = request.form.get("artist_id")
+    artist_name = request.form.get("artist_name")
+    album_name = request.form.get("album_name")
+    saved_album_id = request.form.get("saved_album_id")
+    newer_album_id = request.form.get("newer_album_id")
+
+    if not all([artist_id, artist_name, album_name, saved_album_id, newer_album_id]):
+        flash("Missing required fields to mark album as outdated.", "error")
+        return redirect(url_for("diagnostics"))
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO outdated_albums (
+                artist_id, artist_name, album_name,
+                saved_album_id, newer_album_id
+            ) VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (artist_id, saved_album_id) DO UPDATE
+            SET newer_album_id = EXCLUDED.newer_album_id,
+                last_checked_at = NOW()
+        """, (artist_id, artist_name, album_name, saved_album_id, newer_album_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash("Outdated album marked successfully.", "success")
+    except Exception as e:
+        flash(f"Database error while marking outdated album: {e}", "error")
+
+    return redirect(url_for("diagnostics"))
 from flask import Flask, request, redirect, session
 from flask import render_template
 from flask import redirect, url_for, request, flash

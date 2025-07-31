@@ -2,6 +2,50 @@
 
 {% block content %}
 <div class="container mt-4">
+    <h2 class="text-center mb-4">📦 Outdated Albums in Library</h2>
+    <p class="text-center text-muted mb-4">
+      These albums are stored in your library, but Spotify now recommends a different version of the same album.
+      This can happen if Spotify reissues, republishes, or updates album metadata.<br>
+      <strong>To fix:</strong> Click the album link below to visit it on Spotify. Remove it from your library, and add the version Spotify now recommends. Then re-run your sync to update.
+    </p>
+
+    {% if outdated_albums %}
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered sortable">
+            <thead class="thead-dark">
+                <tr>
+                    <th onclick="sortTable(this.cellIndex)">saved_album_id</th>
+                    <th onclick="sortTable(this.cellIndex)">album_name</th>
+                    <th onclick="sortTable(this.cellIndex)">artist_name</th>
+                    <th onclick="sortTable(this.cellIndex)">Saved Album Link</th>
+                    <th onclick="sortTable(this.cellIndex)">newer_album_id</th>
+                    <th onclick="sortTable(this.cellIndex)">Newer Album Link</th>
+                    <th onclick="sortTable(this.cellIndex)">first_detected_at</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in outdated_albums %}
+                <tr>
+                    <td><code>{{ row.stored_album_id }}</code></td>
+                    <td>{{ row.album_name }}</td>
+                    <td>{{ row.artist }}</td>
+                    <td><a href="https://open.spotify.com/album/{{ row.stored_album_id }}" target="_blank">View</a></td>
+                    <td><code>{{ row.recommended_album_id }}</code></td>
+                    <td><a href="https://open.spotify.com/album/{{ row.recommended_album_id }}" target="_blank">View</a></td>
+                    <td>{{ row.discovered_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-success text-center" role="alert">
+        ✅ No outdated albums found in your library!
+    </div>
+    {% endif %}
+</div>
+
+<div class="container mt-4">
     <h2 class="text-center mb-4">🚨 Duplicate Album Tracks Detected</h2>
     <p class="text-center text-muted mb-4">
       This table highlights albums in your library where the number of expected tracks doesn't match what's stored, possibly due to duplicate or partial entries.<br>
