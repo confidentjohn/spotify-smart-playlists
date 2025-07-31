@@ -1,5 +1,3 @@
-
-
 import time
 import logging
 from utils.spotify_auth import get_spotify_client
@@ -62,23 +60,39 @@ def main():
 
             saved_album_ids = {row[0] for row in saved_albums}
             saved_album_names = {row[1] for row in saved_albums}
-            remote_album_lookup = {album['name']: album['id'] for album in albums}
+            remote_album_lookup = {
+                (album['name'], album['album_type'], album['release_date'][:4]): album['id']
+                for album in albums if 'release_date' in album
+            }
 
             # Identify new outdated albums
             with conn.cursor() as cur:
                 for name in saved_album_names:
-                    remote_id = remote_album_lookup.get(name)
                     matching_saved = [id_ for id_, nm in saved_albums if nm == name]
+                    for id_, nm in saved_albums:
+                        if nm != name:
+                            continue
+                        # Get album_type and release_year from local DB
+                        cur.execute("""
+                            SELECT album_type, release_date FROM albums WHERE id = %s;
+                        """, (id_,))
+                        row = cur.fetchone()
+                        if not row:
+                            continue
+                        album_type, release_date = row
+                        release_year = release_date.year if release_date else None
+                        if not release_year:
+                            continue
 
-                    if remote_id and remote_id not in matching_saved:
-                        for saved_id in matching_saved:
+                        remote_id = remote_album_lookup.get((name, album_type, str(release_year)))
+                        if remote_id and remote_id not in matching_saved:
                             if (name, remote_id) not in outdated_lookup:
-                                logging.info(f"Inserting outdated album: {name} from {saved_id} to {remote_id}")
+                                logging.info(f"Inserting outdated album: {name} from {id_} to {remote_id}")
                                 cur.execute("""
                                     INSERT INTO outdated_albums (artist_id, artist_name, album_name, saved_album_id, newer_album_id)
                                     VALUES (%s, %s, %s, %s, %s)
                                     ON CONFLICT (saved_album_id, newer_album_id) DO NOTHING;
-                                """, (artist_id, artist_name, name, saved_id, remote_id))
+                                """, (artist_id, artist_name, name, id_, remote_id))
 
                 # Check for resolved outdated albums
                 for (album_name, newer_album_id), saved_album_id in outdated_lookup.items():

@@ -26,13 +26,13 @@
             <tbody>
                 {% for row in outdated_albums %}
                 <tr>
-                    <td><code>{{ row.stored_album_id }}</code></td>
+                    <td><code>{{ row.saved_album_id }}</code></td>
                     <td>{{ row.album_name }}</td>
-                    <td>{{ row.artist }}</td>
-                    <td><a href="https://open.spotify.com/album/{{ row.stored_album_id }}" target="_blank">View</a></td>
-                    <td><code>{{ row.recommended_album_id }}</code></td>
-                    <td><a href="https://open.spotify.com/album/{{ row.recommended_album_id }}" target="_blank">View</a></td>
-                    <td>{{ row.discovered_at }}</td>
+                    <td>{{ row.artist_name }}</td>
+                    <td><a href="https://open.spotify.com/album/{{ row.saved_album_id }}" target="_blank">View</a></td>
+                    <td><code>{{ row.newer_album_id }}</code></td>
+                    <td><a href="https://open.spotify.com/album/{{ row.newer_album_id }}" target="_blank">View</a></td>
+                    <td>{{ row.first_detected_at }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
