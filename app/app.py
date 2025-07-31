@@ -1,3 +1,35 @@
+from flask import Flask, request, redirect, session
+from flask import render_template
+from flask import redirect, url_for, request, flash
+from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
+from app.users import validate_user
+from app.users import get_user_by_username
+from app.users import has_refresh_token
+from markupsafe import escape
+import os
+import subprocess
+import psycopg2
+import spotipy
+from spotipy import Spotify
+from spotipy.oauth2 import SpotifyOAuth
+from app import startup
+from utils.spotify_auth import get_spotify_client, get_spotify_oauth
+from utils.db_utils import get_db_connection
+from utils.logger import log_event
+import requests
+from routes import playlist_dashboard
+from routes.create_admin import create_admin_bp
+from routes.metrics import metrics_bp
+
+
+
+app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your preferred secure method
+app.register_blueprint(playlist_dashboard)
+app.register_blueprint(create_admin_bp)
+app.register_blueprint(metrics_bp)
+
+
 # ─────────────────────────────────────────────────────
 # Route to mark an album as outdated
 @app.route("/mark_outdated_album", methods=["POST"])
@@ -32,36 +64,6 @@ def mark_outdated_album():
         flash(f"Database error while marking outdated album: {e}", "error")
 
     return redirect(url_for("diagnostics"))
-from flask import Flask, request, redirect, session
-from flask import render_template
-from flask import redirect, url_for, request, flash
-from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin
-from app.users import validate_user
-from app.users import get_user_by_username
-from app.users import has_refresh_token
-from markupsafe import escape
-import os
-import subprocess
-import psycopg2
-import spotipy
-from spotipy import Spotify
-from spotipy.oauth2 import SpotifyOAuth
-from app import startup
-from utils.spotify_auth import get_spotify_client, get_spotify_oauth
-from utils.db_utils import get_db_connection
-from utils.logger import log_event
-import requests
-from routes import playlist_dashboard
-from routes.create_admin import create_admin_bp
-from routes.metrics import metrics_bp
-
-
-
-app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your preferred secure method
-app.register_blueprint(playlist_dashboard)
-app.register_blueprint(create_admin_bp)
-app.register_blueprint(metrics_bp)
 
 
 login_manager = LoginManager()
