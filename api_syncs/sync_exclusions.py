@@ -29,6 +29,22 @@ playlist_url = row[0]
 playlist_id = playlist_url.split("/")[-1].split("?")[0]
 log_event("sync_exclusions", f"🎯 Using playlist ID: {playlist_id}")
 
+playlist = sp.playlist(playlist_id)
+current_snapshot = playlist["snapshot_id"]
+log_event("sync_exclusions", f"🔍 Retrieved playlist snapshot: {current_snapshot}")
+
+cur.execute("SELECT snapshot_id FROM playlist_mappings WHERE playlist_id = %s", (playlist_url,))
+row = cur.fetchone()
+stored_snapshot = row[0] if row else None
+
+if stored_snapshot == current_snapshot:
+    log_event("sync_exclusions", "🟢 Snapshot unchanged — skipping sync.")
+    cur.close()
+    conn.close()
+    exit(0)
+
+log_event("sync_exclusions", "📥 Fetching track IDs from Spotify...")
+
 # ─────────────────────────────────────────────
 # Fetch track IDs from exclusion playlist
 # ─────────────────────────────────────────────
@@ -47,6 +63,8 @@ while True:
 
 log_event("sync_exclusions", f"📦 Retrieved {len(track_ids)} track(s) to exclude.")
 
+log_event("sync_exclusions", "📤 Writing excluded_tracks to database...")
+
 # ─────────────────────────────────────────────
 # Update excluded_tracks table
 # ─────────────────────────────────────────────
@@ -56,6 +74,14 @@ for track_id in track_ids:
     cur.execute("INSERT INTO excluded_tracks (track_id) VALUES (%s)", (track_id,))
 conn.commit()
 
+cur.execute("""
+    UPDATE playlist_mappings
+    SET snapshot_id = %s, last_synced_at = CURRENT_TIMESTAMP
+    WHERE playlist_id = %s
+""", (current_snapshot, playlist_url))
+conn.commit()
+
+log_event("sync_exclusions", "📝 Updated playlist_mappings with new snapshot.")
 log_event("sync_exclusions", "✅ excluded_tracks table updated.")
 cur.close()
 conn.close()
