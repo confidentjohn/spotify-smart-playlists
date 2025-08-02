@@ -148,9 +148,31 @@ def run_init_db():
         status TEXT DEFAULT 'active',
         track_count INTEGER DEFAULT 0,
         rules JSONB,
-        is_dynamic BOOLEAN DEFAULT TRUE
+        is_dynamic BOOLEAN DEFAULT TRUE,
+        snapshot_id TEXT
     );
     """)
+
+    # Ensure all expected columns exist in the playlist_mappings table
+    expected_pm_columns = {
+        "slug": "TEXT",
+        "name": "TEXT",
+        "playlist_id": "TEXT",
+        "last_synced_at": "TIMESTAMP",
+        "status": "TEXT DEFAULT 'active'",
+        "track_count": "INTEGER DEFAULT 0",
+        "rules": "JSONB",
+        "is_dynamic": "BOOLEAN DEFAULT TRUE",
+        "snapshot_id": "TEXT"
+    }
+
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'playlist_mappings';")
+    existing_pm_columns = {row[0] for row in cur.fetchall()}
+
+    for col_name, col_type in expected_pm_columns.items():
+        if col_name not in existing_pm_columns:
+            print(f"🛠 Adding missing column to playlist_mappings: {col_name}")
+            cur.execute(f"ALTER TABLE playlist_mappings ADD COLUMN {col_name} {col_type};")
 
     # ─────────────────────────────────────────────
     # Track availability table
