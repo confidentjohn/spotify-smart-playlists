@@ -51,6 +51,23 @@ current_album_ids = set()
 log_event("sync_saved_albums", "Starting saved albums sync")
 
 # ─────────────────────────────────────────────
+# Check Spotify and local saved album counts, exit early if up to date
+# ─────────────────────────────────────────────
+initial_result = safe_spotify_call(sp.current_user_saved_albums, limit=1)
+spotify_total = initial_result['total']
+log_event("sync_saved_albums", f"📊 Spotify reports {spotify_total} saved albums")
+
+cur.execute("SELECT COUNT(*) FROM albums WHERE is_saved = TRUE")
+local_total = cur.fetchone()[0]
+log_event("sync_saved_albums", f"📁 Local DB has {local_total} saved albums")
+
+if spotify_total == local_total:
+    log_event("sync_saved_albums", "✅ Saved albums are up to date — skipping sync.")
+    cur.close()
+    conn.close()
+    sys.exit(0)
+
+# ─────────────────────────────────────────────
 # Sync saved albums from Spotify
 # ─────────────────────────────────────────────
 while True:
