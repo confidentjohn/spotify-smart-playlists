@@ -41,6 +41,22 @@ with open(LOCK_FILE, 'w') as lock_file:
     conn = get_db_connection()
     cur = conn.cursor()
 
+    log_event("sync_liked_tracks_full", "🔍 Checking if liked tracks are up-to-date before sync")
+
+    initial_result = safe_spotify_call(sp.current_user_saved_tracks, limit=1)
+    spotify_total = initial_result['total']
+    log_event("sync_liked_tracks_full", f"📊 Spotify reports {spotify_total} liked tracks")
+
+    cur.execute("SELECT COUNT(*) FROM liked_tracks")
+    local_total = cur.fetchone()[0]
+    log_event("sync_liked_tracks_full", f"📁 Local DB has {local_total} liked tracks")
+
+    if spotify_total == local_total:
+        log_event("sync_liked_tracks_full", "✅ Liked tracks are up to date — skipping full sync")
+        cur.close()
+        conn.close()
+        exit(0)
+
     now = datetime.now(tz=None).astimezone()  # keep UTC-awareness
 
     limit = 50
