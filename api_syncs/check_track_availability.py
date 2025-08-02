@@ -46,7 +46,6 @@ conn = get_db_connection()
 cur = conn.cursor()
 
 now = datetime.utcnow()
-cutoff = now - timedelta(days=60)
 
 # ─────────────────────────────────────────────
 # Step 1: Build unified view of track IDs with last check timestamp
@@ -63,7 +62,7 @@ cur.execute("""
 """)
 
 rows = cur.fetchall()
-to_check = [track_id for track_id, last_check in rows if last_check is None or last_check < cutoff]
+to_check = [track_id for track_id, _ in rows]
 
 log_event("check_track_availability", f"Eligible tracks to check: {len(to_check)}")
 
