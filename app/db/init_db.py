@@ -149,7 +149,8 @@ def run_init_db():
         track_count INTEGER DEFAULT 0,
         rules JSONB,
         is_dynamic BOOLEAN DEFAULT TRUE,
-        snapshot_id TEXT
+        snapshot_id TEXT,
+        last_synced_uris TEXT[]
     );
     """)
 
@@ -163,7 +164,8 @@ def run_init_db():
         "track_count": "INTEGER DEFAULT 0",
         "rules": "JSONB",
         "is_dynamic": "BOOLEAN DEFAULT TRUE",
-        "snapshot_id": "TEXT"
+        "snapshot_id": "TEXT",
+        "last_synced_uris": "TEXT[]"
     }
 
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'playlist_mappings';")
