@@ -23,14 +23,15 @@ def ensure_exclusions_playlist(sp):
         user = sp.current_user()
         log_event("init", f"👤 Current Spotify user ID: {user['id']}")
         playlist = sp.user_playlist_create(user["id"], "exclusions", public=False)
+        snapshot_id = playlist["snapshot_id"]
         playlist_url = playlist["external_urls"]["spotify"]
         log_event("init", f"📋 Created Spotify playlist: {playlist_url}")
 
         log_event("init", f"📌 Inserting playlist: slug='exclusions', name='exclusions'")
         log_event("init", "📝 Inserting new playlist record into DB.")
         cur.execute("""
-            INSERT INTO playlist_mappings (slug, name, playlist_id, status, rules, track_count, last_synced_at, is_dynamic)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO playlist_mappings (slug, name, playlist_id, status, rules, track_count, last_synced_at, is_dynamic, snapshot_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             "exclusions",
             "exclusions",
@@ -39,7 +40,8 @@ def ensure_exclusions_playlist(sp):
             "{}",
             0,
             datetime.utcnow(),
-            False  # <-- explicitly set to False
+            False,
+            snapshot_id
         ))
         conn.commit()
 
