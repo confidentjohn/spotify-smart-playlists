@@ -33,15 +33,33 @@ def main():
     now = datetime.utcnow()
 
     # Get all unique artist IDs from albums and liked_tracks
-    cur.execute("SELECT DISTINCT artist_id FROM albums")
-    album_artists = {row[0] for row in cur.fetchall()}
+    cur.execute("""
+        SELECT DISTINCT artist_id FROM (
+            SELECT artist_id FROM albums
+            UNION
+            SELECT artist_id FROM liked_tracks
+        ) AS combined
+    """)
+    all_known_artist_ids = {row[0] for row in cur.fetchall()}
 
-    cur.execute("SELECT DISTINCT artist_id FROM liked_tracks")
-    liked_artists = {row[0] for row in cur.fetchall()}
+    # Artists not yet in the artists table
+    cur.execute("SELECT id FROM artists")
+    existing_artist_ids = {row[0] for row in cur.fetchall()}
+    new_artist_ids = list(all_known_artist_ids - existing_artist_ids)
 
-    all_artist_ids = list(album_artists.union(liked_artists))
+    # Oldest 100 existing artists
+    cur.execute("""
+        SELECT id FROM artists
+        ORDER BY COALESCE(last_checked_at, '2000-01-01') ASC
+        LIMIT 100
+    """)
+    oldest_artist_ids = [row[0] for row in cur.fetchall()]
+
+    # Combine new and old artist IDs
+    all_artist_ids = list(set(new_artist_ids + oldest_artist_ids))
+
     if not all_artist_ids:
-        log_event("sync_artists", "No artist IDs found.")
+        log_event("sync_artists", "No artist IDs found to sync.")
         return
 
     sp = get_spotify_client()
