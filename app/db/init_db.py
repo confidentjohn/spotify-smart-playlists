@@ -150,7 +150,7 @@ def run_init_db():
         rules JSONB,
         is_dynamic BOOLEAN DEFAULT TRUE,
         snapshot_id TEXT,
-        last_synced_uris TEXT[]
+        last_synced_hash TEXT
     );
     """)
 
@@ -165,7 +165,7 @@ def run_init_db():
         "rules": "JSONB",
         "is_dynamic": "BOOLEAN DEFAULT TRUE",
         "snapshot_id": "TEXT",
-        "last_synced_uris": "TEXT[]"
+        "last_synced_hash": "TEXT"
     }
 
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'playlist_mappings';")

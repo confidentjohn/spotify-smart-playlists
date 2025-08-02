@@ -1,12 +1,17 @@
 import os
 import json
 import psycopg2
+import hashlib
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from routes.rule_parser import build_track_query
 from utils.logger import log_event
 from utils.spotify_auth import get_spotify_client
 from datetime import datetime
+
+def compute_tracklist_hash(track_uris):
+    joined = ",".join(track_uris)  # order matters
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()
 
 def sync_playlist(slug):
     log_event("generate_playlist", f"🔁 Starting sync for playlist slug: '{slug}'")
@@ -73,12 +78,13 @@ def sync_playlist(slug):
             track_uris = [row[0] for row in rows if row and row[0]]
             log_event("generate_playlist", f"📦 Track URIs fetched: {track_uris}")
 
-            cur.execute("SELECT last_synced_uris FROM playlist_mappings WHERE slug = %s", (slug,))
-            last_synced_row = cur.fetchone()
-            last_synced_uris = last_synced_row[0] if last_synced_row else None
-            log_event("generate_playlist", f"🧠 Last synced URIs: {last_synced_uris}")
+            new_hash = compute_tracklist_hash(track_uris)
+            cur.execute("SELECT last_synced_hash FROM playlist_mappings WHERE slug = %s", (slug,))
+            last_hash_row = cur.fetchone()
+            last_synced_hash = last_hash_row[0] if last_hash_row else None
+            log_event("generate_playlist", f"🧠 Computed hash: {new_hash} | Stored hash: {last_synced_hash}")
 
-            if last_synced_uris is not None and track_uris == last_synced_uris:
+            if last_synced_hash == new_hash:
                 log_event("generate_playlist", f"✅ Playlist '{slug}' unchanged — skipping update.")
                 cur.execute("UPDATE playlist_mappings SET last_synced_at = %s WHERE slug = %s", (datetime.utcnow(), slug))
                 conn.commit()
@@ -118,7 +124,7 @@ def sync_playlist(slug):
         for i in range(0, len(track_uris), 100):
             sp.playlist_add_items(playlist_id, track_uris[i:i + 100])
 
-        cur.execute("UPDATE playlist_mappings SET track_count = %s, last_synced_at = %s, last_synced_uris = %s WHERE slug = %s", (len(track_uris), datetime.utcnow(), track_uris, slug))
+        cur.execute("UPDATE playlist_mappings SET track_count = %s, last_synced_at = %s, last_synced_hash = %s WHERE slug = %s", (len(track_uris), datetime.utcnow(), new_hash, slug))
         conn.commit()
         log_event("generate_playlist", f"📝 Updated playlist_mappings for '{slug}' with {len(track_uris)} track URIs")
 
