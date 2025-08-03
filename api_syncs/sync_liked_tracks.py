@@ -41,6 +41,21 @@ with open(LOCK_FILE, 'w') as lock_file:
     conn = get_db_connection()
     cur = conn.cursor()
 
+    # Compare total liked tracks between Spotify and DB
+    try:
+        spotify_total = safe_spotify_call(sp.current_user_saved_tracks, limit=1)['total']
+        cur.execute("SELECT COUNT(*) FROM liked_tracks;")
+        db_total = cur.fetchone()[0]
+        log_event("sync_liked_tracks", f"🔍 Spotify total: {spotify_total}, DB total: {db_total}")
+
+        if spotify_total == db_total:
+            log_event("sync_liked_tracks", "✅ Liked track counts match — skipping sync.")
+            cur.close()
+            conn.close()
+            exit(0)
+    except Exception as e:
+        log_event("sync_liked_tracks", f"⚠️ Failed to compare liked track counts: {e}", level="warning")
+
     now = datetime.now(tz=None).astimezone()  # keep UTC-awareness
     FRESH_LIKED_CUTOFF_DAYS = int(os.environ.get("FRESH_LIKED_CUTOFF_DAYS", "30"))
     fresh_cutoff = now - timedelta(days=FRESH_LIKED_CUTOFF_DAYS)
