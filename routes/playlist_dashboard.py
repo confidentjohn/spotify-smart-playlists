@@ -34,7 +34,8 @@ def run_initial_syncs(user_id: int, is_initial=True):
         "check_track_availability.py",
         "sync_exclusions.py",
         "materialized_views.py",
-        "materialized_metrics.py"
+        "materialized_metrics.py",
+        "check_canonical_albums.py"
     ]
 
     # Check if exclusions playlist exists; create it if missing
