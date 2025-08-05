@@ -76,7 +76,7 @@ UNION
 """)
 
 rows = cur.fetchall()
-to_check = [track_id for track_id, _ in rows]
+to_check = [track_id for (track_id,) in rows]
 
 log_event("check_track_availability", f"Eligible tracks to check: {len(to_check)}")
 
