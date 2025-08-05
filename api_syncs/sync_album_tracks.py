@@ -29,7 +29,21 @@ def safe_spotify_call(func, *args, **kwargs):
             time.sleep(5)
     raise Exception("safe_spotify_call failed after 5 retries")
 
+
 sp = get_spotify_client()
+
+# Helper to get all tracks for an album (handles pagination)
+def get_all_album_tracks(album_id):
+    album_data = safe_spotify_call(sp.album, album_id)
+    tracks = album_data['tracks']['items']
+    next_url = album_data['tracks']['next']
+
+    while next_url:
+        next_page = safe_spotify_call(sp._get, next_url)
+        tracks.extend(next_page['items'])
+        next_url = next_page['next']
+
+    return tracks
 
 conn = get_db_connection()
 cur = conn.cursor()
@@ -45,8 +59,7 @@ saved_albums = cur.fetchall()
 
 for album_id, album_name, album_added_at in saved_albums:
     log_event("sync_album_tracks", f"Syncing tracks for: {album_name} ({album_id})")
-    album_data = safe_spotify_call(sp.album, album_id)
-    album_tracks = album_data['tracks']['items']
+    album_tracks = get_all_album_tracks(album_id)
     if not album_tracks:
         log_event("sync_album_tracks", f"No tracks found for album: {album_name} ({album_id})")
         continue
