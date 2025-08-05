@@ -50,15 +50,29 @@ now = datetime.utcnow()
 # ─────────────────────────────────────────────
 # Step 1: Build unified view of track IDs with last check timestamp
 cur.execute("""
-    SELECT combined.track_id, COALESCE(ta.checked_at, '1970-01-01') AS last_check
+(
+    SELECT combined.track_id
     FROM (
         SELECT track_id FROM liked_tracks
         UNION
         SELECT id AS track_id FROM tracks
     ) AS combined
     LEFT JOIN track_availability ta ON combined.track_id = ta.track_id
-    ORDER BY COALESCE(ta.checked_at, '1970-01-01') ASC
+    WHERE ta.checked_at IS NULL
+)
+UNION
+(
+    SELECT combined.track_id
+    FROM (
+        SELECT track_id FROM liked_tracks
+        UNION
+        SELECT id AS track_id FROM tracks
+    ) AS combined
+    LEFT JOIN track_availability ta ON combined.track_id = ta.track_id
+    WHERE ta.checked_at IS NOT NULL
+    ORDER BY ta.checked_at ASC
     LIMIT 100
+)
 """)
 
 rows = cur.fetchall()
