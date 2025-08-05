@@ -90,3 +90,26 @@ def get_outdated_albums():
     cur.close()
     conn.close()
     return results
+
+def get_track_count_mismatches():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT 
+            a.id AS album_id,
+            a.name AS album_name,
+            a.artist AS artist_name,
+            a.total_tracks,
+            COUNT(t.id) AS actual_track_count
+        FROM albums a
+        LEFT JOIN tracks t ON a.id = t.album_id
+        GROUP BY a.id, a.name, a.artist, a.total_tracks
+        HAVING COUNT(t.id) != a.total_tracks
+        ORDER BY a.name
+    """)
+
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return results

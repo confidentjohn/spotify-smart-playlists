@@ -22,6 +22,32 @@ from routes.create_admin import create_admin_bp
 from routes.metrics import metrics_bp
 
 
+# ─────────────────────────────────────────────────────
+# Route to mark albums for resync
+@app.route("/resync_albums", methods=["POST"])
+def resync_albums():
+    album_ids = request.form.getlist("album_ids")
+    if not album_ids:
+        flash("No albums selected for resync.", "warning")
+        return redirect(url_for("diagnostics"))
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE albums SET tracks_synched = FALSE WHERE id = ANY(%s)",
+            (album_ids,)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash(f"{len(album_ids)} album(s) marked for resync.", "success")
+    except Exception as e:
+        flash(f"Error updating albums for resync: {e}", "error")
+
+    return redirect(url_for("diagnostics"))
+
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your preferred secure method
