@@ -68,7 +68,7 @@ def flag_mismatched_albums():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "UPDATE albums SET tracks_synched = FALSE WHERE id = ANY(%s)",
+            "UPDATE albums SET tracks_synced = FALSE WHERE id = ANY(%s)",
             (album_ids,)
         )
         conn.commit()
