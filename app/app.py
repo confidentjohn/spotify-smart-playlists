@@ -22,6 +22,13 @@ from routes.create_admin import create_admin_bp
 from routes.metrics import metrics_bp
 
 
+app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your preferred secure method
+app.register_blueprint(playlist_dashboard)
+app.register_blueprint(create_admin_bp)
+app.register_blueprint(metrics_bp)
+
+
 # ─────────────────────────────────────────────────────
 # Route to mark albums for resync
 @app.route("/resync_albums", methods=["POST"])
@@ -47,13 +54,6 @@ def resync_albums():
 
     return redirect(url_for("diagnostics"))
 
-
-
-app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET", "supersecret")  # or your preferred secure method
-app.register_blueprint(playlist_dashboard)
-app.register_blueprint(create_admin_bp)
-app.register_blueprint(metrics_bp)
 
 
 # ─────────────────────────────────────────────────────
