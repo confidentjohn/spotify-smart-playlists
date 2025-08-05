@@ -96,17 +96,20 @@ def get_track_count_mismatches():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT 
+        SELECT
             a.id AS album_id,
             a.name AS album_name,
-            a.artist AS artist_name,
-            a.total_tracks,
-            COUNT(t.id) AS actual_track_count
+            ar.name AS artist_name,
+            a.total_tracks AS expected_track_count,
+            COUNT(t.id) AS actual_track_count,
+            (a.total_tracks - COUNT(t.id)) AS track_count_difference
         FROM albums a
-        LEFT JOIN tracks t ON a.id = t.album_id
-        GROUP BY a.id, a.name, a.artist, a.total_tracks
+        LEFT JOIN tracks t ON t.album_id = a.id
+        LEFT JOIN artists ar ON ar.id = a.artist_id
+        WHERE a.is_saved = TRUE
+        GROUP BY a.id, a.name, ar.name, a.total_tracks
         HAVING COUNT(t.id) != a.total_tracks
-        ORDER BY a.name
+        ORDER BY track_count_difference DESC
     """)
 
     results = cur.fetchall()
