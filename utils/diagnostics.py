@@ -106,7 +106,7 @@ def get_track_count_mismatches():
         FROM albums a
         LEFT JOIN tracks t ON t.album_id = a.id
         LEFT JOIN artists ar ON ar.id = a.artist_id
-        WHERE a.is_saved = TRUE
+        WHERE a.is_saved = TRUE AND a.tracks_synced = TRUE
         GROUP BY a.id, a.name, ar.name, a.total_tracks
         HAVING COUNT(t.id) != a.total_tracks
         ORDER BY track_count_difference DESC

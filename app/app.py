@@ -33,7 +33,7 @@ app.register_blueprint(metrics_bp)
 # Route to mark albums for resync
 @app.route("/resync_albums", methods=["POST"])
 def resync_albums():
-    album_ids = request.form.getlist("album_ids")
+    album_ids = request.form.getlist("selected_album_ids")
     if not album_ids:
         flash("No albums selected for resync.", "warning")
         return redirect(url_for("diagnostics"))
@@ -59,7 +59,7 @@ def resync_albums():
 # Route to flag mismatched albums as unsynced
 @app.route("/flag_mismatched_albums", methods=["POST"])
 def flag_mismatched_albums():
-    album_ids = request.form.getlist("album_ids")
+    album_ids = request.form.getlist("selected_album_ids")
     if not album_ids:
         flash("No albums selected to flag as unsynced.", "warning")
         return redirect(url_for("diagnostics"))
