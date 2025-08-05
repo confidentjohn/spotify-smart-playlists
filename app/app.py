@@ -55,6 +55,32 @@ def resync_albums():
     return redirect(url_for("diagnostics"))
 
 
+# ─────────────────────────────────────────────────────
+# Route to flag mismatched albums as unsynced
+@app.route("/flag_mismatched_albums", methods=["POST"])
+def flag_mismatched_albums():
+    album_ids = request.form.getlist("album_ids")
+    if not album_ids:
+        flash("No albums selected to flag as unsynced.", "warning")
+        return redirect(url_for("diagnostics"))
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE albums SET tracks_synched = FALSE WHERE id = ANY(%s)",
+            (album_ids,)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash(f"✅ {len(album_ids)} album(s) flagged to re-download tracks.", "success")
+    except Exception as e:
+        flash(f"❌ Error flagging albums: {e}", "error")
+
+    return redirect(url_for("diagnostics"))
+
+
 
 # ─────────────────────────────────────────────────────
 # Route to mark an album as outdated
