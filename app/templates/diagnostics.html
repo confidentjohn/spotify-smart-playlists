@@ -150,7 +150,7 @@
       <strong>To fix:</strong> Check the album on Spotify and re-trigger sync for the album. You can also use the checkbox to flag it for re-download on next run.
     </p>
 
-    {% if track_mismatches %}
+    {% if mismatches %}
         <form method="POST" action="/flag_mismatched_albums">
             <div class="table-responsive">
                 <table class="table table-striped table-bordered sortable">
@@ -165,7 +165,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for row in track_mismatches %}
+                        {% for row in mismatches %}
                         <tr>
                             <td><input type="checkbox" name="selected_album_ids" value="{{ row[0] }}"></td>
                             <td><a href="https://open.spotify.com/album/{{ row[0] }}" target="_blank"><code>{{ row[0] }}</code></a></td>
