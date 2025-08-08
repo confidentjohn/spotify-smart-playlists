@@ -1,4 +1,4 @@
-name: z01 - Sync Spotify Albums
+name: z01a - Sync Spotify Albums
 
 on:
   workflow_dispatch:
