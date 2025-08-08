@@ -52,6 +52,7 @@ log_event("sync_saved_albums", "Starting saved albums sync")
 
 # ─────────────────────────────────────────────
 # Lite window: only process albums added in the last N days (default 10)
+# The "look back" is anchored to the newest Spotify saved album's added_at
 # ─────────────────────────────────────────────
 days_window = int(os.getenv("ALBUM_LITE_WINDOW_DAYS", "10"))
 
@@ -64,7 +65,7 @@ if not items:
     conn.close()
     sys.exit(0)
 
-# Determine anchor_date from first item's added_at (UTC date only)
+# Determine anchor_dt from first item's added_at (keep it naive UTC like liked_tracks logic)
 first_added_at = items[0].get('added_at')
 if first_added_at is None:
     log_event("sync_saved_albums", "First saved album has no added_at date. Exiting sync.")
@@ -75,15 +76,14 @@ if first_added_at is None:
 anchor_dt = parser.parse(first_added_at)
 if anchor_dt.tzinfo is not None:
     anchor_dt = anchor_dt.astimezone(datetime.timezone.utc).replace(tzinfo=None)
-anchor_date = anchor_dt.date()
 
-# Create window_dates set: dates from anchor_date going back days_window - 1 days
-window_dates = set(anchor_date - datetime.timedelta(days=i) for i in range(days_window))
+# Compute fresh_cutoff by looking back N days from the newest Spotify date
+fresh_cutoff = anchor_dt - datetime.timedelta(days=days_window)
 
-min_window_date = min(window_dates)
-max_window_date = max(window_dates)
-
-log_event("sync_saved_albums", f"Lite sync: processing albums added between {min_window_date.isoformat()} and {max_window_date.isoformat()} (last {days_window} days)")
+log_event(
+    "sync_saved_albums",
+    f"Lite sync: processing albums with added_at between {fresh_cutoff.isoformat()} and {anchor_dt.isoformat()} (last {days_window} days)"
+)
 
 offset += len(items)
 stop_paging = False
@@ -102,15 +102,14 @@ while True:
         added_dt = parser.parse(added_at)
         if added_dt.tzinfo is not None:
             added_dt = added_dt.astimezone(datetime.timezone.utc).replace(tzinfo=None)
-        added_date = added_dt.date()
 
-        # If added_date is earlier than min_window_date, stop paging
-        if added_date < min_window_date:
+        # If this album is older than the cutoff, stop paging
+        if added_dt < fresh_cutoff:
             stop_paging = True
             break
 
-        # Only upsert albums whose added_date is in window_dates
-        if added_date in window_dates:
+        # Only upsert albums newer than or equal to the cutoff
+        if added_dt >= fresh_cutoff:
             current_album_ids.add(album_id)
             album_type = album.get('album_type')
             album_image_url = album['images'][0]['url'] if album.get('images') else None
@@ -143,6 +142,10 @@ while True:
     if stop_paging:
         break
 
+    # If the last item in this page is already older than the cutoff, stop fetching more
+    if items and parser.isoparse(items[-1].get('added_at')) < fresh_cutoff:
+        stop_paging = True
+
     # Fetch next page
     results = safe_spotify_call(sp.current_user_saved_albums, limit=limit, offset=offset)
     items = results['items']
@@ -161,15 +164,16 @@ if not current_album_ids:
         "⚠️ Skipping 'mark unsaved' step because no recent Spotify album IDs were collected (likely transient API issue)."
     )
 else:
-    # 1) Fetch recent album IDs from DB that are still marked saved and where DATE(added_at) in window_dates
+    # 1) Fetch recent album IDs from DB that are still marked saved within the same window
     cur.execute(
-        f"""
+        """
         SELECT id
           FROM albums
          WHERE is_saved = TRUE
-           AND DATE(added_at) = ANY(%s)
+           AND added_at >= %s
+           AND added_at <= %s
         """,
-        (list(window_dates),)
+        (fresh_cutoff, anchor_dt)
     )
     _db_rows = cur.fetchall()
     db_recent_ids = {r[0] for r in _db_rows}
