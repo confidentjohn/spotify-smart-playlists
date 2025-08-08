@@ -1,4 +1,4 @@
-name: 001 - Full Library Sync
+name: 001_sync_plays_and_playlists
 
 on:
   workflow_dispatch:  
