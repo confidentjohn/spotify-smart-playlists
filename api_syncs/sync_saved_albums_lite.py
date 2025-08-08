@@ -124,27 +124,50 @@ while True:
 log_event("sync_saved_albums", f"{len(current_album_ids)} saved albums synced")
 
 # ─────────────────────────────────────────────
-# Mark albums as unsaved if they were added in the last N days but not in current_album_ids
+# Mark albums as unsaved only if they are in DB (recent window) but not returned by Spotify
 # ─────────────────────────────────────────────
-if current_album_ids:
-    cur.execute(
-        """
-        UPDATE albums
-           SET is_saved = FALSE
-         WHERE added_at >= %s
-           AND is_saved = TRUE
-           AND NOT (id = ANY(%s))
-        """,
-        (cutoff, list(current_album_ids)),
-    )
-    unsaved_count = cur.rowcount
-    log_event("sync_saved_albums", f"{unsaved_count} recent album(s) marked as unsaved (not present in Spotify).")
-else:
+if not current_album_ids:
     log_event(
         "sync_saved_albums",
-        "⚠️ Skipping 'mark unsaved' step because no recent Spotify album IDs were collected. This prevents accidental mass-unsave when the Spotify API returns no items.",
+        "⚠️ Skipping 'mark unsaved' step because no recent Spotify album IDs were collected (likely transient API issue)."
     )
-    unsaved_count = 0
+else:
+    # 1) Fetch recent album IDs from DB that are still marked saved
+    cur.execute(
+        """
+        SELECT id
+          FROM albums
+         WHERE is_saved = TRUE
+           AND added_at >= %s
+        """,
+        (cutoff,)
+    )
+    _db_rows = cur.fetchall()
+    db_recent_ids = {r[0] for r in _db_rows}
+
+    # 2) Compute precise set difference: present in DB recent set, missing from Spotify response
+    to_unsave = db_recent_ids - current_album_ids
+
+    log_event(
+        "sync_saved_albums",
+        f"Recent DB albums: {len(db_recent_ids)} | Recent Spotify albums: {len(current_album_ids)} | Will mark unsaved: {len(to_unsave)}"
+    )
+
+    # 3) Update only those specific IDs
+    if to_unsave:
+        cur.execute(
+            """
+            UPDATE albums
+               SET is_saved = FALSE
+             WHERE id = ANY(%s)
+            """,
+            (list(to_unsave),)
+        )
+        unsaved_count = cur.rowcount
+        log_event("sync_saved_albums", f"{unsaved_count} recent album(s) marked as unsaved (missing from Spotify).")
+    else:
+        unsaved_count = 0
+        log_event("sync_saved_albums", "No recent albums needed to be marked unsaved.")
 
 conn.commit()
 cur.close()
