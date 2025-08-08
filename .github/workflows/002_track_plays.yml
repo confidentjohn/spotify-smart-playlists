@@ -4,6 +4,26 @@ on:
   schedule:
     - cron: '*/10 * * * *'  # Every 10 minutes, UTC
   workflow_dispatch:
+  workflow_call:
+    secrets:
+      SPOTIFY_CLIENT_ID:
+        required: true
+      SPOTIFY_CLIENT_SECRET:
+        required: true
+      SPOTIFY_REDIRECT_URI:
+        required: true
+      SPOTIFY_REFRESH_TOKEN:
+        required: true
+      DB_HOST:
+        required: true
+      DB_PORT:
+        required: true
+      DB_NAME:
+        required: true
+      DB_USER:
+        required: true
+      DB_PASSWORD:
+        required: true
 
 jobs:
   track-plays:
