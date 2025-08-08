@@ -71,7 +71,6 @@ while True:
     for item in items:
         album = item['album']
         album_id = album['id']
-        current_album_ids.add(album_id)
         added_at = item.get('added_at')
         # Parse added_at and compare to cutoff (Spotify returns newest-first)
         added_dt = parser.parse(added_at) if added_at else None
@@ -87,6 +86,7 @@ while True:
 
         # Only upsert albums within the cutoff window
         if added_dt is not None and added_dt >= cutoff:
+            current_album_ids.add(album_id)
             # Extract new album data
             album_type = album.get('album_type')
             album_image_url = album['images'][0]['url'] if album.get('images') else None
@@ -130,28 +130,21 @@ if current_album_ids:
     cur.execute(
         """
         UPDATE albums
-        SET is_saved = FALSE
-        WHERE added_at >= %s
-          AND id NOT IN %s
-          AND is_saved = TRUE
+           SET is_saved = FALSE
+         WHERE added_at >= %s
+           AND is_saved = TRUE
+           AND NOT (id = ANY(%s))
         """,
-        (cutoff, tuple(current_album_ids))
+        (cutoff, list(current_album_ids)),
     )
     unsaved_count = cur.rowcount
+    log_event("sync_saved_albums", f"{unsaved_count} recent album(s) marked as unsaved (not present in Spotify).")
 else:
-    # No current albums, so mark all albums added after cutoff as unsaved
-    cur.execute(
-        """
-        UPDATE albums
-        SET is_saved = FALSE
-        WHERE added_at >= %s
-          AND is_saved = TRUE
-        """,
-        (cutoff,)
+    log_event(
+        "sync_saved_albums",
+        "⚠️ Skipping 'mark unsaved' step because no recent Spotify album IDs were collected. This prevents accidental mass-unsave when the Spotify API returns no items.",
     )
-    unsaved_count = cur.rowcount
-
-log_event("sync_saved_albums", f"{unsaved_count} albums marked as unsaved")
+    unsaved_count = 0
 
 conn.commit()
 cur.close()
