@@ -1,4 +1,4 @@
-name: 001 - Full Library Sync
+name: 001a - Full Library Sync
 
 on:
   schedule:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   sync-albums:
-    uses: ./.github/workflows/z01_sync_albums.yml
+    uses: ./.github/workflows/z01a_sync_albums.yml
     secrets:
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
