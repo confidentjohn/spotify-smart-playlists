@@ -170,3 +170,34 @@ def run_initial_sync():
     flash("✅ Initial sync completed successfully.")
     log_event("initial_sync", f"✅ Sync finished for user {user_id}")
     return redirect(url_for("home"))
+
+# Lite sync route
+@playlist_dashboard.route('/sync/lite', methods=['POST'])
+@login_required
+def run_lite_sync():
+    import subprocess
+    user_id = current_user.get_id()
+
+    lite_job_sequence = [
+        'api_syncs/track_plays.py',
+        'api_syncs/sync_saved_albums_lite.py',
+        'api_syncs/sync_album_tracks.py',
+        'api_syncs/sync_liked_tracks.py',
+        'api_syncs/sync_artists.py',
+        'api_syncs/materialized_views.py',
+        'api_syncs/materialized_metrics.py',
+        'playlists/update_dynamic_playlists.py',
+    ]
+
+    try:
+        for job in lite_job_sequence:
+            subprocess.run(
+                ['python', job, '--user_id', str(user_id)],
+                check=True,
+                env={**os.environ, 'PYTHONPATH': '.'}
+            )
+        flash("Lite sync completed successfully.", "success")
+    except subprocess.CalledProcessError as e:
+        flash(f"Lite sync failed on {job}: {e}", "error")
+
+    return redirect(url_for('home'))

@@ -18,24 +18,39 @@
       }
     }
   </style>
-  <div class="btn-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem;">
+  {% if is_first_sync %}
     <form method="POST" action="{{ url_for('playlist_dashboard.run_initial_sync') }}">
-      <button type="submit" class="btn">
-        {% if is_first_sync %}
-          🔁 Run Initial Sync
-        {% else %}
-          🔁 Sync Now
-        {% endif %}
-      </button>
+      <button type="submit" class="btn">🔁 Run Initial Sync</button>
     </form>
-    {% if not is_first_sync %}
+  {% else %}
+    <div style="display:flex; gap: 0.75rem; flex-wrap: wrap; justify-content:center;">
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <form method="POST" action="{{ url_for('playlist_dashboard.run_initial_sync') }}">
+          <button type="submit" class="btn">🔁 Run Full Sync Now</button>
+        </form>
+        <br>
+        <small style="color: #6c757d; margin-top: 0.25rem; text-align: center; max-width: 220px; display: block;">
+          Full sync will run the entire update process, checking for additions and removals. Can take longer.
+        </small>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <form method="POST" action="{{ url_for('playlist_dashboard.run_lite_sync') }}">
+          <button type="submit" class="btn">🔁 Run Lite Sync Now</button>
+        </form>
+        <br>
+        <small style="color: #6c757d; margin-top: 0.25rem; text-align: center; max-width: 220px; display: block;">
+          Lite sync will check the last 100 album additions and make sure all are added. It will not look for any removals from the library.
+        </small>
+      </div>
+    </div>
+    <div class="btn-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 1rem;">
       <a href="/dashboard/playlists" class="btn">🎛️ Playlist Dashboard</a>
       <a href="/dashboard/create-playlist" class="btn">➕ Create Playlist</a>
       <a href="/metrics" class="btn">📊 View Metrics</a>
       <a href="/logs" class="btn">📜 View Logs</a>
       <a href="/diagnostics" class="btn">🧪 Diagnostics</a>
-    {% endif %}
-  </div>
+    </div>
+  {% endif %}
 </div>
 {% endif %}
 
