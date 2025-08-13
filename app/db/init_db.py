@@ -165,7 +165,12 @@ def run_init_db():
         "rules": "JSONB",
         "is_dynamic": "BOOLEAN DEFAULT TRUE",
         "snapshot_id": "TEXT",
-        "last_synced_hash": "TEXT"
+        "last_synced_hash": "TEXT",
+        "pending_delete": "BOOLEAN DEFAULT FALSE",
+        "missing_count": "INTEGER DEFAULT 0",
+        "last_seen_spotify_at": "TIMESTAMP",
+        "last_missing_at": "TIMESTAMP",
+        "last_missing_reason": "TEXT"
     }
 
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'playlist_mappings';")
@@ -175,6 +180,9 @@ def run_init_db():
         if col_name not in existing_pm_columns:
             print(f"🛠 Adding missing column to playlist_mappings: {col_name}")
             cur.execute(f"ALTER TABLE playlist_mappings ADD COLUMN {col_name} {col_type};")
+
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_pm_pending_delete ON playlist_mappings (pending_delete)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_pm_last_missing_at ON playlist_mappings (last_missing_at)")
 
     # ─────────────────────────────────────────────
     # Track availability table
