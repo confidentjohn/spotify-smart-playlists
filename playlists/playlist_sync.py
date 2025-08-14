@@ -39,13 +39,35 @@ def sync_playlist(slug):
 
             user_playlist_ids = {pl["id"] for pl in playlists}
             if playlist_id not in user_playlist_ids:
-                log_event("generate_playlist", f"🗑 Playlist '{playlist_id}' not found in user's library. Deleting from DB.")
-                cur.execute("DELETE FROM playlist_mappings WHERE slug = %s", (slug,))
+                reason = "playlist not found in user's library"
+                log_event("generate_playlist", f"⚠️ Playlist '{playlist_id}' not found in user's library. Soft-flagging in DB instead of deleting.")
+                cur.execute(
+                    """
+                    UPDATE playlist_mappings
+                    SET pending_delete = TRUE,
+                        missing_count = COALESCE(missing_count, 0) + 1,
+                        last_missing_at = NOW(),
+                        last_missing_reason = %s
+                    WHERE slug = %s
+                    """,
+                    (reason, slug)
+                )
                 conn.commit()
                 return
         except Exception as e:
-            log_event("generate_playlist", f"🗑 Playlist '{playlist_id}' not accessible. Deleting from DB. Error: {e}")
-            cur.execute("DELETE FROM playlist_mappings WHERE slug = %s", (slug,))
+            reason = str(e)
+            log_event("generate_playlist", f"⚠️ Playlist '{playlist_id}' not accessible. Soft-flagging in DB instead of deleting. Error: {e}")
+            cur.execute(
+                """
+                UPDATE playlist_mappings
+                SET pending_delete = TRUE,
+                    missing_count = COALESCE(missing_count, 0) + 1,
+                    last_missing_at = NOW(),
+                    last_missing_reason = %s
+                WHERE slug = %s
+                """,
+                (reason[:500], slug)
+            )
             conn.commit()
             return
 
