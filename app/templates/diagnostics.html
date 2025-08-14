@@ -110,10 +110,10 @@
                     <td>{{ pl.missing_count }}</td>
                     <td>{{ pl.last_missing_at }}</td>
                     <td>
-                        <form method="POST" action="{{ url_for('diagnostics.delete_playlist_route', slug=pl.slug) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('delete_playlist_route', slug=pl.slug) }}" style="display:inline;">
                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                         </form>
-                        <form method="POST" action="{{ url_for('diagnostics.ignore_playlist', slug=pl.slug) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('ignore_playlist', slug=pl.slug) }}" style="display:inline;">
                             <button type="submit" class="btn btn-secondary btn-sm">Ignore</button>
                         </form>
                     </td>
