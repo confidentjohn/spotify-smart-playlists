@@ -1,5 +1,3 @@
-
-
 import os
 import psycopg2
 from utils.db_utils import get_db_connection
@@ -19,33 +17,7 @@ def main():
             try:
                 log_event("update_dynamic_playlists", f"🔁 Updating playlist: {slug}")
                 sync_playlist(slug)
-                # Mark playlist as seen in Spotify this run
-                cur.execute(
-                    """
-                    UPDATE playlist_mappings
-                    SET last_seen_spotify_at = NOW(),
-                        pending_delete = FALSE,
-                        missing_count = 0,
-                        last_missing_reason = NULL
-                    WHERE slug = %s
-                    """,
-                    (slug,)
-                )
-                conn.commit()
             except Exception as e:
-                reason = str(e)
-                cur.execute(
-                    """
-                    UPDATE playlist_mappings
-                    SET pending_delete = TRUE,
-                        missing_count = COALESCE(missing_count, 0) + 1,
-                        last_missing_at = NOW(),
-                        last_missing_reason = %s
-                    WHERE slug = %s
-                    """,
-                    (reason[:500], slug)
-                )
-                conn.commit()
                 log_event("update_dynamic_playlists", f"❌ Error syncing playlist '{slug}': {e}", level="error")
 
         # Diagnostics summary of delete-candidates

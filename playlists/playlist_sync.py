@@ -28,6 +28,7 @@ def sync_playlist(slug):
         name, playlist_url, rules_json, is_dynamic = row
         playlist_id = playlist_url.split("/")[-1]
 
+        # Spotify check first
         sp = get_spotify_client()
         try:
             user_id = sp.current_user()["id"]
@@ -126,37 +127,24 @@ def sync_playlist(slug):
                 cur.execute("UPDATE playlist_mappings SET last_synced_at = %s WHERE slug = %s", (datetime.utcnow(), slug))
                 conn.commit()
                 return
-
-            # Always clear the playlist before re-adding
-            log_event("generate_playlist", f"🧹 Clearing playlist '{slug}' before re-adding tracks")
-            sp = get_spotify_client()
-            user = sp.current_user()
-            sp.user_playlist_replace_tracks(user["id"], playlist_id, [])
-
-            if not track_uris:
-                log_event("generate_playlist", f"⚠️ No tracks found for '{slug}' — playlist was cleared.")
-                cur.execute("UPDATE playlist_mappings SET track_count = 0, last_synced_at = %s WHERE slug = %s", (datetime.utcnow(), slug))
-                conn.commit()
-                return
         except Exception as query_error:
             log_event("generate_playlist", f"❌ Error building/executing track query for '{slug}': {query_error} — rules: {rules}", level="error")
             return
 
+        # Always clear the playlist before re-adding
+        log_event("generate_playlist", f"🧹 Clearing playlist '{slug}' before re-adding tracks")
+        sp = get_spotify_client()
+        user = sp.current_user()
+        sp.user_playlist_replace_tracks(user["id"], playlist_id, [])
+
         if not track_uris:
-            log_event("generate_playlist", f"⚠️ No tracks found for '{slug}' — clearing playlist.")
-            sp = get_spotify_client()
-            user = sp.current_user()
-            sp.user_playlist_replace_tracks(user["id"], playlist_id, [])
+            log_event("generate_playlist", f"⚠️ No tracks found for '{slug}' — playlist was cleared.")
             cur.execute("UPDATE playlist_mappings SET track_count = 0, last_synced_at = %s WHERE slug = %s", (datetime.utcnow(), slug))
             conn.commit()
             return
 
         log_event("generate_playlist", f"🎧 Retrieved {len(track_uris)} tracks for '{slug}'")
 
-        sp = get_spotify_client()
-        user = sp.current_user()
-        log_event("generate_playlist", f"🧹 Clearing playlist '{slug}' before re-adding tracks")
-        sp.user_playlist_replace_tracks(user["id"], playlist_id, [])
         log_event("generate_playlist", f"➕ Adding {len(track_uris)} tracks to playlist '{slug}' in batches of 100")
         for i in range(0, len(track_uris), 100):
             sp.playlist_add_items(playlist_id, track_uris[i:i + 100])
