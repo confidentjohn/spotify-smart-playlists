@@ -316,14 +316,16 @@ def diagnostics():
     fuzzy_matches = get_fuzzy_matched_plays()
     outdated_albums = get_outdated_albums()
     mismatches = get_track_count_mismatches()
-    deletion_candidates = get_pending_playlists()
+    # This variable holds the data
+    deletion_candidates = get_pending_playlists() 
     return render_template(
         "diagnostics.html",
         duplicates=duplicates,
         fuzzy_matches=fuzzy_matches,
         outdated_albums=outdated_albums,
         mismatches=mismatches,
-        deletion_candidates=deletion_candidates
+        # CHANGE THIS LINE: The key must be 'pending_playlists'
+        pending_playlists=deletion_candidates
     )
 
 

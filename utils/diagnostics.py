@@ -1,3 +1,4 @@
+from psycopg2.extras import DictCursor
 from utils.db_utils import get_db_connection
 
 def get_duplicate_album_track_counts():
@@ -118,7 +119,8 @@ def get_track_count_mismatches():
     return results
 def get_pending_playlists():
     conn = get_db_connection()
-    cur = conn.cursor()
+    # Use DictCursor to get results as dictionaries
+    cur = conn.cursor(cursor_factory=DictCursor)
 
     cur.execute("""
         SELECT name, slug, missing_count, last_missing_at
@@ -127,6 +129,7 @@ def get_pending_playlists():
         ORDER BY last_missing_at DESC
     """)
 
+    # fetchall() will now return a list of dictionary-like Row objects
     results = cur.fetchall()
     cur.close()
     conn.close()
