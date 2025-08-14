@@ -375,7 +375,7 @@ def ignore_playlist(slug):
     flash(f"Ignored playlist '{slug}' — flag cleared.", "info")
     return redirect(url_for("diagnostics"))
 
-from playlists.generate_playlist import delete_playlist as perform_delete_playlist
+from playlists.playlist_sync import delete_playlist as perform_delete_playlist
 
 @app.route("/delete-playlist/<slug>", methods=["POST"])
 @login_required
