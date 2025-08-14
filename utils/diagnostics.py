@@ -116,7 +116,7 @@ def get_track_count_mismatches():
     cur.close()
     conn.close()
     return results
-def get_pending_deletion_playlists():
+def pending_playlists():
     conn = get_db_connection()
     cur = conn.cursor()
 
