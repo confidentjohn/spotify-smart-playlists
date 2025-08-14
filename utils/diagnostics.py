@@ -132,31 +132,3 @@ def get_pending_deletion_playlists():
     conn.close()
     return results
 
-
-# Route to ignore a playlist (clear pending_delete and related flags)
-from flask import Blueprint, flash, redirect, url_for
-from flask_login import login_required
-
-# Assuming bp is defined elsewhere and imported, or you may need to define it here.
-
-@bp.route("/ignore-playlist/<slug>", methods=["POST"])
-@login_required
-def ignore_playlist(slug):
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        UPDATE playlist_mappings
-        SET pending_delete = FALSE,
-            missing_count = 0,
-            last_missing_at = NULL,
-            last_missing_reason = NULL
-        WHERE slug = %s
-    """, (slug,))
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    flash(f"Ignored playlist '{slug}' — flag cleared.", "info")
-    return redirect(url_for("diagnostics"))

@@ -351,6 +351,28 @@ def resolve_fuzzy_matches():
 
     return redirect(url_for("diagnostics"))
 
+@app.route("/ignore-playlist/<slug>", methods=["POST"])
+@login_required
+def ignore_playlist(slug):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE playlist_mappings
+        SET pending_delete = FALSE,
+            missing_count = 0,
+            last_missing_at = NULL,
+            last_missing_reason = NULL
+        WHERE slug = %s
+    """, (slug,))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    flash(f"Ignored playlist '{slug}' — flag cleared.", "info")
+    return redirect(url_for("diagnostics"))
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
