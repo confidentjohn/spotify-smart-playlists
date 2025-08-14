@@ -375,6 +375,18 @@ def ignore_playlist(slug):
     flash(f"Ignored playlist '{slug}' — flag cleared.", "info")
     return redirect(url_for("diagnostics"))
 
+from playlists.generate_playlist import delete_playlist as perform_delete_playlist
+
+@app.route("/delete-playlist/<slug>", methods=["POST"])
+@login_required
+def delete_playlist_route(slug):
+    try:
+        perform_delete_playlist(slug)
+        flash(f"Deleted playlist '{slug}'", "success")
+    except Exception as e:
+        flash(f"Failed to delete playlist '{slug}': {e}", "error")
+    return redirect(url_for("diagnostics"))
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
