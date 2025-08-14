@@ -69,12 +69,12 @@ def collect_metrics_payload():
 
     # Top Albums
     cur.execute("""
-        SELECT album_name, artist, COALESCE(album_image_url, artist_image, '/app/static/img/no_image.png') AS image_url, SUM(play_count) as total_plays
+        SELECT  album_name,artist, COALESCE(album_image_url, '/app/static/img/no_image.png') AS image_url, SUM(play_count) AS total_plays
         FROM unified_tracks
-        WHERE play_count > 0
-        GROUP BY album_name, artist, album_image_url, artist_image
+        WHERE play_count > 0 AND (album_type = 'album' OR album_type = 'compilation')
+        GROUP BY album_name, artist, album_image_url
         ORDER BY total_plays DESC
-        LIMIT 10
+        LIMIT 10;
     """)
     top_albums = [
         {"album_name": row[0], "artist": row[1], "image_url": row[2], "count": row[3]}
