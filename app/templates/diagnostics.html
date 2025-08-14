@@ -90,7 +90,7 @@
         These playlists were not found during the last sync. You can choose to delete the mapping or ignore the flag and keep them.
     </p>
 
-    {% if pending_playlists %}
+    {% if deletion_candidates %}
     <div class="table-responsive">
         <table class="table table-striped table-bordered">
             <thead class="thead-dark">
@@ -103,17 +103,17 @@
                 </tr>
             </thead>
             <tbody>
-                {% for pl in pending_playlists %}
+                {% for pl in deletion_candidates %}
                 <tr>
                     <td>{{ pl.name }}</td>
                     <td><code>{{ pl.slug }}</code></td>
                     <td>{{ pl.missing_count }}</td>
                     <td>{{ pl.last_missing_at }}</td>
                     <td>
-                        <form method="POST" action="{{ url_for('delete_playlist_route', slug=pl.slug) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('diagnostics.delete_playlist_route', slug=pl.slug) }}" style="display:inline;">
                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                         </form>
-                        <form method="POST" action="{{ url_for('ignore_playlist', slug=pl.slug) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('diagnostics.ignore_playlist', slug=pl.slug) }}" style="display:inline;">
                             <button type="submit" class="btn btn-secondary btn-sm">Ignore</button>
                         </form>
                     </td>
