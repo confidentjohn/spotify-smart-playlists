@@ -47,13 +47,27 @@ def sync_playlist(slug):
                     SET pending_delete = TRUE,
                         missing_count = COALESCE(missing_count, 0) + 1,
                         last_missing_at = NOW(),
-                        last_missing_reason = %s
+                        last_missing_reason = %s,
+                        last_seen_spotify_at = NOW()
                     WHERE slug = %s
                     """,
                     (reason, slug)
                 )
                 conn.commit()
                 return
+            # Reset soft-delete flags if previously marked missing
+            cur.execute(
+                """
+                UPDATE playlist_mappings
+                SET pending_delete = FALSE,
+                    missing_count = 0,
+                    last_missing_at = NULL,
+                    last_missing_reason = NULL
+                WHERE slug = %s
+                """,
+                (slug,)
+            )
+            conn.commit()
         except Exception as e:
             reason = str(e)
             log_event("generate_playlist", f"⚠️ Playlist '{playlist_id}' not accessible. Soft-flagging in DB instead of deleting. Error: {e}")
@@ -63,7 +77,8 @@ def sync_playlist(slug):
                 SET pending_delete = TRUE,
                     missing_count = COALESCE(missing_count, 0) + 1,
                     last_missing_at = NOW(),
-                    last_missing_reason = %s
+                    last_missing_reason = %s,
+                    last_seen_spotify_at = NOW()
                 WHERE slug = %s
                 """,
                 (reason[:500], slug)
