@@ -105,15 +105,15 @@
             <tbody>
                 {% for pl in deletion_candidates %}
                 <tr>
-                    <td>{{ pl["name"] }}</td>
-                    <td><code>{{ pl["slug"] }}</code></td>
-                    <td>{{ pl["missing_count"] }}</td>
-                    <td>{{ pl["last_missing_at"] }}</td>
+                    <td>{{ pl.name }}</td>
+                    <td><code>{{ pl.slug }}</code></td>
+                    <td>{{ pl.missing_count }}</td>
+                    <td>{{ pl.last_missing_at }}</td>
                     <td>
-                        <form method="POST" action="{{ url_for('diagnostics.delete_playlist_route', slug=pl['slug']) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('diagnostics.delete_playlist_route', slug=pl.slug) }}" style="display:inline;">
                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                         </form>
-                        <form method="POST" action="{{ url_for('diagnostics.ignore_playlist', slug=pl['slug']) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('diagnostics.ignore_playlist', slug=pl.slug) }}" style="display:inline;">
                             <button type="submit" class="btn btn-secondary btn-sm">Ignore</button>
                         </form>
                     </td>
