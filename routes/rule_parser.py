@@ -2,7 +2,7 @@
 import json
 from utils.logger import log_event
 
-def _normalize_source(v: object):
+def _normalize_track_source(v: object):
     val = str(v or "").strip().lower()
     if val in ("library", "non_library"):
         return val
@@ -11,8 +11,8 @@ def _normalize_source(v: object):
     raise ValueError("Source must be 'library', 'non_library', or 'both'.")
 
 def _source_clause(v: object, op: str) -> str:
-    val = _normalize_source(v)
-    return "" if val is None else f"source {op} '{val}'"
+    val = _normalize_track_source(v)
+    return "" if val is None else f"track_source {op} '{val}'"
 
 # Define a mapping of supported condition fields to SQL templates
 CONDITION_MAP = {
