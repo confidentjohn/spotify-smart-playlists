@@ -109,6 +109,7 @@
       const rule = container.querySelector('.rule-row').cloneNode(true);
       rule.querySelectorAll('input').forEach(input => input.value = '');
       container.appendChild(rule);
+      initializeRuleRow(rule);
     }
 
     function removeRule(button) {
@@ -144,6 +145,96 @@
       });
       button.parentElement.appendChild(newGroup);
     }
+
+    // --- Context-aware rule inputs ---
+    const FIELD_CONFIG = {
+      // free text fields
+      artist: { type: 'text', operators: ['eq','is_not','contains','not_contains'] },
+      album:  { type: 'text', operators: ['eq','is_not','contains','not_contains'] },
+      track:  { type: 'text', operators: ['eq','is_not','contains','not_contains'] },
+
+      // enums / booleans
+      track_source: { type: 'enum', values: [ ['library','Library'], ['non_library','Non-library'], ['both','Both'] ], operators: ['eq','is_not'] },
+      is_liked:     { type: 'enum', values: [ ['true','True'], ['false','False'] ], operators: ['eq'] },
+
+      // dates
+      added_after:  { type: 'date', operators: ['gt','gte','eq'] },
+      added_before: { type: 'date', operators: ['lt','lte','eq'] },
+      last_played:  { type: 'date', operators: ['gt','gte','lt','lte','eq'] },
+      first_played: { type: 'date', operators: ['gt','gte','lt','lte','eq'] },
+
+      // numbers
+      added_in_last_days: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['eq','gte','lte'] },
+      min_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['gte','gt','eq'] },
+      max_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['lte','lt','eq'] },
+      plays:     { type: 'number', attrs: { min: 0, step: 1 }, operators: ['eq','gte','lte','gt','lt'] }
+    };
+
+    function buildOperatorSelect(row, allowed) {
+      const opSel = row.querySelector('[name="operator[]"]');
+      const current = opSel.value;
+      opSel.innerHTML = '';
+      const labels = { eq: 'is', is_not: 'is not', contains: 'contains', not_contains: 'does not contain', gt: 'greater than', lt: 'less than', gte: 'greater than or equal to', lte: 'less than or equal to' };
+      allowed.forEach(op => {
+        const opt = document.createElement('option');
+        opt.value = op; opt.textContent = labels[op] || op;
+        opSel.appendChild(opt);
+      });
+      if (allowed.includes(current)) opSel.value = current;
+    }
+
+    function buildValueControl(row, field) {
+      const cfg = FIELD_CONFIG[field] || { type: 'text', operators: ['eq','is_not','contains','not_contains'] };
+      let existing = row.querySelector('[name="value[]"]');
+
+      let control;
+      if (cfg.type === 'enum') {
+        control = document.createElement('select');
+        control.name = 'value[]';
+        control.className = 'form-select';
+        cfg.values.forEach(([val,label]) => {
+          const opt = document.createElement('option');
+          opt.value = val; opt.textContent = label; control.appendChild(opt);
+        });
+      } else if (cfg.type === 'date') {
+        control = document.createElement('input');
+        control.type = 'date';
+        control.name = 'value[]';
+        control.className = 'form-input';
+      } else if (cfg.type === 'number') {
+        control = document.createElement('input');
+        control.type = 'number';
+        control.name = 'value[]';
+        control.className = 'form-input';
+        if (cfg.attrs) Object.entries(cfg.attrs).forEach(([k,v]) => control.setAttribute(k, v));
+      } else {
+        control = document.createElement('input');
+        control.type = 'text';
+        control.name = 'value[]';
+        control.className = 'form-input';
+      }
+
+      existing.replaceWith(control);
+      buildOperatorSelect(row, cfg.operators);
+    }
+
+    function initializeRuleRow(row) {
+      const fieldSel = row.querySelector('[name="field[]"]');
+      buildValueControl(row, fieldSel.value);
+    }
+
+    // Watch for field changes to swap in the right control
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.name === 'field[]') {
+        const row = e.target.closest('.rule-row');
+        buildValueControl(row, e.target.value);
+      }
+    });
+
+    // Initialize existing rule rows on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.rule-row').forEach(initializeRuleRow);
+    });
 
     function serializeGroup(groupElement) {
       const group = {
