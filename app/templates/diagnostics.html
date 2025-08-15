@@ -1,8 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center mb-4">📦 Outdated Albums in Library</h2>
+<div class="container mt-3 mb-4">
+  <a href="{{ url_for('home') }}" class="btn btn-link">&larr; Back to Home</a>
+</div>
+<div class="container mt-4 mb-5">
+    <div class="text-center">
+        <h2 class="display-6 mb-4">📦 Outdated Albums in Library</h2>
+    </div>
     <p class="text-center text-muted mb-4">
       These albums are stored in your library, but Spotify now recommends a different version of the same album.
       This can happen if Spotify reissues, republishes, or updates album metadata.<br>
@@ -11,14 +16,14 @@
 
     {% if outdated_albums %}
     <div class="table-responsive">
-        <table class="table table-striped table-bordered sortable">
+        <table class="table table-striped table-bordered table-sm sortable">
             <thead class="thead-dark">
                 <tr>
-                    <th onclick="sortTable(this.cellIndex)">saved_album_id</th>
+                    <th class="text-nowrap" onclick="sortTable(this.cellIndex)">saved_album_id</th>
                     <th onclick="sortTable(this.cellIndex)">album_name</th>
                     <th onclick="sortTable(this.cellIndex)">artist_name</th>
                     <th onclick="sortTable(this.cellIndex)">Saved Album Link</th>
-                    <th onclick="sortTable(this.cellIndex)">newer_album_id</th>
+                    <th class="text-nowrap" onclick="sortTable(this.cellIndex)">newer_album_id</th>
                     <th onclick="sortTable(this.cellIndex)">Newer Album Link</th>
                     <th onclick="sortTable(this.cellIndex)">first_detected_at</th>
                 </tr>
@@ -26,11 +31,11 @@
             <tbody>
                 {% for row in outdated_albums %}
                 <tr>
-                    <td><code>{{ row[3] }}</code></td>
+                    <td class="text-nowrap small text-monospace">{{ row[3] }}</td>
                     <td>{{ row[2] }}</td>
                     <td>{{ row[1] }}</td>
                     <td><a href="https://open.spotify.com/album/{{ row[3] }}" target="_blank">View</a></td>
-                    <td><code>{{ row[4] }}</code></td>
+                    <td class="text-nowrap small text-monospace">{{ row[4] }}</td>
                     <td><a href="https://open.spotify.com/album/{{ row[4] }}" target="_blank">View</a></td>
                     <td>{{ row[5] }}</td>
                 </tr>
@@ -44,9 +49,11 @@
     </div>
     {% endif %}
 </div>
-
-<div class="container mt-4">
-    <h2 class="text-center mb-4">🚨 Duplicate Album Tracks Detected</h2>
+<hr class="my-5">
+<div class="container mt-4 mb-5">
+    <div class="text-center">
+        <h2 class="display-6 mb-4">🚨 Duplicate Album Tracks Detected</h2>
+    </div>
     <p class="text-center text-muted mb-4">
       This table highlights albums in your library where the number of expected tracks doesn't match what's stored, possibly due to duplicate or partial entries.<br>
       <strong>To fix:</strong> Visit the linked album in Spotify, remove all versions from your library, and re-add the correct one. Then re-run your sync to update.
@@ -54,24 +61,24 @@
 
     {% if duplicates %}
         <div class="table-responsive">
-            <table class="table table-striped table-bordered">
+            <table class="table table-striped table-bordered table-sm">
                 <thead class="thead-dark">
                     <tr>
-                        <th>Album ID</th>
+                        <th class="text-nowrap">Album ID</th>
                         <th>Album Name</th>
-                        <th>Expected Tracks</th>
-                        <th>Actual Tracks</th>
-                        <th>Extra Tracks</th>
+                        <th class="text-end">Expected Tracks</th>
+                        <th class="text-end">Actual Tracks</th>
+                        <th class="text-end">Extra Tracks</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for row in duplicates %}
                     <tr>
-                        <td><a href="https://open.spotify.com/album/{{ row[0] }}" target="_blank"><code>{{ row[0] }}</code></a></td>
+                        <td class="text-nowrap"><a href="https://open.spotify.com/album/{{ row[0] }}" target="_blank"><span class="small text-monospace">{{ row[0] }}</span></a></td>
                         <td>{{ row[1] }}</td>
-                        <td>{{ row[2] }}</td>
-                        <td>{{ row[3] }}</td>
-                        <td>{{ row[4] }}</td>
+                        <td class="text-end">{{ row[2] }}</td>
+                        <td class="text-end">{{ row[3] }}</td>
+                        <td class="text-end">{{ row[4] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -83,21 +90,23 @@
         </div>
     {% endif %}
 </div>
-
-<div class="container mt-5">
-    <h2 class="text-center mb-4">🗑️ Playlists Flagged for Deletion</h2>
+<hr class="my-5">
+<div class="container mt-5 mb-5">
+    <div class="text-center">
+        <h2 class="display-6 mb-4">🗑️ Playlists Flagged for Deletion</h2>
+    </div>
     <p class="text-center text-muted mb-4">
         These playlists were not found during the last sync. You can choose to delete the mapping or ignore the flag and keep them.
     </p>
 
     {% if pending_playlists %}
     <div class="table-responsive">
-        <table class="table table-striped table-bordered">
+        <table class="table table-striped table-bordered table-sm">
             <thead class="thead-dark">
                 <tr>
                     <th>Playlist Name</th>
-                    <th>Slug</th>
-                    <th>Missing Count</th>
+                    <th class="text-nowrap">Slug</th>
+                    <th class="text-end">Missing Count</th>
                     <th>Last Missing</th>
                     <th>Actions</th>
                 </tr>
@@ -106,8 +115,8 @@
                 {% for pl in pending_playlists %}
                 <tr>
                     <td>{{ pl.name }}</td>
-                    <td><code>{{ pl.slug }}</code></td>
-                    <td>{{ pl.missing_count }}</td>
+                    <td class="text-nowrap small text-monospace">{{ pl.slug }}</td>
+                    <td class="text-end">{{ pl.missing_count }}</td>
                     <td>{{ pl.last_missing_at }}</td>
                     <td>
                         <form method="POST" action="{{ url_for('delete_playlist_route', slug=pl.slug) }}" style="display:inline;">
@@ -128,9 +137,11 @@
     </div>
     {% endif %}
 </div>
-
-<div class="container mt-5">
-    <h2 class="text-center mb-4">🕵️ Fuzzy Matched Plays</h2>
+<hr class="my-5">
+<div class="container mt-5 mb-5">
+    <div class="text-center">
+        <h2 class="display-6 mb-4">🕵️ Fuzzy Matched Plays</h2>
+    </div>
     <p class="text-center text-muted mb-4">
       This table is showing tracks played that don't match the 
       <span data-toggle="tooltip" title="The track version stored in your personal library — typically from a specific album you've saved.">stored album version</span> 
@@ -146,18 +157,18 @@
     {% if fuzzy_matches %}
     <form method="POST" action="/resolve_fuzzy_matches">
         <div class="table-responsive">
-            <table class="table table-striped table-bordered sortable">
+            <table class="table table-striped table-bordered table-sm sortable">
                 <thead class="thead-dark">
                     <tr>
                         <th onclick="sortTable(this.cellIndex)">Select</th>
                         <th onclick="sortTable(this.cellIndex)">Play Time</th>
-                        <th onclick="sortTable(this.cellIndex)">Original Track ID</th>
+                        <th class="text-nowrap" onclick="sortTable(this.cellIndex)">Original Track ID</th>
                         <th onclick="sortTable(this.cellIndex)">Original Track Name</th>
                         <th onclick="sortTable(this.cellIndex)">Original Artist</th>
-                        <th onclick="sortTable(this.cellIndex)">Matched Track ID</th>
+                        <th class="text-nowrap" onclick="sortTable(this.cellIndex)">Matched Track ID</th>
                         <th onclick="sortTable(this.cellIndex)">Library Track Name</th>
                         <th onclick="sortTable(this.cellIndex)">Library Artist</th>
-                        <th onclick="sortTable(this.cellIndex)">Library Album ID</th>
+                        <th class="text-nowrap" onclick="sortTable(this.cellIndex)">Library Album ID</th>
                         <th onclick="sortTable(this.cellIndex)">Library Album Name</th>
                     </tr>
                 </thead>
@@ -166,13 +177,13 @@
                     <tr>
                         <td><input type="checkbox" name="selected_track_ids" value="{{ row[5] }}"></td>
                         <td>{{ row[4] }}</td>
-                        <td><code>{{ row[1] }}</code></td>
+                        <td class="text-nowrap small text-monospace">{{ row[1] }}</td>
                         <td>{{ row[2] }}</td>
                         <td>{{ row[3] }}</td>
-                        <td><code>{{ row[5] }}</code></td>
+                        <td class="text-nowrap small text-monospace">{{ row[5] }}</td>
                         <td>{{ row[6] }}</td>
                         <td>{{ row[7] }}</td>
-                        <td><code>{{ row[8] }}</code></td>
+                        <td class="text-nowrap small text-monospace">{{ row[8] }}</td>
                         <td>{{ row[9] }}</td>
                     </tr>
                     {% endfor %}
@@ -189,8 +200,11 @@
         </div>
     {% endif %}
 </div>
-<div class="container mt-5">
-    <h2 class="text-center mb-4">🧮 Albums with Mismatched Track Counts</h2>
+<hr class="my-5">
+<div class="container mt-5 mb-5">
+    <div class="text-center">
+        <h2 class="display-6 mb-4">🧮 Albums with Mismatched Track Counts</h2>
+    </div>
     <p class="text-center text-muted mb-4">
       These albums report a different number of total tracks in Spotify metadata than what is currently stored in your library.<br>
       <strong>To fix:</strong> Check the album on Spotify and re-trigger sync for the album. You can also use the checkbox to flag it for re-download on next run.
@@ -199,26 +213,26 @@
     {% if mismatches %}
         <form method="POST" action="/flag_mismatched_albums">
             <div class="table-responsive">
-                <table class="table table-striped table-bordered sortable">
+                <table class="table table-striped table-bordered table-sm sortable">
                     <thead class="thead-dark">
                         <tr>
                             <th>Select</th>
-                            <th>Album ID</th>
+                            <th class="text-nowrap">Album ID</th>
                             <th>Album Name</th>
                             <th>Artist</th>
-                            <th>Total Tracks (Expected)</th>
-                            <th>Stored Tracks</th>
+                            <th class="text-end">Total Tracks (Expected)</th>
+                            <th class="text-end">Stored Tracks</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for row in mismatches %}
                         <tr>
                             <td><input type="checkbox" name="selected_album_ids" value="{{ row[0] }}"></td>
-                            <td><a href="https://open.spotify.com/album/{{ row[0] }}" target="_blank"><code>{{ row[0] }}</code></a></td>
+                            <td class="text-nowrap"><a href="https://open.spotify.com/album/{{ row[0] }}" target="_blank"><span class="small text-monospace">{{ row[0] }}</span></a></td>
                             <td>{{ row[1] }}</td>
                             <td>{{ row[2] }}</td>
-                            <td>{{ row[3] }}</td>
-                            <td>{{ row[4] }}</td>
+                            <td class="text-end">{{ row[3] }}</td>
+                            <td class="text-end">{{ row[4] }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
