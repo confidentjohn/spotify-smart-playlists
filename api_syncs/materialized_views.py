@@ -30,7 +30,7 @@ WITH base_tracks AS (
         ta.is_playable,
         CASE WHEN lt.liked_at IS NOT NULL THEN TRUE ELSE FALSE END AS is_liked,
         EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = t.id) AS excluded,
-        'library'::text AS source
+        'library'::text AS track_source
     FROM tracks t
     JOIN albums a ON t.album_id = a.id
     LEFT JOIN liked_tracks lt ON lt.track_id = t.id
@@ -64,7 +64,7 @@ WITH base_tracks AS (
         ta.is_playable,
         TRUE,
         EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = lt.track_id),
-        'library'::text AS source
+        'library'::text AS track_source
     FROM liked_tracks lt
     LEFT JOIN tracks t ON lt.track_id = t.id
     LEFT JOIN track_availability ta ON ta.track_id = lt.track_id
@@ -189,7 +189,7 @@ non_library_base AS (
         ta.is_playable,
         FALSE                 AS is_liked,
         EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = p.track_id) AS excluded,
-        'non_library'::text   AS source
+        'non_library'::text   AS track_source
     FROM non_library_candidates c
     JOIN LATERAL (
         SELECT p2.*
