@@ -42,7 +42,7 @@ CONDITION_MAP = {
     },
     "album": lambda v: f"LOWER(album_name) LIKE LOWER('%{v}%')",
     "track": lambda v: f"LOWER(track_name) LIKE LOWER('%{v}%')",
-    "source": {
+    "track_source": {
         "eq": lambda v: _source_clause(v, "="),
         "is_not": lambda v: _source_clause(v, "<>")
     },
