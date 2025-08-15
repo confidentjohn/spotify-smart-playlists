@@ -23,6 +23,8 @@
       <option value="9000" selected>9000</option>
       <option value="no_limit">No Limit</option>
     </select>
+    <input type="number" name="custom_limit" min="1" max="9000" step="1" class="form-input" placeholder="Custom limit (1-9000)">
+    <small>(Leave empty to use the dropdown)</small>
   </label>
 
   <br><br>
@@ -172,7 +174,30 @@
     function serializeRules() {
       const topGroup = document.querySelector("#rules-container .rule-group");
       const rules = serializeGroup(topGroup);
-      rules.limit = document.querySelector('[name="limit"]').value === 'no_limit' ? 9000 : parseInt(document.querySelector('[name="limit"]').value);
+
+      // Determine limit: prefer valid custom_limit (1-9000), else fallback to dropdown
+      const limitSelect = document.querySelector('[name="limit"]');
+      const customLimitEl = document.querySelector('[name="custom_limit"]');
+      const customValRaw = customLimitEl ? customLimitEl.value.trim() : '';
+
+      let limit = null;
+      if (customValRaw !== '') {
+        const n = parseInt(customValRaw, 10);
+        if (!Number.isNaN(n) && n >= 1 && n <= 9000) {
+          limit = n;
+        } else {
+          alert('Custom limit must be an integer between 1 and 9000.');
+          return false;
+        }
+      } else {
+        // Fallback to dropdown; map "no_limit" to 9000 (max allowed)
+        const sel = limitSelect ? limitSelect.value : '9000';
+        limit = sel === 'no_limit' ? 9000 : parseInt(sel, 10);
+      }
+
+      rules.limit = limit;
+
+      // Sort rules
       rules.sort = Array.from(document.querySelectorAll('#sort-container .sort-row')).map(row => ({
         by: row.querySelector('[name="sort_by[]"]').value,
         direction: row.querySelector('[name="sort_direction[]"]').value
