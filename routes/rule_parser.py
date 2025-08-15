@@ -2,6 +2,18 @@
 import json
 from utils.logger import log_event
 
+def _normalize_source(v: object):
+    val = str(v or "").strip().lower()
+    if val in ("library", "non_library"):
+        return val
+    if val in ("", "both", "all", "any"):
+        return None  # treat as no filter
+    raise ValueError("Source must be 'library', 'non_library', or 'both'.")
+
+def _source_clause(v: object, op: str) -> str:
+    val = _normalize_source(v)
+    return "" if val is None else f"source {op} '{val}'"
+
 # Define a mapping of supported condition fields to SQL templates
 CONDITION_MAP = {
     "min_plays": lambda v: f"play_count >= {int(v)}",
@@ -30,6 +42,10 @@ CONDITION_MAP = {
     },
     "album": lambda v: f"LOWER(album_name) LIKE LOWER('%{v}%')",
     "track": lambda v: f"LOWER(track_name) LIKE LOWER('%{v}%')",
+    "source": {
+        "eq": lambda v: _source_clause(v, "="),
+        "is_not": lambda v: _source_clause(v, "<>")
+    },
     "last_played": lambda v: f"last_played_at >= '{v}'",
     "first_played": lambda v: f"first_played_at >= '{v}'",
 }
@@ -74,8 +90,11 @@ def build_track_query(rules_json):
                     condition_sql = map_entry[operator](value)
                 else:
                     condition_sql = map_entry(value)
-                condition_strings.append(condition_sql)
-                log_event("rule_parser", f"✅ Parsed rule '{field}' -> {condition_sql}")
+                if condition_sql and str(condition_sql).strip():
+                    condition_strings.append(condition_sql)
+                    log_event("rule_parser", f"✅ Parsed rule '{field}' -> {condition_sql}")
+                else:
+                    log_event("rule_parser", f"ℹ️ Skipping rule '{field}' because it produced no condition (likely 'both')")
             except Exception as e:
                 log_event("rule_parser", f"❌ Error parsing rule '{field}': {e}", level="error")
 
@@ -83,6 +102,9 @@ def build_track_query(rules_json):
 
     # Start parsing from top-level group
     where_clause = parse_condition_group(rules)
+
+    if not where_clause or not where_clause.strip():
+        where_clause = "1=1"
 
     # Always include these
     if "is_playable" not in [c.get("field") for c in rules.get("conditions", [])]:
