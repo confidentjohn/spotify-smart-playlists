@@ -4,7 +4,7 @@ from utils.db_utils import get_db_connection
 
 UNIFIED_TRACKS_VIEW = """
 CREATE MATERIALIZED VIEW unified_tracks AS
--- Step 1: Merge tracks and liked_tracks into a unified base
+-- Step 1: Merge tracks and liked_tracks into a unified base (library source)
 WITH base_tracks AS (
     SELECT
         t.id AS track_id,
@@ -15,23 +15,22 @@ WITH base_tracks AS (
         a.name AS album_name,
         a.album_type,
         a.album_image_url,
-        a.release_date,
+        a.release_date::text AS release_date,         -- cast to text
         ar.genres,
         ar.image_url AS artist_image,
         t.track_number,
         COALESCE(t.disc_number, 1) AS disc_number,
-        t.added_at,
+        t.added_at,                                    -- timestamptz
         t.added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS added_at_est,
         t.duration_ms,
         lt.popularity,
-        lt.liked_at,
+        lt.liked_at,                                   -- timestamptz
         lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
-        lt.last_checked_at,
+        lt.last_checked_at,                            -- timestamptz
         ta.is_playable,
         CASE WHEN lt.liked_at IS NOT NULL THEN TRUE ELSE FALSE END AS is_liked,
-        EXISTS (
-            SELECT 1 FROM excluded_tracks et WHERE et.track_id = t.id
-        ) AS excluded
+        EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = t.id) AS excluded,
+        'library'::text AS source
     FROM tracks t
     JOIN albums a ON t.album_id = a.id
     LEFT JOIN liked_tracks lt ON lt.track_id = t.id
@@ -50,23 +49,22 @@ WITH base_tracks AS (
         NULL,
         NULL,
         NULL,
-        NULL,
+        NULL::text AS release_date,                    -- match type to text
         ar.genres,
-        ar.image_url,
+        ar.image_url AS artist_image,
         NULL,
         1,
-        lt.added_at,
+        lt.added_at,                                   -- timestamptz
         lt.added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York',
         lt.duration_ms,
         lt.popularity,
-        lt.liked_at,
+        lt.liked_at,                                   -- timestamptz
         lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York',
-        lt.last_checked_at,
+        lt.last_checked_at,                            -- timestamptz
         ta.is_playable,
         TRUE,
-        EXISTS (
-            SELECT 1 FROM excluded_tracks et WHERE et.track_id = lt.track_id
-        )
+        EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = lt.track_id),
+        'library'::text AS source
     FROM liked_tracks lt
     LEFT JOIN tracks t ON lt.track_id = t.id
     LEFT JOIN track_availability ta ON ta.track_id = lt.track_id
@@ -74,7 +72,7 @@ WITH base_tracks AS (
     WHERE t.id IS NULL
 ),
 
--- Step 2: Aggregate play stats from exact track_id matches
+-- Step 2: Aggregate play stats from exact track_id matches (library + non-library)
 play_stats AS (
     SELECT
         track_id,
@@ -86,25 +84,25 @@ play_stats AS (
     GROUP BY track_id
 ),
 
--- Step 3: Classify skips and resumes from plays
+-- Step 3: Classify skips and resumes from plays (fallback to plays.duration_ms)
 classified_plays AS (
     SELECT
         p.track_id,
-        COALESCE(t.duration_ms, lt.duration_ms) AS duration_ms,
+        COALESCE(t.duration_ms, lt.duration_ms, p.duration_ms) AS duration_ms,
         LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at) AS prev_played,
         LEAD(p.track_id) OVER (ORDER BY p.played_at) AS next_track_id,
         LEAD(p.played_at) OVER (ORDER BY p.played_at) AS next_played,
         CASE
             WHEN LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at) IS NOT NULL
                  AND EXTRACT(EPOCH FROM (p.played_at - LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at))) * 1000
-                     < COALESCE(t.duration_ms, lt.duration_ms)
+                     < COALESCE(t.duration_ms, lt.duration_ms, p.duration_ms)
             THEN TRUE ELSE FALSE
         END AS is_resume,
         CASE
             WHEN LEAD(p.track_id) OVER (ORDER BY p.played_at) IS NOT NULL
                  AND LEAD(p.track_id) OVER (ORDER BY p.played_at) != p.track_id
                  AND EXTRACT(EPOCH FROM (LEAD(p.played_at) OVER (ORDER BY p.played_at) - p.played_at)) * 1000
-                     < (COALESCE(t.duration_ms, lt.duration_ms) * 0.3)
+                     < (COALESCE(t.duration_ms, lt.duration_ms, p.duration_ms) * 0.3)
             THEN TRUE ELSE FALSE
         END AS is_skipped
     FROM plays p
@@ -123,7 +121,7 @@ play_behavior_stats AS (
     GROUP BY track_id
 ),
 
--- Step 5: Fuzzy match plays to tracks
+-- Step 5: Fuzzy match plays to tracks (so we can exclude those plays from non-library)
 fuzzy_matched_tracks AS (
   SELECT 
     p.id AS play_id,
@@ -147,11 +145,74 @@ fuzzy_play_stats AS (
     MAX(fuzzy_played_at) AS fuzz_play_count_last_played
   FROM fuzzy_matched_tracks
   GROUP BY matched_track_id
+),
+
+-- NEW: Identify non-library track_ids from plays that are NOT in library/liked AND not used by a fuzzy match play
+non_library_candidates AS (
+    SELECT
+        p.track_id
+    FROM plays p
+    LEFT JOIN tracks t       ON p.track_id = t.id
+    LEFT JOIN liked_tracks l ON p.track_id = l.track_id
+    LEFT JOIN fuzzy_matched_tracks fmt ON fmt.play_id = p.id
+    WHERE p.played_at IS NOT NULL
+      AND p.track_id IS NOT NULL
+      AND t.id IS NULL
+      AND l.track_id IS NULL
+      AND fmt.play_id IS NULL  -- exclude any play that was used in fuzzy matching
+    GROUP BY p.track_id
+),
+
+-- For each candidate track_id, pick a representative (most recent play) and enrich from artists/albums if available
+non_library_base AS (
+    SELECT
+        p.track_id,
+        p.track_name,
+        p.artist_name AS artist,
+        p.artist_id           AS artist_id,                   -- from plays
+        p.album_id            AS album_id,                    -- from plays
+        COALESCE(a2.name, p.album_name)    AS album_name,     -- prefer album table
+        COALESCE(a2.album_type, p.album_type) AS album_type,
+        a2.album_image_url    AS album_image_url,             -- from albums if present
+        a2.release_date::text AS release_date,                -- cast to text
+        ar2.genres            AS genres,                      -- from artists if present
+        ar2.image_url         AS artist_image,
+        NULL::int             AS track_number,
+        1                     AS disc_number,
+        NULL::timestamptz     AS added_at,
+        NULL::timestamp       AS added_at_est,
+        p.duration_ms,
+        NULL::int             AS popularity,
+        NULL::timestamptz     AS liked_at,
+        NULL::timestamp       AS liked_at_est,
+        NULL::timestamptz     AS last_checked_at,
+        ta.is_playable,
+        FALSE                 AS is_liked,
+        EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = p.track_id) AS excluded,
+        'non_library'::text   AS source
+    FROM non_library_candidates c
+    JOIN LATERAL (
+        SELECT p2.*
+        FROM plays p2
+        WHERE p2.track_id = c.track_id
+        ORDER BY p2.played_at DESC
+        LIMIT 1
+    ) p ON TRUE
+    LEFT JOIN artists ar2 ON ar2.id = p.artist_id
+    LEFT JOIN albums  a2  ON a2.id = p.album_id
+    LEFT JOIN track_availability ta ON ta.track_id = p.track_id
+),
+
+-- Combine library and non-library rows before stats joins
+all_base AS (
+    SELECT * FROM base_tracks
+    UNION ALL
+    SELECT * FROM non_library_base
 )
 
 -- Final SELECT: Merge everything together
 SELECT
-    bt.*,
+    ab.*,
     COALESCE(ps.library_play_count, 0) AS library_play_count,
     ps.library_play_count_first_played,
     ps.library_play_count_last_played,
@@ -188,11 +249,11 @@ SELECT
       fp.fuzz_play_count_last_played
     ) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS last_played_at_est
 
-FROM base_tracks bt
-LEFT JOIN play_stats ps ON ps.track_id = bt.track_id
-LEFT JOIN play_behavior_stats pb ON pb.track_id = bt.track_id
-LEFT JOIN fuzzy_play_stats fp ON fp.track_id = bt.track_id
-ORDER BY bt.artist, bt.album_id, bt.disc_number, bt.track_number;
+FROM all_base ab
+LEFT JOIN play_stats ps ON ps.track_id = ab.track_id
+LEFT JOIN play_behavior_stats pb ON pb.track_id = ab.track_id
+LEFT JOIN fuzzy_play_stats fp ON fp.track_id = ab.track_id
+ORDER BY ab.artist, ab.album_id, ab.disc_number, ab.track_number NULLS LAST;
 """
 
 if __name__ == "__main__":
