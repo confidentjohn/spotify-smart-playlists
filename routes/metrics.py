@@ -69,10 +69,10 @@ def collect_metrics_payload():
 
     # Top Albums
     cur.execute("""
-        SELECT  album_name,artist, COALESCE(album_image_url, '/app/static/img/no_image.png') AS image_url, SUM(play_count) AS total_plays
+        SELECT album_name, artist, COALESCE(MIN(album_image_url),'/app/static/img/no_image.png') AS image_url, SUM(play_count) AS total_plays
         FROM unified_tracks
-        WHERE play_count > 0 AND (album_type = 'album' OR album_type = 'compilation')
-        GROUP BY album_name, artist, album_image_url
+        WHERE play_count > 0 AND track_source = 'library' AND album_type IN ('album', 'compilation')
+        GROUP BY album_name, artist
         ORDER BY total_plays DESC
         LIMIT 10;
     """)
@@ -298,11 +298,11 @@ def collect_metrics_payload():
 
     cur.execute("""
         SELECT
-      COUNT(DISTINCT album_id) FILTER (WHERE COALESCE(album_type, 'single') = 'album'),
-      COUNT(DISTINCT album_id) FILTER (WHERE COALESCE(album_type, 'single') = 'single'),
-      COUNT(DISTINCT album_id) FILTER (WHERE COALESCE(album_type, 'single') = 'compilation')
-    FROM unified_tracks
-    WHERE album_id IS NOT NULL
+        COUNT(DISTINCT album_id) FILTER (WHERE COALESCE(album_type, 'single') = 'album'),
+        COUNT(DISTINCT album_id) FILTER (WHERE COALESCE(album_type, 'single') = 'single'),
+        COUNT(DISTINCT album_id) FILTER (WHERE COALESCE(album_type, 'single') = 'compilation')
+        FROM unified_tracks
+        WHERE album_id IS NOT NULL AND track_source = 'library'
     """)
     album_counts = cur.fetchone()
 
