@@ -27,7 +27,7 @@ WITH base_tracks AS (
         lt.liked_at,                                   -- timestamptz
         lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
         lt.last_checked_at,                            -- timestamptz
-        ta.is_playable,
+        TRUE AS is_playable,
         CASE WHEN lt.liked_at IS NOT NULL THEN TRUE ELSE FALSE END AS is_liked,
         EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = t.id) AS excluded,
         'library'::text AS track_source
