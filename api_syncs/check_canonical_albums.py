@@ -40,7 +40,7 @@ def main():
 
     for artist_id, artist_name in stale_artists:
         logging.info(f"Checking albums for: {artist_name}")
-        log_event("check_canonical_albums", f"Checking albums for: {artist_name}", {"artist": artist_name})
+        log_event("check_canonical_albums", f"Checking albums for: {artist_name}")
         try:
             albums = get_albums_by_artist(sp, artist_id)
 
@@ -90,7 +90,7 @@ def main():
                         if remote_id and remote_id not in matching_saved:
                             if (name, remote_id) not in outdated_lookup:
                                 logging.info(f"Inserting outdated album: {name} from {id_} to {remote_id}")
-                                log_event("check_canonical_albums", f"Inserting outdated album: {name}", {"from_album": id_, "to_album": remote_id})
+                                log_event("check_canonical_albums", f"Inserting outdated album: {name} from {id_} to {remote_id}")
                                 cur.execute("""
                                     INSERT INTO outdated_albums (artist_id, artist_name, album_name, saved_album_id, newer_album_id)
                                     VALUES (%s, %s, %s, %s, %s)
@@ -103,7 +103,7 @@ def main():
                         matching_saved = [id_ for id_, nm in saved_albums if nm == album_name]
                         if newer_album_id in matching_saved:
                             logging.info(f"Removing resolved outdated album: {album_name}")
-                            log_event("check_canonical_albums", f"Resolved outdated album: {album_name}", {"album": album_name})
+                            log_event("check_canonical_albums", f"Resolved outdated album: {album_name}")
                             cur.execute("""
                                 DELETE FROM outdated_albums
                                 WHERE saved_album_id = %s AND newer_album_id = %s;
@@ -118,7 +118,7 @@ def main():
 
         except Exception as e:
             logging.error(f"Error checking artist {artist_name}: {e}")
-            log_event("check_canonical_albums", f"Error checking artist {artist_name}: {e}", {"artist": artist_name})
+            log_event("check_canonical_albums", f"Error checking artist {artist_name}: {e}")
 
     conn.close()
 
