@@ -615,15 +615,27 @@
             options: {
               responsive: true,
               plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return `${context.parsed.y}% of tracks`;
+                    }
+                  }
+                }
               },
               scales: {
                 y: {
-                  beginAtZero: true,
-                  max: 100,
+                  type: 'logarithmic',
+                  min: 0.1,
                   title: {
                     display: true,
-                    text: 'Percentage of Tracks'
+                    text: 'Percentage of Tracks (Log Scale)'
+                  },
+                  ticks: {
+                    callback: function(value) {
+                      return value + '%';
+                    }
                   }
                 }
               }
