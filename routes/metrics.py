@@ -59,11 +59,11 @@ def collect_metrics_payload():
 
     # Plays Per Day (last 30 days)
     cur.execute("""
-        SELECT DATE(last_played_at), SUM(play_count)
-        FROM unified_tracks
-        WHERE last_played_at > NOW() - INTERVAL '30 days'
-        GROUP BY DATE(last_played_at)
-        ORDER BY DATE(last_played_at)
+        SELECT DATE(played_at) AS play_date, COUNT(*) AS daily_play_count
+        FROM plays
+        WHERE played_at >= NOW() - INTERVAL '30 days'
+        GROUP BY play_date
+        ORDER BY play_date;
     """)
     daily_plays = [{"date": row[0].isoformat(), "count": row[1]} for row in cur.fetchall()]
 
