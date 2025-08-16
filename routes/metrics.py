@@ -109,16 +109,18 @@ def collect_metrics_payload():
     # Plays by Hour of Day
     cur.execute("""
         WITH hourly AS (
-            SELECT EXTRACT(HOUR FROM played_at) AS hour, COUNT(*) AS count
-            FROM plays
-            WHERE played_at IS NOT NULL
-            GROUP BY hour
+        SELECT 
+            EXTRACT(HOUR FROM played_at AT TIME ZONE 'UTC' AT TIME ZONE 'US/Eastern') AS hour,
+            COUNT(*) AS count
+        FROM plays
+        WHERE played_at IS NOT NULL
+        GROUP BY hour
         )
         SELECT 
             hour,
             ROUND((count * 100.0 / SUM(count) OVER ()), 1) AS percentage
         FROM hourly
-        ORDER BY hour
+        ORDER BY hour;
     """)
     plays_by_hour = [
         {"hour": int(row[0]), "percentage": row[1]}
