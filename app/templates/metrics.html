@@ -601,12 +601,32 @@
         // Time to First Play from Release
         if (Array.isArray(data.release_to_play)) {
           const rtpLabels = data.release_to_play.map(p => p.bucket);
-          const rtpCounts = data.release_to_play.map(p => Number(p.count));
+          const rtpPercents = data.release_to_play.map(p => Number(p.percentage));
           new Chart(document.getElementById('chart-release-to-play'), {
             type: 'bar',
             data: {
               labels: rtpLabels,
-              datasets: [{ label: 'Tracks', data: rtpCounts }]
+              datasets: [{
+                label: '% of Tracks',
+                data: rtpPercents,
+                backgroundColor: '#1DB954'
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: false }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  max: 100,
+                  title: {
+                    display: true,
+                    text: 'Percentage of Tracks'
+                  }
+                }
+              }
             }
           });
         }

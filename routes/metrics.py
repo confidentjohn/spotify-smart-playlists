@@ -108,26 +108,29 @@ def collect_metrics_payload():
 
     # Plays by Hour of Day
     cur.execute("""
-        SELECT EXTRACT(HOUR FROM last_played_at_est) AS hour,
-        SUM(play_count)
-        FROM unified_tracks
-        WHERE last_played_at_est IS NOT NULL
-        GROUP BY hour
+        WITH hourly AS (
+            SELECT EXTRACT(HOUR FROM played_at) AS hour, COUNT(*) AS count
+            FROM plays
+            WHERE played_at IS NOT NULL
+            GROUP BY hour
+        )
+        SELECT 
+            hour,
+            ROUND((count * 100.0 / SUM(count) OVER ()), 1) AS percentage
+        FROM hourly
         ORDER BY hour
     """)
-    rows = cur.fetchall()
-    total_hourly_plays = sum(row[1] for row in rows)
     plays_by_hour = [
-        {"hour": int(row[0]), "percentage": round((row[1] / total_hourly_plays) * 100, 1)}
-        for row in rows
+        {"hour": int(row[0]), "percentage": row[1]}
+        for row in cur.fetchall()
     ]
 
     # Plays by Month
     cur.execute("""
-        SELECT TO_CHAR(last_played_at, 'YYYY-MM') AS month, SUM(play_count)
-        FROM unified_tracks
-        WHERE last_played_at IS NOT NULL
-        GROUP BY TO_CHAR(last_played_at, 'YYYY-MM')
+        SELECT TO_CHAR(played_at, 'YYYY-MM') AS month, COUNT(*) AS total_plays
+        FROM plays
+        WHERE played_at IS NOT NULL
+        GROUP BY TO_CHAR(played_at, 'YYYY-MM')
         ORDER BY month
     """)
     plays_by_month = [{"month": row[0], "count": row[1]} for row in cur.fetchall()]
@@ -197,47 +200,60 @@ def collect_metrics_payload():
 
     # Time from Release to First Play
     cur.execute("""
-        SELECT bucket, COUNT(*) AS count
+        SELECT bucket, ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) AS percentage
         FROM (
           SELECT
             CASE
-              WHEN EXTRACT(DAY FROM MIN(last_played_at) - parsed_release_date) <= 1 THEN '0-1 days'
-              WHEN EXTRACT(DAY FROM MIN(last_played_at) - parsed_release_date) <= 7 THEN '2-7 days'
-              WHEN EXTRACT(DAY FROM MIN(last_played_at) - parsed_release_date) <= 30 THEN '8-30 days'
-              WHEN EXTRACT(DAY FROM MIN(last_played_at) - parsed_release_date) <= 90 THEN '31-90 days'
-              ELSE '90+ days'
+              WHEN diff <= 1 THEN '0–1 days'
+              WHEN diff <= 7 THEN '2–7 days'
+              WHEN diff <= 30 THEN '8–30 days'
+              WHEN diff <= 90 THEN '31–90 days'
+              WHEN diff <= 180 THEN '91–180 days'
+              WHEN diff <= 365 THEN '181–365 days'
+              WHEN diff <= 730 THEN '1–2 years'
+              ELSE '2+ years'
             END AS bucket
           FROM (
             SELECT
               track_name,
               artist,
-              last_played_at,
+              MIN(last_played_at) AS first_played_at,
               CASE
                 WHEN LENGTH(release_date) = 4 THEN TO_DATE(release_date || '-01-01', 'YYYY-MM-DD')
                 WHEN LENGTH(release_date) = 7 THEN TO_DATE(release_date || '-01', 'YYYY-MM-DD')
                 WHEN LENGTH(release_date) = 10 THEN TO_DATE(release_date, 'YYYY-MM-DD')
                 ELSE NULL
-              END AS parsed_release_date
+              END AS parsed_release_date,
+              EXTRACT(DAY FROM MIN(last_played_at) - 
+                CASE
+                  WHEN LENGTH(release_date) = 4 THEN TO_DATE(release_date || '-01-01', 'YYYY-MM-DD')
+                  WHEN LENGTH(release_date) = 7 THEN TO_DATE(release_date || '-01', 'YYYY-MM-DD')
+                  WHEN LENGTH(release_date) = 10 THEN TO_DATE(release_date, 'YYYY-MM-DD')
+                END
+              ) AS diff
             FROM unified_tracks
             WHERE last_played_at IS NOT NULL
               AND release_date IS NOT NULL
               AND play_count > 0
+            GROUP BY track_name, artist, release_date
           ) normalized
           WHERE parsed_release_date IS NOT NULL
-            AND last_played_at >= parsed_release_date
-          GROUP BY parsed_release_date, track_name, artist
+            AND first_played_at >= parsed_release_date
         ) sub
         GROUP BY bucket
         ORDER BY
           CASE bucket
-            WHEN '0-1 days' THEN 1
-            WHEN '2-7 days' THEN 2
-            WHEN '8-30 days' THEN 3
-            WHEN '31-90 days' THEN 4
-            ELSE 5
+            WHEN '0–1 days' THEN 1
+            WHEN '2–7 days' THEN 2
+            WHEN '8–30 days' THEN 3
+            WHEN '31–90 days' THEN 4
+            WHEN '91–180 days' THEN 5
+            WHEN '181–365 days' THEN 6
+            WHEN '1–2 years' THEN 7
+            ELSE 8
           END
     """)
-    release_to_play = [{"bucket": row[0], "count": row[1]} for row in cur.fetchall()]
+    release_to_play = [{"bucket": row[0], "percentage": row[1]} for row in cur.fetchall()]
 
     # Monthly Increase in Library Size
     cur.execute("""
@@ -251,18 +267,21 @@ def collect_metrics_payload():
 
     # Top Artist by Month
     cur.execute("""
-        SELECT artist, month, plays FROM (
+        SELECT artist_name, month, play_count
+        FROM (
             SELECT
-                artist,
-                TO_CHAR(last_played_at, 'YYYY-MM') AS month,
-                SUM(play_count) AS plays,
-                ROW_NUMBER() OVER (PARTITION BY TO_CHAR(last_played_at, 'YYYY-MM') ORDER BY SUM(play_count) DESC) AS rank
-            FROM unified_tracks
-            WHERE last_played_at IS NOT NULL
-            GROUP BY artist, TO_CHAR(last_played_at, 'YYYY-MM')
+                artist_name,
+                TO_CHAR(played_at, 'YYYY-MM') AS month,
+                COUNT(*) AS play_count,
+                ROW_NUMBER() OVER (
+                    PARTITION BY TO_CHAR(played_at, 'YYYY-MM')
+                    ORDER BY COUNT(*) DESC
+                ) AS rank
+            FROM plays
+            GROUP BY artist_name, TO_CHAR(played_at, 'YYYY-MM')
         ) ranked
         WHERE rank = 1
-        ORDER BY month
+        ORDER BY month;
     """)
     top_artist_by_month = [{"month": row[1], "artist": row[0], "count": row[2]} for row in cur.fetchall()]
 
