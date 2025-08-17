@@ -9,6 +9,10 @@ from utils.logger import log_event
 from utils.spotify_auth import get_spotify_client
 from utils.db_utils import get_db_connection
 
+sp = get_spotify_client()
+# How many albums to integrity-check per run (can override via env ALBUM_INTEGRITY_BATCH)
+INTEGRITY_CHECK_COUNT = int(os.getenv("ALBUM_INTEGRITY_BATCH", "10"))
+
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0
     while retries < 5:
@@ -29,8 +33,6 @@ def safe_spotify_call(func, *args, **kwargs):
             time.sleep(5)
     raise Exception("safe_spotify_call failed after 5 retries")
 
-
-sp = get_spotify_client()
 
 # Helper to get all tracks for an album (handles pagination)
 def get_all_album_tracks(album_id):
@@ -81,14 +83,18 @@ for album_id, album_name, album_added_at in saved_albums:
 
         duration_ms = track.get('duration_ms')
 
+        popularity = None
+        if track_id and track_id in enriched_metadata:
+            popularity = enriched_metadata[track_id].get('popularity')
+
         cur.execute("""
             INSERT INTO tracks (
                 id, name, artist, album, album_id,
                 from_album, track_number, disc_number, added_at,
-                duration_ms
+                duration_ms, popularity
             )
             VALUES (%s, %s, %s, %s, %s, TRUE, %s, %s, %s,
-                    %s)
+                    %s, %s)
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 artist = EXCLUDED.artist,
@@ -98,11 +104,12 @@ for album_id, album_name, album_added_at in saved_albums:
                 track_number = EXCLUDED.track_number,
                 disc_number = EXCLUDED.disc_number,
                 added_at = COALESCE(tracks.added_at, EXCLUDED.added_at),
-                duration_ms = EXCLUDED.duration_ms
+                duration_ms = EXCLUDED.duration_ms,
+                popularity = COALESCE(EXCLUDED.popularity, tracks.popularity)
         """, (
             track_id, track_name, track_artist, album_name, album_id,
             track_number, disc_number, album_added_at,
-            duration_ms
+            duration_ms, popularity
         ))
 
     cur.execute("""
@@ -136,6 +143,77 @@ for album_id, in removed_albums:
     cur.execute("DELETE FROM tracks WHERE album_id = %s", (album_id,))
     cur.execute("DELETE FROM albums WHERE id = %s", (album_id,))
     conn.commit()
+
+# 3️⃣ Background integrity check: verify oldest N albums each run (N=INTEGRITY_CHECK_COUNT)
+log_event("sync_album_tracks", f"Running background integrity check for oldest {INTEGRITY_CHECK_COUNT} albums")
+
+cur.execute("""
+    SELECT id, name, added_at
+    FROM albums
+    WHERE is_saved = TRUE
+    ORDER BY tracks_checked_at NULLS FIRST, added_at ASC
+    LIMIT %s
+""", (INTEGRITY_CHECK_COUNT,))
+oldest_albums = cur.fetchall()
+
+for chk_album_id, chk_album_name, chk_album_added_at in oldest_albums:
+    try:
+        log_event("sync_album_tracks", f"Integrity check: {chk_album_name} ({chk_album_id})")
+        album_tracks = get_all_album_tracks(chk_album_id)
+        if not album_tracks:
+            log_event("sync_album_tracks", f"No tracks returned during integrity check for album: {chk_album_name} ({chk_album_id})", level="warning")
+            # Still record check to avoid hammering the same album
+            cur.execute("UPDATE albums SET tracks_checked_at = NOW() WHERE id = %s", (chk_album_id,))
+            conn.commit()
+            continue
+
+        # Enrich with popularity
+        sp_track_ids = [t.get('id') for t in album_tracks if t.get('id')]
+        enriched = {}
+        for i in range(0, len(sp_track_ids), 50):
+            batch_ids = sp_track_ids[i:i+50]
+            response = safe_spotify_call(sp.tracks, batch_ids)
+            for item in response.get('tracks', []):
+                enriched[item['id']] = item
+
+        # Upsert tracks + popularity; do not delete missing here
+        for t in album_tracks:
+            tid = t.get('id')
+            if not tid:
+                continue
+            t_name = t.get('name')
+            t_artist = t.get('artists', [{}])[0].get('name')
+            t_num = t.get('track_number') or 1
+            d_num = t.get('disc_number') or 1
+            dur = t.get('duration_ms')
+            pop = enriched.get(tid, {}).get('popularity')
+
+            cur.execute("""
+                INSERT INTO tracks (
+                    id, name, artist, album, album_id,
+                    from_album, track_number, disc_number, added_at,
+                    duration_ms, popularity
+                )
+                VALUES (%s, %s, %s, %s, %s, TRUE, %s, %s, %s,
+                        %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    artist = EXCLUDED.artist,
+                    album = EXCLUDED.album,
+                    album_id = EXCLUDED.album_id,
+                    from_album = TRUE,
+                    track_number = EXCLUDED.track_number,
+                    disc_number = EXCLUDED.disc_number,
+                    duration_ms = EXCLUDED.duration_ms,
+                    popularity = COALESCE(EXCLUDED.popularity, tracks.popularity)
+            """, (tid, t_name, t_artist, chk_album_name, chk_album_id, t_num, d_num, chk_album_added_at, dur, pop))
+
+        # Mark album as checked
+        cur.execute("UPDATE albums SET tracks_checked_at = NOW() WHERE id = %s", (chk_album_id,))
+        conn.commit()
+    except Exception as e:
+        log_event("sync_album_tracks", f"Integrity check failed for album {chk_album_id}: {e}", level="error")
+        conn.rollback()
 
 conn.commit()
 
