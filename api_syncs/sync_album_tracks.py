@@ -49,6 +49,11 @@ def get_all_album_tracks(album_id):
 
 conn = get_db_connection()
 cur = conn.cursor()
+# Safety: ensure columns exist (no-op if already present)
+cur.execute("ALTER TABLE albums ADD COLUMN IF NOT EXISTS tracks_checked_at TIMESTAMP")
+cur.execute("ALTER TABLE tracks ADD COLUMN IF NOT EXISTS popularity INTEGER")
+conn.commit()
+log_event("sync_album_tracks", "Schema check complete for tracks_checked_at and popularity")
 
 log_event("sync_album_tracks", "Syncing album tracks for unsynced albums")
 
@@ -114,7 +119,8 @@ for album_id, album_name, album_added_at in saved_albums:
 
     cur.execute("""
         UPDATE albums SET
-            tracks_synced = TRUE
+            tracks_synced = TRUE,
+            tracks_checked_at = NOW()
         WHERE id = %s
     """, (album_id,))
     conn.commit()
@@ -210,6 +216,12 @@ for chk_album_id, chk_album_name, chk_album_added_at in oldest_albums:
 
         # Mark album as checked
         cur.execute("UPDATE albums SET tracks_checked_at = NOW() WHERE id = %s", (chk_album_id,))
+        updated = cur.rowcount
+        log_event("sync_album_tracks", f"Stamped tracks_checked_at for {chk_album_id}; rows updated: {updated}")
+        if updated == 0:
+            # Re-attempt with explicit type cast (rare, but helpful if id encoding mismatch)
+            cur.execute("UPDATE albums SET tracks_checked_at = NOW() WHERE id::text = %s::text", (chk_album_id,))
+            log_event("sync_album_tracks", f"Re-attempted stamp for {chk_album_id}; rows updated: {cur.rowcount}")
         conn.commit()
     except Exception as e:
         log_event("sync_album_tracks", f"Integrity check failed for album {chk_album_id}: {e}", level="error")
