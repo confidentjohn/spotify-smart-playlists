@@ -23,7 +23,8 @@ def run_init_db():
         added_at TIMESTAMP,
         tracks_synced BOOLEAN DEFAULT FALSE,
         album_type TEXT,
-        album_image_url TEXT
+        album_image_url TEXT,
+        tracks_checked_at TIMESTAMP
     );
     """)
 
@@ -39,7 +40,8 @@ def run_init_db():
         "added_at": "TIMESTAMP",
         "tracks_synced": "BOOLEAN DEFAULT FALSE",
         "album_type": "TEXT",
-        "album_image_url": "TEXT"
+        "album_image_url": "TEXT",
+        "tracks_checked_at": "TIMESTAMP"
     }
 
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'albums';")
@@ -64,7 +66,8 @@ def run_init_db():
         track_number INTEGER,
         disc_number INTEGER,
         added_at TIMESTAMP,
-        duration_ms INTEGER
+        duration_ms INTEGER,
+        popularity INTEGER
     );
     """)
 
@@ -79,7 +82,8 @@ def run_init_db():
         "track_number": "INTEGER",
         "disc_number": "INTEGER",
         "added_at": "TIMESTAMP",
-        "duration_ms": "INTEGER"
+        "duration_ms": "INTEGER",
+        "popularity": "INTEGER"
     }
 
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'tracks';")
