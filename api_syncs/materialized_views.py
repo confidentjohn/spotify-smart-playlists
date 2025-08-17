@@ -23,7 +23,7 @@ WITH base_tracks AS (
         t.added_at,                                    -- timestamptz
         t.added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS added_at_est,
         t.duration_ms,
-        lt.popularity,
+        COALESCE(lt.popularity, t.popularity) AS popularity,
         lt.liked_at,                                   -- timestamptz
         lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
         lt.last_checked_at,                            -- timestamptz
@@ -57,7 +57,7 @@ WITH base_tracks AS (
         lt.added_at,                                   -- timestamptz
         lt.added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York',
         lt.duration_ms,
-        lt.popularity,
+        COALESCE(lt.popularity, t.popularity) AS popularity,
         lt.liked_at,                                   -- timestamptz
         lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York',
         lt.last_checked_at,                            -- timestamptz
