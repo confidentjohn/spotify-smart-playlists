@@ -11,7 +11,7 @@ from utils.db_utils import get_db_connection
 
 sp = get_spotify_client()
 # How many albums to integrity-check per run (can override via env ALBUM_INTEGRITY_BATCH)
-INTEGRITY_CHECK_COUNT = int(os.getenv("ALBUM_INTEGRITY_BATCH", "200"))
+INTEGRITY_CHECK_COUNT = int(os.getenv("ALBUM_INTEGRITY_BATCH", "50"))
 
 def safe_spotify_call(func, *args, **kwargs):
     retries = 0

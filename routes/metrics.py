@@ -186,7 +186,7 @@ def collect_metrics_payload():
           END AS popularity_range,
           COUNT(*) AS count
         FROM unified_tracks
-        WHERE is_liked = TRUE AND popularity IS NOT NULL
+        WHERE popularity IS NOT NULL
         GROUP BY popularity_range
         ORDER BY popularity_range
     """)
