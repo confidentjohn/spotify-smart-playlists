@@ -196,7 +196,7 @@ def collect_metrics_payload():
     cur.execute("""
         SELECT ROUND(AVG(popularity), 1)
         FROM unified_tracks
-        WHERE is_liked = TRUE AND popularity IS NOT NULL
+        WHERE popularity IS NOT NULL
     """)
     avg_popularity_score = cur.fetchone()[0] or 0
 
