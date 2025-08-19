@@ -117,6 +117,18 @@ for album_id, album_name, album_added_at in saved_albums:
             duration_ms, popularity
         ))
 
+    # --- Reconcile: remove DB tracks that no longer exist on Spotify for this album ---
+    cur.execute("SELECT id FROM tracks WHERE album_id = %s AND from_album = TRUE", (album_id,))
+    existing_ids = {row[0] for row in cur.fetchall()}
+    desired_ids = {t['id'] for t in album_tracks if t.get('id')}
+    to_remove = list(existing_ids - desired_ids)
+
+    if to_remove:
+        # Remove liked_tracks that reference these tracks first to avoid FK issues
+        cur.execute("DELETE FROM liked_tracks WHERE track_id = ANY(%s)", (to_remove,))
+        cur.execute("DELETE FROM tracks WHERE id = ANY(%s) AND album_id = %s", (to_remove, album_id))
+        log_event("sync_album_tracks", f"Reconciled album {album_id}: removed {len(to_remove)} track(s) not present on Spotify")
+
     cur.execute("""
         UPDATE albums SET
             tracks_synced = TRUE,
@@ -213,6 +225,17 @@ for chk_album_id, chk_album_name, chk_album_added_at in oldest_albums:
                     duration_ms = EXCLUDED.duration_ms,
                     popularity = COALESCE(EXCLUDED.popularity, tracks.popularity)
             """, (tid, t_name, t_artist, chk_album_name, chk_album_id, t_num, d_num, chk_album_added_at, dur, pop))
+
+        # --- Reconcile: remove DB tracks that no longer exist on Spotify for this album (integrity check) ---
+        cur.execute("SELECT id FROM tracks WHERE album_id = %s AND from_album = TRUE", (chk_album_id,))
+        existing_ids = {row[0] for row in cur.fetchall()}
+        desired_ids = {t['id'] for t in album_tracks if t.get('id')}
+        to_remove = list(existing_ids - desired_ids)
+
+        if to_remove:
+            cur.execute("DELETE FROM liked_tracks WHERE track_id = ANY(%s)", (to_remove,))
+            cur.execute("DELETE FROM tracks WHERE id = ANY(%s) AND album_id = %s", (to_remove, chk_album_id))
+            log_event("sync_album_tracks", f"Integrity reconcile {chk_album_id}: removed {len(to_remove)} track(s) not present on Spotify")
 
         # Mark album as checked
         cur.execute("UPDATE albums SET tracks_checked_at = NOW() WHERE id = %s", (chk_album_id,))
