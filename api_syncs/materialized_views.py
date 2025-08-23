@@ -30,7 +30,8 @@ WITH base_tracks AS (
         ta.is_playable,
         CASE WHEN lt.liked_at IS NOT NULL THEN TRUE ELSE FALSE END AS is_liked,
         EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = t.id) AS excluded,
-        'library'::text AS track_source
+        'library'::text AS track_source,
+        'album'::text   AS library_origin              -- NEW
     FROM tracks t
     JOIN albums a ON t.album_id = a.id
     LEFT JOIN liked_tracks lt ON lt.track_id = t.id
@@ -64,7 +65,8 @@ WITH base_tracks AS (
         ta.is_playable,
         TRUE,
         EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = lt.track_id),
-        'library'::text AS track_source
+        'library'::text    AS track_source,
+        'liked_only'::text AS library_origin           -- NEW
     FROM liked_tracks lt
     LEFT JOIN tracks t ON lt.track_id = t.id
     LEFT JOIN track_availability ta ON ta.track_id = lt.track_id
@@ -147,7 +149,7 @@ fuzzy_play_stats AS (
   GROUP BY matched_track_id
 ),
 
--- NEW: Identify non-library track_ids from plays that are NOT in library/liked AND not used by a fuzzy match play
+-- Identify non-library track_ids from plays not in library/liked AND not used by a fuzzy match play
 non_library_candidates AS (
     SELECT
         p.track_id
@@ -159,11 +161,11 @@ non_library_candidates AS (
       AND p.track_id IS NOT NULL
       AND t.id IS NULL
       AND l.track_id IS NULL
-      AND fmt.play_id IS NULL  -- exclude any play that was used in fuzzy matching
+      AND fmt.play_id IS NULL
     GROUP BY p.track_id
 ),
 
--- For each candidate track_id, pick a representative (most recent play) and enrich from artists/albums if available
+-- For each candidate, pick a representative (most recent play) and enrich if available
 non_library_base AS (
     SELECT
         p.track_id,
@@ -189,7 +191,8 @@ non_library_base AS (
         TRUE AS is_playable,  -- non-library rows default to playable
         FALSE                 AS is_liked,
         EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = p.track_id) AS excluded,
-        'non_library'::text   AS track_source
+        'non_library'::text   AS track_source,
+        'non_library'::text   AS library_origin              -- NEW
     FROM non_library_candidates c
     JOIN LATERAL (
         SELECT p2.*
