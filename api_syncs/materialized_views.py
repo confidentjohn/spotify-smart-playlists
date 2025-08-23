@@ -46,7 +46,7 @@ WITH base_tracks AS (
         lt.track_name,
         lt.track_artist,
         lt.artist_id,
-        NULL,
+        lt.album_id,
         NULL,
         NULL,
         NULL,
