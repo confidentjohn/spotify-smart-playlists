@@ -165,7 +165,7 @@
       first_played: { type: 'date', operators: ['gt','gte','lt','lte','eq'] },
 
       // numbers
-      added_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq','gte','lte'] },
+      added_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq'] },
       min_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['gte','gt','eq'] },
       max_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['lte','lt','eq'] },
       plays:     { type: 'number', attrs: { min: 0, step: 1 }, operators: ['eq','gte','lte','gt','lt'] }
@@ -186,32 +186,35 @@
 
     function buildValueControl(row, field) {
       const cfg = FIELD_CONFIG[field] || { type: 'text', operators: ['eq','is_not','contains','not_contains'] };
-      let existing = row.querySelector('[name="value[]"]');
 
-      // Build controls
-      let container = document.createElement('span');
+      // Remove any existing value UI entirely (container + stray inputs)
+      const oldContainer = row.querySelector('.value-container');
+      if (oldContainer) oldContainer.remove();
+      row.querySelectorAll('[name="value[]"], [name="unit[]"]').forEach(el => el.remove());
+
+      // Always create a fresh container and insert it before the remove button
+      const container = document.createElement('span');
       container.className = 'value-container';
-      let control; // primary control to replace existing
+      const removeBtn = row.querySelector('button.btn-secondary');
 
       if (cfg.type === 'enum') {
-        control = document.createElement('select');
-        control.name = 'value[]';
-        control.className = 'form-select';
+        const sel = document.createElement('select');
+        sel.name = 'value[]';
+        sel.className = 'form-select';
         cfg.values.forEach(([val,label]) => {
           const opt = document.createElement('option');
-          opt.value = val; opt.textContent = label; control.appendChild(opt);
+          opt.value = val; opt.textContent = label; sel.appendChild(opt);
         });
-        container.appendChild(control);
+        container.appendChild(sel);
 
       } else if (cfg.type === 'date') {
-        control = document.createElement('input');
-        control.type = 'date';
-        control.name = 'value[]';
-        control.className = 'form-input';
-        container.appendChild(control);
+        const inp = document.createElement('input');
+        inp.type = 'date';
+        inp.name = 'value[]';
+        inp.className = 'form-input';
+        container.appendChild(inp);
 
       } else if (cfg.type === 'number_unit') {
-        // numeric value
         const num = document.createElement('input');
         num.type = 'number';
         num.name = 'value[]';
@@ -219,7 +222,6 @@
         if (cfg.attrs) Object.entries(cfg.attrs).forEach(([k,v]) => num.setAttribute(k, v));
         container.appendChild(num);
 
-        // unit selector
         const unitSel = document.createElement('select');
         unitSel.name = 'unit[]';
         unitSel.className = 'form-select';
@@ -229,33 +231,24 @@
         });
         container.appendChild(unitSel);
 
-        // define control so replaceWith works
-        control = container;
-
       } else if (cfg.type === 'number') {
-        control = document.createElement('input');
-        control.type = 'number';
-        control.name = 'value[]';
-        control.className = 'form-input';
-        if (cfg.attrs) Object.entries(cfg.attrs).forEach(([k,v]) => control.setAttribute(k, v));
-        container.appendChild(control);
+        const inp = document.createElement('input');
+        inp.type = 'number';
+        inp.name = 'value[]';
+        inp.className = 'form-input';
+        if (cfg.attrs) Object.entries(cfg.attrs).forEach(([k,v]) => inp.setAttribute(k, v));
+        container.appendChild(inp);
 
       } else {
-        control = document.createElement('input');
-        control.type = 'text';
-        control.name = 'value[]';
-        control.className = 'form-input';
-        container.appendChild(control);
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.name = 'value[]';
+        inp.className = 'form-input';
+        container.appendChild(inp);
       }
 
-      // Replace existing value control with our new one
-      if (existing) {
-        existing.replaceWith(control);
-      } else {
-        // if for some reason value[] was missing, append to row before the remove button
-        const removeBtn = row.querySelector('button.btn-secondary');
-        row.insertBefore(control, removeBtn);
-      }
+      // Insert container before the remove button (keeps layout consistent)
+      row.insertBefore(container, removeBtn);
 
       buildOperatorSelect(row, cfg.operators);
     }
