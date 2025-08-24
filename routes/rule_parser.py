@@ -18,6 +18,19 @@ def _added_in_last_clause(value, unit, operator):
     # You can expand semantics later if needed
     return f"added_at >= NOW() - INTERVAL '{n} {unit}'"
 
+def _last_played_in_last_clause(value, unit, operator):
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        raise ValueError("'last_played_in_last' requires an integer value")
+    if n < 0:
+        raise ValueError("'last_played_in_last' value must be >= 0")
+    unit = str(unit or "").strip().lower()
+    if unit not in ALLOWED_UNITS:
+        raise ValueError("'last_played_in_last' unit must be one of: days, weeks, months")
+    # Interpret eq/gte/lte the same: within the last N units
+    return f"last_played_at >= NOW() - INTERVAL '{n} {unit}'"
+
 def _normalize_track_source(v: object):
     val = str(v or "").strip().lower()
     if val in ("library", "non_library"):
@@ -49,6 +62,11 @@ CONDITION_MAP = {
     "artist": lambda v: f"LOWER(artist) LIKE LOWER('%{v}%')",
     "is_playable": lambda v: f"is_playable = {str(v).upper()}",
     "added_in_last": {
+        "eq":  lambda v: "",
+        "gte": lambda v: "",
+        "lte": lambda v: "",
+    },
+    "last_played_in_last": {
         "eq":  lambda v: "",
         "gte": lambda v: "",
         "lte": lambda v: "",
@@ -108,6 +126,10 @@ def build_track_query(rules_json):
                     if operator not in map_entry:
                         raise ValueError(f"Unsupported operator '{operator}' for field '{field}'")
                     condition_sql = _added_in_last_clause(value, condition.get('unit'), operator)
+                elif field == 'last_played_in_last':
+                    if operator not in map_entry:
+                        raise ValueError(f"Unsupported operator '{operator}' for field '{field}'")
+                    condition_sql = _last_played_in_last_clause(value, condition.get('unit'), operator)
                 else:
                     if isinstance(map_entry, dict):
                         if operator not in map_entry:

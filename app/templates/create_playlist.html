@@ -76,6 +76,7 @@
             <option value="added_after">Date Added After</option>
             <option value="added_before">Date Added Before</option>
             <option value="added_in_last">Date Added In Last X</option>
+            <option value="last_played_in_last">Last Played In Last X</option>
             <option value="min_plays">Min Plays</option>
             <option value="max_plays">Max Plays</option>
             <option value="plays">Plays</option>
@@ -166,6 +167,7 @@
 
       // numbers
       added_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq'] },
+      last_played_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq','gt','lt'] },
       min_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['gte','gt','eq'] },
       max_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['lte','lt','eq'] },
       plays:     { type: 'number', attrs: { min: 0, step: 1 }, operators: ['eq','gte','lte','gt','lt'] }
