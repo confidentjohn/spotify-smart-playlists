@@ -72,6 +72,7 @@
             <option value="album">Album</option>
             <option value="track">Track</option>
             <option value="track_source">Track Source</option>
+            <option value="library_origin">Library Origin</option>
             <option value="is_liked">Is Liked</option>
             <option value="added_after">Date Added After</option>
             <option value="added_before">Date Added Before</option>
@@ -157,6 +158,7 @@
 
       // enums / booleans
       track_source: { type: 'enum', values: [ ['library','Library'], ['non_library','Non-library'], ['both','Both'] ], operators: ['eq','is_not'] },
+      library_origin: { type: 'enum', values: [['non_library','Non-Library'],['liked_only','Liked Only'],['album','Album']], operators: ['eq','is_not'] },
       is_liked:     { type: 'enum', values: [ ['true','True'], ['false','False'] ], operators: ['eq'] },
 
       // dates

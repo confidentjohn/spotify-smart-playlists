@@ -33,7 +33,7 @@ def _last_played_in_last_clause(value, unit, operator):
         return f"last_played_at >= NOW() - INTERVAL '{n} {unit}'"
     elif operator == "is_not":
         # NOT played in the last N
-        return f"(last_played_at IS NULL OR last_played_at < NOW() - INTERVAL '{n} {unit}')"
+        return f"last_played_at < NOW() - INTERVAL '{n} {unit}'"
     else:
         raise ValueError(f"Unsupported operator '{operator}' for last_played_in_last")
 
@@ -88,6 +88,10 @@ CONDITION_MAP = {
     "track_source": {
         "eq": lambda v: _source_clause(v, "="),
         "is_not": lambda v: _source_clause(v, "<>")
+    },
+    "library_origin": {
+        "eq": lambda v: f"library_origin = '{v}'",
+        "is_not": lambda v: f"library_origin <> '{v}'"
     },
     "last_played": lambda v: f"last_played_at >= '{v}'",
     "first_played": lambda v: f"first_played_at >= '{v}'",
