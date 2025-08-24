@@ -167,7 +167,7 @@
 
       // numbers
       added_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq'] },
-      last_played_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq','gt','lt'] },
+      last_played_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq','gte','lte'] },
       min_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['gte','gt','eq'] },
       max_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['lte','lt','eq'] },
       plays:     { type: 'number', attrs: { min: 0, step: 1 }, operators: ['eq','gte','lte','gt','lt'] }
