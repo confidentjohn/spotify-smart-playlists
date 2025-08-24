@@ -75,7 +75,7 @@
             <option value="is_liked">Is Liked</option>
             <option value="added_after">Date Added After</option>
             <option value="added_before">Date Added Before</option>
-            <option value="added_in_last_days">Date Added In Last X Days</option>
+            <option value="added_in_last">Date Added In Last X</option>
             <option value="min_plays">Min Plays</option>
             <option value="max_plays">Max Plays</option>
             <option value="plays">Plays</option>
@@ -108,6 +108,7 @@
       const container = button.parentElement.querySelector('.rule-conditions');
       const rule = container.querySelector('.rule-row').cloneNode(true);
       rule.querySelectorAll('input').forEach(input => input.value = '');
+      rule.querySelectorAll('[name="unit[]"]').forEach(sel => sel.selectedIndex = 0);
       container.appendChild(rule);
       initializeRuleRow(rule);
     }
@@ -164,7 +165,7 @@
       first_played: { type: 'date', operators: ['gt','gte','lt','lte','eq'] },
 
       // numbers
-      added_in_last_days: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['eq','gte','lte'] },
+      added_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq','gte','lte'] },
       min_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['gte','gt','eq'] },
       max_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['lte','lt','eq'] },
       plays:     { type: 'number', attrs: { min: 0, step: 1 }, operators: ['eq','gte','lte','gt','lt'] }
@@ -187,7 +188,11 @@
       const cfg = FIELD_CONFIG[field] || { type: 'text', operators: ['eq','is_not','contains','not_contains'] };
       let existing = row.querySelector('[name="value[]"]');
 
-      let control;
+      // Build controls
+      let container = document.createElement('span');
+      container.className = 'value-container';
+      let control; // primary control to replace existing
+
       if (cfg.type === 'enum') {
         control = document.createElement('select');
         control.name = 'value[]';
@@ -196,25 +201,62 @@
           const opt = document.createElement('option');
           opt.value = val; opt.textContent = label; control.appendChild(opt);
         });
+        container.appendChild(control);
+
       } else if (cfg.type === 'date') {
         control = document.createElement('input');
         control.type = 'date';
         control.name = 'value[]';
         control.className = 'form-input';
+        container.appendChild(control);
+
+      } else if (cfg.type === 'number_unit') {
+        // numeric value
+        const num = document.createElement('input');
+        num.type = 'number';
+        num.name = 'value[]';
+        num.className = 'form-input';
+        if (cfg.attrs) Object.entries(cfg.attrs).forEach(([k,v]) => num.setAttribute(k, v));
+        container.appendChild(num);
+
+        // unit selector
+        const unitSel = document.createElement('select');
+        unitSel.name = 'unit[]';
+        unitSel.className = 'form-select';
+        (cfg.units || [['days','Days'],['weeks','Weeks'],['months','Months']]).forEach(([val,label]) => {
+          const opt = document.createElement('option');
+          opt.value = val; opt.textContent = label; unitSel.appendChild(opt);
+        });
+        container.appendChild(unitSel);
+
+        // define control so replaceWith works
+        control = container;
+
       } else if (cfg.type === 'number') {
         control = document.createElement('input');
         control.type = 'number';
         control.name = 'value[]';
         control.className = 'form-input';
         if (cfg.attrs) Object.entries(cfg.attrs).forEach(([k,v]) => control.setAttribute(k, v));
+        container.appendChild(control);
+
       } else {
         control = document.createElement('input');
         control.type = 'text';
         control.name = 'value[]';
         control.className = 'form-input';
+        container.appendChild(control);
       }
 
-      existing.replaceWith(control);
+      // Replace existing value control with our new one
+      if (existing) {
+        existing.replaceWith(control);
+      } else {
+        // if for some reason value[] was missing, append to row before the remove button
+        const removeBtn = row.querySelector('button.btn-secondary');
+        row.insertBefore(control, removeBtn);
+      }
+
       buildOperatorSelect(row, cfg.operators);
     }
 
@@ -248,8 +290,18 @@
       rows.forEach(row => {
         const field = row.querySelector('[name="field[]"]').value;
         const operator = row.querySelector('[name="operator[]"]').value;
-        const value = row.querySelector('[name="value[]"]').value;
-        if (field && operator && value) {
+        const valueEl = row.querySelector('[name="value[]"]');
+        const unitEl  = row.querySelector('[name="unit[]"]');
+        const value = valueEl ? valueEl.value : '';
+        const unit  = unitEl ? unitEl.value : undefined;
+
+        // basic validation for number+unit field
+        if (field === 'added_in_last') {
+          const n = parseInt(value, 10);
+          if (Number.isNaN(n) || n < 0) return; // skip invalid row
+          if (!unit) return; // must have unit
+          group.conditions.push({ field, operator, value: n, unit });
+        } else if (field && operator && value !== '') {
           group.conditions.push({ field, operator, value });
         }
       });
@@ -295,6 +347,8 @@
         direction: row.querySelector('[name="sort_direction[]"]').value
       }));
 
+      // NOTE: Backend should handle `added_in_last` using the provided unit
+      // e.g., build an interval like `${value} ${unit}` in SQL.
       document.getElementById("rules_json").value = JSON.stringify(rules);
       return true;
     }

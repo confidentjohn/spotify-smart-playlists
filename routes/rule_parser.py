@@ -2,6 +2,22 @@
 import json
 from utils.logger import log_event
 
+ALLOWED_UNITS = {"days", "weeks", "months"}
+
+def _added_in_last_clause(value, unit, operator):
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        raise ValueError("'added_in_last' requires an integer value")
+    if n < 0:
+        raise ValueError("'added_in_last' value must be >= 0")
+    unit = str(unit or "").strip().lower()
+    if unit not in ALLOWED_UNITS:
+        raise ValueError("'added_in_last' unit must be one of: days, weeks, months")
+    # Interpret eq/gte/lte the same: within the last N units
+    # You can expand semantics later if needed
+    return f"added_at >= NOW() - INTERVAL '{n} {unit}'"
+
 def _normalize_track_source(v: object):
     val = str(v or "").strip().lower()
     if val in ("library", "non_library"):
@@ -32,7 +48,11 @@ CONDITION_MAP = {
     "is_liked": lambda v: f"is_liked = {str(v).upper()}",
     "artist": lambda v: f"LOWER(artist) LIKE LOWER('%{v}%')",
     "is_playable": lambda v: f"is_playable = {str(v).upper()}",
-    "added_in_last_days": lambda v: f"added_at >= NOW() - INTERVAL '{int(v)} days'",
+    "added_in_last": {
+        "eq":  lambda v: "",
+        "gte": lambda v: "",
+        "lte": lambda v: "",
+    },
     "date_added": {
         "gt": lambda v: f"added_at > '{v}'",
         "lt": lambda v: f"added_at < '{v}'",
@@ -84,12 +104,17 @@ def build_track_query(rules_json):
 
             try:
                 map_entry = CONDITION_MAP[field]
-                if isinstance(map_entry, dict):
+                if field == 'added_in_last':
                     if operator not in map_entry:
                         raise ValueError(f"Unsupported operator '{operator}' for field '{field}'")
-                    condition_sql = map_entry[operator](value)
+                    condition_sql = _added_in_last_clause(value, condition.get('unit'), operator)
                 else:
-                    condition_sql = map_entry(value)
+                    if isinstance(map_entry, dict):
+                        if operator not in map_entry:
+                            raise ValueError(f"Unsupported operator '{operator}' for field '{field}'")
+                        condition_sql = map_entry[operator](value)
+                    else:
+                        condition_sql = map_entry(value)
                 if condition_sql and str(condition_sql).strip():
                     condition_strings.append(condition_sql)
                     log_event("rule_parser", f"✅ Parsed rule '{field}' -> {condition_sql}")
