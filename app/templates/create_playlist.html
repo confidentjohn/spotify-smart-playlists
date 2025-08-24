@@ -167,7 +167,7 @@
 
       // numbers
       added_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq'] },
-      last_played_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq','gte','lte'] },
+      last_played_in_last: { type: 'number_unit', attrs: { min: 0, step: 1 }, units: [['days','Days'], ['weeks','Weeks'], ['months','Months']], operators: ['eq','is_not'] },
       min_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['gte','gt','eq'] },
       max_plays: { type: 'number', attrs: { min: 0, step: 1 }, operators: ['lte','lt','eq'] },
       plays:     { type: 'number', attrs: { min: 0, step: 1 }, operators: ['eq','gte','lte','gt','lt'] }
@@ -291,7 +291,7 @@
         const unit  = unitEl ? unitEl.value : undefined;
 
         // basic validation for number+unit field
-        if (field === 'added_in_last') {
+        if (field === 'added_in_last' || field === 'last_played_in_last') {
           const n = parseInt(value, 10);
           if (Number.isNaN(n) || n < 0) return; // skip invalid row
           if (!unit) return; // must have unit

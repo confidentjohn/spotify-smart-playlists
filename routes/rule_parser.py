@@ -28,8 +28,14 @@ def _last_played_in_last_clause(value, unit, operator):
     unit = str(unit or "").strip().lower()
     if unit not in ALLOWED_UNITS:
         raise ValueError("'last_played_in_last' unit must be one of: days, weeks, months")
-    # Interpret eq/gte/lte the same: within the last N units
-    return f"last_played_at >= NOW() - INTERVAL '{n} {unit}'"
+    if operator == "eq":
+        # Played in the last N (inclusive)
+        return f"last_played_at >= NOW() - INTERVAL '{n} {unit}'"
+    elif operator == "is_not":
+        # NOT played in the last N
+        return f"(last_played_at IS NULL OR last_played_at < NOW() - INTERVAL '{n} {unit}')"
+    else:
+        raise ValueError(f"Unsupported operator '{operator}' for last_played_in_last")
 
 def _normalize_track_source(v: object):
     val = str(v or "").strip().lower()
@@ -68,8 +74,7 @@ CONDITION_MAP = {
     },
     "last_played_in_last": {
         "eq":  lambda v: "",
-        "gte": lambda v: "",
-        "lte": lambda v: "",
+        "is_not": lambda v: "",
     },
     "date_added": {
         "gt": lambda v: f"added_at > '{v}'",
