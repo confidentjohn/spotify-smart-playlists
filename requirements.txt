@@ -3,7 +3,7 @@ blinker==1.9.0
 certifi==2025.8.3
 charset-normalizer==3.4.3
 click==8.2.1
-Flask==3.1.1
+Flask==3.1.2
 flask-login
 werkzeug
 idna==3.10
