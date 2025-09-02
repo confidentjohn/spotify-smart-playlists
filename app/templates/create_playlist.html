@@ -136,17 +136,47 @@
     }
 
     function addGroup(button) {
-      const newGroup = document.querySelector("#rules-container .rule-group").cloneNode(true);
-      newGroup.querySelectorAll('input').forEach(input => input.value = '');
-      // Reset selects in the new group
-      newGroup.querySelectorAll('select').forEach(select => {
-        if (select.classList.contains('match-selector')) {
-          select.value = 'all';
-        } else {
-          select.selectedIndex = 0;
+      // Clone a fresh top-level group as a template
+      const template = document.querySelector('#rules-container .rule-group').cloneNode(true);
+
+      // 1) Remove any nested groups from the template so we don't duplicate subgroups
+      template.querySelectorAll('.rule-group').forEach(g => g.remove());
+
+      // 2) Reset the match selector to 'all' for the new subgroup
+      const matchSel = template.querySelector('.match-selector');
+      if (matchSel) matchSel.value = 'all';
+
+      // 3) Keep only a single clean rule row and reset its inputs
+      const rulesContainer = template.querySelector('.rule-conditions');
+      if (rulesContainer) {
+        const ruleRows = Array.from(rulesContainer.querySelectorAll('.rule-row'));
+        // Remove extra rule rows if any
+        ruleRows.slice(1).forEach(r => r.remove());
+
+        // Reset the remaining rule row to defaults (field/operator/value)
+        const row = ruleRows[0];
+        if (row) {
+          // reset selects and inputs
+          row.querySelectorAll('input').forEach(inp => { inp.value = ''; });
+          row.querySelectorAll('[name="unit[]"]').forEach(sel => sel.selectedIndex = 0);
+
+          // Reset the field to the first option then rebuild its value control
+          const fieldSel = row.querySelector('[name="field[]"]');
+          if (fieldSel) {
+            fieldSel.selectedIndex = 0;
+            buildValueControl(row, fieldSel.value);
+          }
+
+          // Ensure operator list matches the default field configuration
+          const defaultField = fieldSel ? fieldSel.value : 'artist';
+          const cfg = FIELD_CONFIG[defaultField] || { operators: ['eq','is_not','contains','not_contains'] };
+          buildOperatorSelect(row, cfg.operators);
         }
-      });
-      button.parentElement.appendChild(newGroup);
+      }
+
+      // 4) Append this clean subgroup as a direct child of the current group's container
+      // Place it next to the existing buttons inside the current .rule-group
+      button.parentElement.appendChild(template);
     }
 
     // --- Context-aware rule inputs ---
