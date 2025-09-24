@@ -141,6 +141,52 @@ def run_init_db():
             cur.execute(f"ALTER TABLE plays ADD COLUMN {col_name} {col_type};")
 
     # ─────────────────────────────────────────────
+    # Spotify play history table (same schema as plays; optional import target)
+    # ─────────────────────────────────────────────
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS spotify_play_history (
+        id SERIAL PRIMARY KEY,
+        track_id TEXT,
+        played_at TIMESTAMP,
+        track_name TEXT,
+        artist_id TEXT,
+        duration_ms INTEGER,
+        artist_name TEXT,
+        album_id TEXT,
+        album_name TEXT,
+        album_type TEXT,
+        UNIQUE(track_id, played_at)
+    );
+    """)
+
+    # Explicitly create a named unique index to mirror plays
+    cur.execute("""
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_spotify_play_history_unique ON spotify_play_history (track_id, played_at);
+    """)
+
+    # Ensure all expected columns exist in the spotify_play_history table
+    expected_history_columns = {
+        "id": "SERIAL",
+        "track_id": "TEXT",
+        "played_at": "TIMESTAMP",
+        "track_name": "TEXT",
+        "artist_id": "TEXT",
+        "duration_ms": "INTEGER",
+        "artist_name": "TEXT",
+        "album_id": "TEXT",
+        "album_name": "TEXT",
+        "album_type": "TEXT"
+    }
+
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'spotify_play_history';")
+    existing_history_columns = {row[0] for row in cur.fetchall()}
+
+    for col_name, col_type in expected_history_columns.items():
+        if col_name not in existing_history_columns:
+            print(f"🛠 Adding missing column to spotify_play_history: {col_name}")
+            cur.execute(f"ALTER TABLE spotify_play_history ADD COLUMN {col_name} {col_type};")
+
+    # ─────────────────────────────────────────────
     # Playlist mapping table
     # ─────────────────────────────────────────────
     cur.execute("""
