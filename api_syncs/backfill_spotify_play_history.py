@@ -113,7 +113,7 @@ def update_history_rows(cur, track_id, artist_id, album_id, album_type, duration
     )
 
 
-def backfill_history(batch_size: int = 500, drip_delay: int = 5):
+def backfill_history(batch_size: int = 500, drip_delay: int = 5, no_catalog_writes: bool = False):
     """Slow-drip backfill that runs until all rows are enriched.
 
     Fetches up to `batch_size` distinct track_ids per outer loop, processes them
@@ -142,15 +142,27 @@ def backfill_history(batch_size: int = 500, drip_delay: int = 5):
             try:
                 resp = sp.tracks(chunk)
             except spotipy.SpotifyException as e:
-                log_event(JOB_NAME, f"Spotify API error: {e}. Sleeping 30s and retrying this chunk…")
-                print(f"⚠️ Spotify API error: {e}. Sleeping 30s and retrying this chunk…")
-                time.sleep(30)
-                try:
-                    resp = sp.tracks(chunk)
-                except Exception as e2:
-                    log_event(JOB_NAME, f"Chunk failed again, skipping. Error: {e2}")
-                    print(f"❗ Chunk failed again, skipping. Error: {e2}")
-                    continue
+                # If token expired, refresh client via our standard helper and retry once
+                if getattr(e, 'http_status', None) == 401:
+                    log_event(JOB_NAME, "Access token expired. Refreshing client and retrying chunk once…")
+                    print("🔄 Access token expired. Refreshing and retrying…")
+                    sp = get_spotify_client()
+                    try:
+                        resp = sp.tracks(chunk)
+                    except Exception as e2:
+                        log_event(JOB_NAME, f"401 retry failed; exiting job. Error: {e2}")
+                        print(f"❗ 401 retry failed; stopping backfill. Error: {e2}")
+                        sys.exit(1)
+                else:
+                    log_event(JOB_NAME, f"Spotify API error: {e}. Sleeping 30s and retrying this chunk…")
+                    print(f"⚠️ Spotify API error: {e}. Sleeping 30s and retrying this chunk…")
+                    time.sleep(30)
+                    try:
+                        resp = sp.tracks(chunk)
+                    except Exception as e2:
+                        log_event(JOB_NAME, f"Chunk failed again, skipping. Error: {e2}")
+                        print(f"❗ Chunk failed again, skipping. Error: {e2}")
+                        continue
 
             tracks = (resp or {}).get("tracks", []) or []
             for t in tracks:
@@ -173,9 +185,10 @@ def backfill_history(batch_size: int = 500, drip_delay: int = 5):
                 primary_artist_name = artists[0].get("name") if artists else None
                 track_duration = t.get("duration_ms")
 
-                # Upsert catalog rows
-                upsert_artist(cur, primary_artist_id, primary_artist_name)
-                upsert_album(cur, album_id, album_name, primary_artist_name, primary_artist_id, release_date, album_type, image_url)
+                # Optionally skip catalog writes to avoid touching other systems
+                if not no_catalog_writes:
+                    upsert_artist(cur, primary_artist_id, primary_artist_name)
+                    upsert_album(cur, album_id, album_name, primary_artist_name, primary_artist_id, release_date, album_type, image_url)
 
                 # Update all history rows for this track_id that are still missing data
                 update_history_rows(cur, tid, primary_artist_id, album_id, album_type, track_duration)
@@ -196,10 +209,11 @@ def parse_args():
     ap = argparse.ArgumentParser(description="Backfill spotify_play_history metadata in batches (slow-drip until complete)")
     ap.add_argument("--batch-size", type=int, default=500, help="Number of distinct track_ids to fetch per outer loop (default 500)")
     ap.add_argument("--drip-delay", type=int, default=5, help="Seconds to sleep between API chunks (default 5)")
+    ap.add_argument("--no-catalog-writes", action="store_true", help="Do not upsert into artists/albums; only fill spotify_play_history (safer one-time run)")
     return ap.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     log_event(JOB_NAME, "Invocation received.")
-    backfill_history(batch_size=args.batch_size, drip_delay=args.drip_delay)
+    backfill_history(batch_size=args.batch_size, drip_delay=args.drip_delay, no_catalog_writes=args.no_catalog_writes)
