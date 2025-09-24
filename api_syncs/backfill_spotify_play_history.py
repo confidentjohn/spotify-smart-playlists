@@ -14,6 +14,11 @@ Behavior:
 - Upserts minimal rows into artists and albums to keep the catalog consistent.
 - Commits once per run; rerun as many times as needed. Already-filled tracks will not be selected again.
 """
+import os
+import sys as _sys
+# Ensure project root is on sys.path when running as a script
+_sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 import argparse
 import sys
 import time
@@ -23,8 +28,10 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
 from utils.db_utils import get_db_connection
+from utils.logger import log_event
 
 CHUNK = 50  # Spotify API max batch for tracks
+JOB_NAME = "backfill_spotify_play_history"
 
 
 def fetch_missing_track_ids(cur, limit):
@@ -95,16 +102,19 @@ def update_history_rows(cur, track_id, artist_id, album_id, album_type):
 
 
 def backfill_history(batch_size: int = 500):
+    log_event(JOB_NAME, f"Starting backfill run with batch_size={batch_size}.")
     conn = get_db_connection()
     cur = conn.cursor()
 
     # Select a batch of missing track_ids
     track_ids = fetch_missing_track_ids(cur, batch_size)
     if not track_ids:
+        log_event(JOB_NAME, "Nothing to backfill. All rows have artist_id/album_id/album_type.")
         print("✅ Nothing to backfill. All rows have artist_id/album_id/album_type.")
         cur.close(); conn.close()
         return
 
+    log_event(JOB_NAME, f"Selected {len(track_ids)} track_ids; processing in chunks of {CHUNK}…")
     print(f"🔎 Selected {len(track_ids)} track_ids needing metadata. Processing in chunks of {CHUNK}…")
 
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials())
@@ -115,6 +125,7 @@ def backfill_history(batch_size: int = 500):
         try:
             resp = sp.tracks(chunk)
         except spotipy.SpotifyException as e:
+            log_event(JOB_NAME, f"Spotify API error: {e}. Retrying after 5s.")
             print(f"⚠️ Spotify API error: {e}. Sleeping 5s and continuing…")
             time.sleep(5)
             continue
@@ -151,9 +162,11 @@ def backfill_history(batch_size: int = 500):
         time.sleep(0.2)
 
     conn.commit()
+    log_event(JOB_NAME, f"Batch committed. Tracks processed this run: {processed}.")
     cur.close(); conn.close()
 
     print(f"✅ Backfill committed. Tracks processed this run: {processed}. Run again to continue.")
+    log_event(JOB_NAME, "Run complete.")
 
 
 def parse_args():
@@ -164,4 +177,5 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    log_event(JOB_NAME, "Invocation received.")
     backfill_history(batch_size=args.batch_size)
