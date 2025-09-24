@@ -1,4 +1,3 @@
-# api_syncs/backfill_spotify_play_history.py
 """
 Manual backfill of artist_id, album_id, and album_type into spotify_play_history
 in small, resumable batches.
@@ -46,9 +45,14 @@ def fetch_missing_track_ids(cur, limit):
         SELECT track_id
           FROM spotify_play_history
          WHERE track_id IS NOT NULL
-           AND (artist_id IS NULL OR album_id IS NULL OR album_type IS NULL)
+           AND (
+                artist_id   IS NULL OR
+                album_id    IS NULL OR
+                album_type  IS NULL OR
+                duration_ms IS NULL
+           )
          GROUP BY track_id
-         ORDER BY MIN(played_at) ASC
+         ORDER BY MIN(checked_at) NULLS FIRST, MIN(played_at) ASC
          LIMIT %s
         """,
         (limit,),
@@ -88,17 +92,24 @@ def upsert_album(cur, album_id, album_name, primary_artist_name, primary_artist_
     )
 
 
-def update_history_rows(cur, track_id, artist_id, album_id, album_type):
+def update_history_rows(cur, track_id, artist_id, album_id, album_type, duration_ms):
     cur.execute(
         """
         UPDATE spotify_play_history
-           SET artist_id = COALESCE(%s, artist_id),
-               album_id  = COALESCE(%s, album_id),
-               album_type= COALESCE(%s, album_type)
+           SET artist_id   = COALESCE(%s, artist_id),
+               album_id    = COALESCE(%s, album_id),
+               album_type  = COALESCE(%s, album_type),
+               duration_ms = COALESCE(%s, duration_ms),
+               checked_at  = NOW()
          WHERE track_id = %s
-           AND (artist_id IS NULL OR album_id IS NULL OR album_type IS NULL)
+           AND (
+                artist_id   IS NULL OR
+                album_id    IS NULL OR
+                album_type  IS NULL OR
+                duration_ms IS NULL
+           )
         """,
-        (artist_id, album_id, album_type, track_id),
+        (artist_id, album_id, album_type, duration_ms, track_id),
     )
 
 
@@ -150,13 +161,14 @@ def backfill_history(batch_size: int = 500):
 
             primary_artist_id = artists[0].get("id") if artists else None
             primary_artist_name = artists[0].get("name") if artists else None
+            track_duration = t.get("duration_ms")
 
             # Upsert catalog rows
             upsert_artist(cur, primary_artist_id, primary_artist_name)
             upsert_album(cur, album_id, album_name, primary_artist_name, primary_artist_id, release_date, album_type, image_url)
 
             # Update all history rows for this track_id that are still missing data
-            update_history_rows(cur, tid, primary_artist_id, album_id, album_type)
+            update_history_rows(cur, tid, primary_artist_id, album_id, album_type, track_duration)
 
         processed += len(chunk)
         # Gentle pacing; spotipy handles retry headers but we avoid hammering

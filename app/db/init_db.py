@@ -109,6 +109,7 @@ def run_init_db():
         album_id TEXT,
         album_name TEXT,
         album_type TEXT,
+        checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(track_id, played_at)
     );
     """)
@@ -175,7 +176,8 @@ def run_init_db():
         "artist_name": "TEXT",
         "album_id": "TEXT",
         "album_name": "TEXT",
-        "album_type": "TEXT"
+        "album_type": "TEXT",
+        "checked_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
     }
 
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'spotify_play_history';")
