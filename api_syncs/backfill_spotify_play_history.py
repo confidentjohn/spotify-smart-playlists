@@ -113,82 +113,93 @@ def update_history_rows(cur, track_id, artist_id, album_id, album_type, duration
     )
 
 
-def backfill_history(batch_size: int = 500):
-    log_event(JOB_NAME, f"Starting backfill run with batch_size={batch_size}.")
+def backfill_history(batch_size: int = 500, drip_delay: int = 5):
+    """Slow-drip backfill that runs until all rows are enriched.
+
+    Fetches up to `batch_size` distinct track_ids per outer loop, processes them
+    in chunks of 50 (Spotify API limit), commits after each chunk, sleeps
+    `drip_delay` seconds between chunks, and repeats until no rows remain.
+    """
+    log_event(JOB_NAME, f"Starting slow-drip backfill with batch_size={batch_size}, drip_delay={drip_delay}s.")
     conn = get_db_connection()
     cur = conn.cursor()
-
-    # Select a batch of missing track_ids
-    track_ids = fetch_missing_track_ids(cur, batch_size)
-    if not track_ids:
-        log_event(JOB_NAME, "Nothing to backfill. All rows have artist_id/album_id/album_type.")
-        print("✅ Nothing to backfill. All rows have artist_id/album_id/album_type.")
-        cur.close(); conn.close()
-        return
-
-    log_event(JOB_NAME, f"Selected {len(track_ids)} track_ids; processing in chunks of {CHUNK}…")
-    print(f"🔎 Selected {len(track_ids)} track_ids needing metadata. Processing in chunks of {CHUNK}…")
-
     sp = get_spotify_client()
 
-    processed = 0
-    for i in range(0, len(track_ids), CHUNK):
-        chunk = track_ids[i:i+CHUNK]
-        try:
-            resp = sp.tracks(chunk)
-        except spotipy.SpotifyException as e:
-            log_event(JOB_NAME, f"Spotify API error: {e}. Retrying after 5s.")
-            print(f"⚠️ Spotify API error: {e}. Sleeping 5s and continuing…")
-            time.sleep(5)
-            continue
+    total_processed = 0
 
-        tracks = (resp or {}).get("tracks", []) or []
-        for t in tracks:
-            if not t:
-                continue
-            tid = t.get("id")
-            album = t.get("album") or {}
-            artists = t.get("artists") or []
+    while True:
+        track_ids = fetch_missing_track_ids(cur, batch_size)
+        if not track_ids:
+            log_event(JOB_NAME, "Nothing left to backfill. All rows enriched.")
+            print("✅ All rows enriched. Backfill complete.")
+            break
 
-            album_id = album.get("id")
-            album_name = album.get("name")
-            album_type = album.get("album_type")  # 'album' | 'single' | 'compilation'
-            release_date = album.get("release_date")
-            image_url = None
-            images = album.get("images") or []
-            if images:
-                image_url = images[0].get("url")
+        log_event(JOB_NAME, f"Selected {len(track_ids)} track_ids; processing in chunks of {CHUNK}…")
+        print(f"🔎 Selected {len(track_ids)} track_ids needing metadata. Processing in chunks of {CHUNK}…")
 
-            primary_artist_id = artists[0].get("id") if artists else None
-            primary_artist_name = artists[0].get("name") if artists else None
-            track_duration = t.get("duration_ms")
+        for i in range(0, len(track_ids), CHUNK):
+            chunk = track_ids[i:i+CHUNK]
+            try:
+                resp = sp.tracks(chunk)
+            except spotipy.SpotifyException as e:
+                log_event(JOB_NAME, f"Spotify API error: {e}. Sleeping 30s and retrying this chunk…")
+                print(f"⚠️ Spotify API error: {e}. Sleeping 30s and retrying this chunk…")
+                time.sleep(30)
+                try:
+                    resp = sp.tracks(chunk)
+                except Exception as e2:
+                    log_event(JOB_NAME, f"Chunk failed again, skipping. Error: {e2}")
+                    print(f"❗ Chunk failed again, skipping. Error: {e2}")
+                    continue
 
-            # Upsert catalog rows
-            upsert_artist(cur, primary_artist_id, primary_artist_name)
-            upsert_album(cur, album_id, album_name, primary_artist_name, primary_artist_id, release_date, album_type, image_url)
+            tracks = (resp or {}).get("tracks", []) or []
+            for t in tracks:
+                if not t:
+                    continue
+                tid = t.get("id")
+                album = t.get("album") or {}
+                artists = t.get("artists") or []
 
-            # Update all history rows for this track_id that are still missing data
-            update_history_rows(cur, tid, primary_artist_id, album_id, album_type, track_duration)
+                album_id = album.get("id")
+                album_name = album.get("name")
+                album_type = album.get("album_type")  # 'album' | 'single' | 'compilation'
+                release_date = album.get("release_date")
+                image_url = None
+                images = album.get("images") or []
+                if images:
+                    image_url = images[0].get("url")
 
-        processed += len(chunk)
-        # Gentle pacing; spotipy handles retry headers but we avoid hammering
-        time.sleep(0.2)
+                primary_artist_id = artists[0].get("id") if artists else None
+                primary_artist_name = artists[0].get("name") if artists else None
+                track_duration = t.get("duration_ms")
 
-    conn.commit()
-    log_event(JOB_NAME, f"Batch committed. Tracks processed this run: {processed}.")
-    cur.close(); conn.close()
+                # Upsert catalog rows
+                upsert_artist(cur, primary_artist_id, primary_artist_name)
+                upsert_album(cur, album_id, album_name, primary_artist_name, primary_artist_id, release_date, album_type, image_url)
 
-    print(f"✅ Backfill committed. Tracks processed this run: {processed}. Run again to continue.")
-    log_event(JOB_NAME, "Run complete.")
+                # Update all history rows for this track_id that are still missing data
+                update_history_rows(cur, tid, primary_artist_id, album_id, album_type, track_duration)
+
+            conn.commit()
+            total_processed += len(chunk)
+            log_event(JOB_NAME, f"Committed chunk of {len(chunk)} tracks; total processed this run: {total_processed}.")
+            print(f"✅ Committed chunk of {len(chunk)} tracks; total processed: {total_processed}.")
+
+            time.sleep(drip_delay)
+
+    cur.close()
+    conn.close()
+    log_event(JOB_NAME, "Slow-drip backfill run complete.")
 
 
 def parse_args():
-    ap = argparse.ArgumentParser(description="Backfill spotify_play_history metadata in batches")
-    ap.add_argument("--batch-size", type=int, default=500, help="Number of distinct track_ids to enrich per run (default 500)")
+    ap = argparse.ArgumentParser(description="Backfill spotify_play_history metadata in batches (slow-drip until complete)")
+    ap.add_argument("--batch-size", type=int, default=500, help="Number of distinct track_ids to fetch per outer loop (default 500)")
+    ap.add_argument("--drip-delay", type=int, default=5, help="Seconds to sleep between API chunks (default 5)")
     return ap.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     log_event(JOB_NAME, "Invocation received.")
-    backfill_history(batch_size=args.batch_size)
+    backfill_history(batch_size=args.batch_size, drip_delay=args.drip_delay)
