@@ -29,6 +29,7 @@ from spotipy.oauth2 import SpotifyClientCredentials
 
 from utils.db_utils import get_db_connection
 from utils.logger import log_event
+from utils.spotify_auth import get_spotify_client
 
 CHUNK = 50  # Spotify API max batch for tracks
 JOB_NAME = "backfill_spotify_play_history"
@@ -117,7 +118,7 @@ def backfill_history(batch_size: int = 500):
     log_event(JOB_NAME, f"Selected {len(track_ids)} track_ids; processing in chunks of {CHUNK}…")
     print(f"🔎 Selected {len(track_ids)} track_ids needing metadata. Processing in chunks of {CHUNK}…")
 
-    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials())
+    sp = get_spotify_client()
 
     processed = 0
     for i in range(0, len(track_ids), CHUNK):
