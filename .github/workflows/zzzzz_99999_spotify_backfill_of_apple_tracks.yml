@@ -1,0 +1,56 @@
+name: zzzzz_99999 - Spotify Backfill of Apple Tracks
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Rows per run (your script currently defaults to 100)"
+        required: false
+        default: "100"
+
+concurrency:
+  group: spotify-backfill-apple-tracks
+  cancel-in-progress: false
+
+jobs:
+  backfill-spotify-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v5
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -V
+          pip install -r requirements.txt
+          pip list
+
+      - name: 🔐 Export env vars
+        run: |
+          echo "ISRC_LINK_LIMIT=${{ github.event.inputs.limit }}" >> $GITHUB_ENV
+          echo "TZ=UTC" >> $GITHUB_ENV
+
+      - name: 🚀 Run backfill_spotify_metadata.py
+        env:
+          # Spotify (same as your other jobs)
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
+          SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+
+          # Postgres
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          PYTHONPATH=. python apple_private/backfill_spotify_metadata.py

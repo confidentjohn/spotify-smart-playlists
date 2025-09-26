@@ -227,50 +227,6 @@ def run_init_db():
             print(f"🛠 Adding missing column to apple_music_plays: {col_name}")
             cur.execute(f"ALTER TABLE apple_music_plays ADD COLUMN {col_name} {col_type};")
 
-    # ─────────────────────────────────────────────
-    # Apple unique track IDs cache (one row per Apple track id)
-    # ─────────────────────────────────────────────
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS apple_unique_track_ids (
-        apple_track_id   BIGINT PRIMARY KEY,
-        name             TEXT,
-        artist_name      TEXT,
-        album_name       TEXT,
-        isrc             TEXT,
-        duration_ms      INTEGER,
-        url              TEXT,
-        raw_json         JSONB,
-        checked_at       TIMESTAMPTZ DEFAULT NOW(),
-        last_error       TEXT
-    );
-    """)
-
-    # Helpful index for ISRC-based lookups
-    cur.execute("""
-    CREATE INDEX IF NOT EXISTS idx_apple_unique_track_ids_isrc ON apple_unique_track_ids (isrc);
-    """)
-
-    # Ensure expected columns exist in apple_unique_track_ids
-    expected_apple_unique_columns = {
-        "apple_track_id": "BIGINT",
-        "name": "TEXT",
-        "artist_name": "TEXT",
-        "album_name": "TEXT",
-        "isrc": "TEXT",
-        "duration_ms": "INTEGER",
-        "url": "TEXT",
-        "raw_json": "JSONB",
-        "checked_at": "TIMESTAMPTZ DEFAULT NOW()",
-        "last_error": "TEXT",
-    }
-
-    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'apple_unique_track_ids';")
-    existing_apple_unique_columns = {row[0] for row in cur.fetchall()}
-
-    for col_name, col_type in expected_apple_unique_columns.items():
-        if col_name not in existing_apple_unique_columns:
-            print(f"🛠 Adding missing column to apple_unique_track_ids: {col_name}")
-            cur.execute(f"ALTER TABLE apple_unique_track_ids ADD COLUMN {col_name} {col_type};")
 
     # ─────────────────────────────────────────────
     # Playlist mapping table
