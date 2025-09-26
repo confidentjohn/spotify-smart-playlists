@@ -1,0 +1,85 @@
+
+
+name: zzzzz - Backfill Spotify by Fields
+
+on:
+  workflow_dispatch:
+    inputs:
+      batch_size:
+        description: "Rows per DB batch (SPOTIFY_FIELDS_BATCH)"
+        required: false
+        default: "200"
+      pause_s:
+        description: "Pause seconds between batches (SPOTIFY_FIELDS_PAUSE_S)"
+        required: false
+        default: "1.0"
+      title_sim_min:
+        description: "Min title similarity [0..1] (SPOTIFY_FIELDS_TITLE_SIM_MIN)"
+        required: false
+        default: "0.70"
+      album_sim_min:
+        description: "Min album similarity [0..1] (SPOTIFY_FIELDS_ALBUM_SIM_MIN)"
+        required: false
+        default: "0.35"
+      dur_max_ms:
+        description: "Max duration diff in ms (SPOTIFY_FIELDS_DUR_MAX_MS)"
+        required: false
+        default: "20000"
+      dur_tight_ms:
+        description: "Tight duration (full credit) in ms (SPOTIFY_FIELDS_DUR_TIGHT_MS)"
+        required: false
+        default: "5000"
+
+concurrency:
+  group: backfill_spotify_by_fields
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v5
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: ▶️ Run backfill_spotify_by_fields.py
+        env:
+          # Spotify API (must be set in repo/org secrets)
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
+          SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+
+          # Postgres DB creds
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+          # Matching knobs (tunable from dispatch inputs)
+          SPOTIFY_FIELDS_BATCH: ${{ github.event.inputs.batch_size }}
+          SPOTIFY_FIELDS_PAUSE_S: ${{ github.event.inputs.pause_s }}
+          SPOTIFY_FIELDS_TITLE_SIM_MIN: ${{ github.event.inputs.title_sim_min }}
+          SPOTIFY_FIELDS_ALBUM_SIM_MIN: ${{ github.event.inputs.album_sim_min }}
+          SPOTIFY_FIELDS_DUR_MAX_MS: ${{ github.event.inputs.dur_max_ms }}
+          SPOTIFY_FIELDS_DUR_TIGHT_MS: ${{ github.event.inputs.dur_tight_ms }}
+
+          # Ensure local imports like `utils.*` work
+          PYTHONPATH: "."
+
+        run: |
+          echo "Starting backfill by fields…"
+          python apple_private/backfill_spotify_by_fields.py
+          echo "Backfill complete."
