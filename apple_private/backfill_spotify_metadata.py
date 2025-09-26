@@ -46,7 +46,7 @@ def safe_spotify_call(func, *args, **kwargs):
 sp = get_spotify_client()
 MARKET = os.getenv("ISRC_LINK_MARKET", "US")
 
-def fetch_pending_tracks(limit=100):
+def fetch_pending_tracks():
     """Fetch Apple rows with spotify_track_id but missing metadata and not yet checked"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -55,9 +55,8 @@ def fetch_pending_tracks(limit=100):
         FROM apple_unique_track_ids
         WHERE spotify_track_id IS NOT NULL
           AND spotify_track_name IS NULL
-          AND checked_at_spotify_back_fill IS NULL
-        LIMIT %s;
-    """, (limit,))
+          AND checked_at_spotify_back_fill IS NULL;
+    """)
     rows = cur.fetchall()
     cur.close()
     conn.close()
@@ -112,7 +111,7 @@ def update_row(conn, apple_track_id, data, success=True):
     cur.close()
 
 def main():
-    pending = fetch_pending_tracks(limit=100)
+    pending = fetch_pending_tracks()
     log_event("apple_spotify_backfill", f"Found {len(pending)} tracks to backfill")
     if not pending:
         return
