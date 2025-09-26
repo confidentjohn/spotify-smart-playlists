@@ -139,7 +139,21 @@ def main():
             for apple_id, isrc, dur_ms, artist_name in rows:
                 try:
                     q = f"isrc:{isrc}"
-                    res = safe_spotify_call(sp, sp.search, q=q, type="track", limit=5, market=MARKET)
+                    # Try once; if token expired (401), refresh client and retry once
+                    try:
+                        res = safe_spotify_call(sp, sp.search, q=q, type="track", limit=5, market=MARKET)
+                    except SpotifyException as e:
+                        if getattr(e, 'http_status', None) == 401:
+                            log_event("isrc_link", "spotify token expired; refreshing and retrying once")
+                            try:
+                                sp = get_spotify_client()
+                                res = safe_spotify_call(sp, sp.search, q=q, type="track", limit=5, market=MARKET)
+                            except SpotifyException as e2:
+                                log_event("isrc_link", f"spotify token refresh failed: {e2}", level="error")
+                                sys.exit(1)
+                        else:
+                            log_event("isrc_link", f"spotify exception during search: {e}", level="error")
+                            sys.exit(1)
                     items = (res or {}).get("tracks", {}).get("items", []) or []
 
                     best_spotify_id = pick_best(items, dur_ms, artist_name)
@@ -152,8 +166,8 @@ def main():
                         log_event("isrc_link", f"link miss apple={apple_id} isrc={isrc} -> no_spotify")
 
                 except Exception as e:
-                    update_row(cur2, apple_id, None)
                     log_event("isrc_link", f"error apple={apple_id} isrc={isrc} {e}", level="error")
+                    sys.exit(1)
 
                 processed += 1
                 if processed % 100 == 0:
