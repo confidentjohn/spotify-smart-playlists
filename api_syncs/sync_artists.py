@@ -32,12 +32,18 @@ def main():
     cur = conn.cursor()
     now = datetime.utcnow()
 
-    # Get all unique artist IDs from albums and liked_tracks
+    # Get all unique artist IDs from albums, liked_tracks, spotify_play_history, apple_music_play_history, and plays
     cur.execute("""
         SELECT DISTINCT artist_id FROM (
             SELECT artist_id FROM albums
             UNION
             SELECT artist_id FROM liked_tracks
+            UNION
+            SELECT artist_id FROM spotify_play_history
+            UNION
+            SELECT artist_id FROM apple_music_play_history
+            UNION
+            SELECT artist_id FROM plays
         ) AS combined
     """)
     all_known_artist_ids = {row[0] for row in cur.fetchall()}
