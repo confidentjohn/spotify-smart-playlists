@@ -320,18 +320,11 @@ if __name__ == "__main__":
     log_event("build_unified_tracks", "Starting unified_tracks materialized view build...")
     conn = get_db_connection()
     cur = conn.cursor()
-    # Prefer refreshing the MV to preserve existing MV indexes
-    try:
-        cur.execute("REFRESH MATERIALIZED VIEW unified_tracks;")
-        conn.commit()
-        log_event("build_unified_tracks", "Refreshed existing unified_tracks MV.")
-    except Exception as e:
-        # If the MV does not exist or definition changed, recreate once
-        log_event("build_unified_tracks", f"REFRESH failed ({e}); recreating MV…")
-        cur.execute("DROP MATERIALIZED VIEW IF EXISTS unified_tracks;")
-        cur.execute(UNIFIED_TRACKS_VIEW)
-        conn.commit()
-        log_event("build_unified_tracks", "Recreated unified_tracks MV.")
+    # Force drop and recreate the materialized view each run
+    cur.execute("DROP MATERIALIZED VIEW IF EXISTS unified_tracks;")
+    cur.execute(UNIFIED_TRACKS_VIEW)
+    conn.commit()
+    log_event("build_unified_tracks", "Recreated unified_tracks MV.")
 
     # Ensure helpful indexes exist on the materialized view
     cur.execute(
@@ -352,10 +345,12 @@ if __name__ == "__main__":
         -- Plays & history: speed grouping/windowing and candidate scans
         CREATE INDEX IF NOT EXISTS idx_plays_track_time        ON plays(track_id, played_at);
         CREATE INDEX IF NOT EXISTS idx_hist_track_time         ON spotify_play_history(track_id, played_at);
+        CREATE INDEX IF NOT EXISTS idx_amph_track_time         ON apple_music_play_history(track_id, played_at);
 
         -- Functional indexes for fuzzy matching
         CREATE INDEX IF NOT EXISTS idx_plays_name_artist_lower ON plays(LOWER(track_name), LOWER(artist_name));
         CREATE INDEX IF NOT EXISTS idx_hist_name_artist_lower  ON spotify_play_history(LOWER(track_name), LOWER(artist_name));
+        CREATE INDEX IF NOT EXISTS idx_amph_name_artist_lower  ON apple_music_play_history(LOWER(track_name), LOWER(artist_name));
         CREATE INDEX IF NOT EXISTS idx_tracks_name_artist_lower ON tracks(LOWER(name), LOWER(artist));
 
         -- Common FK/lookup helpers
