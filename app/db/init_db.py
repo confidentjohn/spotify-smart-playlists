@@ -231,43 +231,6 @@ def run_init_db():
             print(f"🛠 Adding missing column to apple_music_play_history: {col_name}")
             cur.execute(f"ALTER TABLE apple_music_play_history ADD COLUMN {col_name} {col_type};")
 
-    # ─────────────────────────────────────────────
-    # Apple Music plays table (staging for Apple history import)
-    # ─────────────────────────────────────────────
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS apple_music_plays (
-        played_at TIMESTAMP NOT NULL,
-        hour_assigned INTEGER,
-        track_description TEXT,
-        apple_track_id BIGINT,
-        play_duration_ms INTEGER
-    );
-    """)
-
-    # Helpful indexes for lookups and joins
-    cur.execute("""
-    CREATE INDEX IF NOT EXISTS idx_apple_music_plays_track_id ON apple_music_plays(apple_track_id);
-    """)
-    cur.execute("""
-    CREATE INDEX IF NOT EXISTS idx_apple_music_plays_played_at ON apple_music_plays(played_at);
-    """)
-
-    # Ensure expected columns exist in apple_music_plays
-    expected_apple_columns = {
-        "played_at": "TIMESTAMP NOT NULL",
-        "hour_assigned": "INTEGER",
-        "track_description": "TEXT",
-        "apple_track_id": "BIGINT",
-        "play_duration_ms": "INTEGER",
-    }
-
-    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'apple_music_plays';")
-    existing_apple_columns = {row[0] for row in cur.fetchall()}
-
-    for col_name, col_type in expected_apple_columns.items():
-        if col_name not in existing_apple_columns:
-            print(f"🛠 Adding missing column to apple_music_plays: {col_name}")
-            cur.execute(f"ALTER TABLE apple_music_plays ADD COLUMN {col_name} {col_type};")
 
 
     # ─────────────────────────────────────────────
