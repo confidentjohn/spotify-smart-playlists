@@ -4,7 +4,7 @@ from utils.db_utils import get_db_connection
 
 UNIFIED_TRACKS_VIEW = """
 CREATE MATERIALIZED VIEW unified_tracks AS
--- Step 0: Merge plays + spotify_play_history into a unified plays set
+-- Step 0: Merge plays + spotify_play_history + apple_music_play_history into a unified plays set
 WITH all_plays AS (
     SELECT
         p.id,
@@ -36,6 +36,23 @@ WITH all_plays AS (
     FROM spotify_play_history sph
     WHERE sph.played_at IS NOT NULL
     AND sph.artist_id IS NOT NULL   -- exclude until backfilled
+
+    UNION ALL
+
+    SELECT
+        amph.id,
+        amph.track_id,
+        amph.track_name,
+        amph.artist_id,
+        amph.artist_name,
+        amph.album_id,
+        amph.album_name,
+        amph.album_type,
+        amph.duration_ms,
+        amph.played_at
+    FROM apple_music_play_history amph
+    WHERE amph.played_at IS NOT NULL
+    AND amph.artist_id IS NOT NULL
 ),
 
 -- Step 1: Merge tracks and liked_tracks into a unified base (library source)
