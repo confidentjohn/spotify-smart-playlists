@@ -204,14 +204,8 @@ def run_init_db():
         album_id TEXT,
         album_name TEXT,
         album_type TEXT,
-        checked_at TIMESTAMP,
-        UNIQUE(track_id, played_at)
+        checked_at TIMESTAMP
     );
-    """)
-
-    # Explicitly create a named unique index to mirror plays
-    cur.execute("""
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_apple_music_play_history_unique ON apple_music_play_history (track_id, played_at);
     """)
 
     # Ensure all expected columns exist in the apple_music_play_history table
