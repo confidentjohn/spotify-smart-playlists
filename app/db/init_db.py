@@ -190,6 +190,54 @@ def run_init_db():
             cur.execute(f"ALTER TABLE spotify_play_history ADD COLUMN {col_name} {col_type};")
 
     # ─────────────────────────────────────────────
+    # Apple Music play history table (mirror of spotify_play_history)
+    # ─────────────────────────────────────────────
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS apple_music_play_history (
+        id SERIAL PRIMARY KEY,
+        track_id TEXT,
+        played_at TIMESTAMP,
+        track_name TEXT,
+        artist_id TEXT,
+        duration_ms INTEGER,
+        artist_name TEXT,
+        album_id TEXT,
+        album_name TEXT,
+        album_type TEXT,
+        checked_at TIMESTAMP,
+        UNIQUE(track_id, played_at)
+    );
+    """)
+
+    # Explicitly create a named unique index to mirror plays
+    cur.execute("""
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_apple_music_play_history_unique ON apple_music_play_history (track_id, played_at);
+    """)
+
+    # Ensure all expected columns exist in the apple_music_play_history table
+    expected_apple_history_columns = {
+        "id": "SERIAL",
+        "track_id": "TEXT",
+        "played_at": "TIMESTAMP",
+        "track_name": "TEXT",
+        "artist_id": "TEXT",
+        "duration_ms": "INTEGER",
+        "artist_name": "TEXT",
+        "album_id": "TEXT",
+        "album_name": "TEXT",
+        "album_type": "TEXT",
+        "checked_at": "TIMESTAMP"
+    }
+
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'apple_music_play_history';")
+    existing_apple_history_columns = {row[0] for row in cur.fetchall()}
+
+    for col_name, col_type in expected_apple_history_columns.items():
+        if col_name not in existing_apple_history_columns:
+            print(f"🛠 Adding missing column to apple_music_play_history: {col_name}")
+            cur.execute(f"ALTER TABLE apple_music_play_history ADD COLUMN {col_name} {col_type};")
+
+    # ─────────────────────────────────────────────
     # Apple Music plays table (staging for Apple history import)
     # ─────────────────────────────────────────────
     cur.execute("""
