@@ -1,4 +1,4 @@
-name: 001 - Full Library Sync Lite (No Removals)
+name: 001b - Full Library Sync Lite (No Removals)
 
 on:
   workflow_dispatch:  
