@@ -1,4 +1,4 @@
-name: 001a - Full Library Sync
+name: 001d - Full Library Sync incl full liked tracks
 
 on:
   workflow_dispatch:      # Allow manual run too
