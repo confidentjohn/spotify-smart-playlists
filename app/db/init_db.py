@@ -351,6 +351,7 @@ def run_init_db():
     """)
 
 
+
     # ─────────────────────────────────────────────
     # Resolved fuzzy matches table
     # ─────────────────────────────────────────────
@@ -359,6 +360,42 @@ def run_init_db():
         track_id TEXT PRIMARY KEY,
         resolved_at TIMESTAMP DEFAULT NOW()
     );
+    """)
+
+    # ─────────────────────────────────────────────
+    # Track ID equivalents table (manual overrides)
+    # Allows mapping an "alias" Spotify track ID (seen in plays) to a canonical track ID
+    # ─────────────────────────────────────────────
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS track_id_equivalents (
+        alias_track_id TEXT PRIMARY KEY,
+        canonical_track_id TEXT NOT NULL,
+        reason TEXT,
+        created_by TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    """)
+
+    # Index to quickly find all aliases for a canonical track
+    cur.execute("""
+    CREATE INDEX IF NOT EXISTS ix_track_id_equivalents_canonical
+    ON track_id_equivalents(canonical_track_id);
+    """)
+
+    # Prevent self-mapping (alias == canonical). Add constraint safely if it doesn't already exist.
+    cur.execute("""
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM pg_constraint
+            WHERE conname = 'track_id_equivalents_not_self'
+        ) THEN
+            ALTER TABLE track_id_equivalents
+            ADD CONSTRAINT track_id_equivalents_not_self
+            CHECK (alias_track_id <> canonical_track_id);
+        END IF;
+    END $$;
     """)
 
     # ─────────────────────────────────────────────
