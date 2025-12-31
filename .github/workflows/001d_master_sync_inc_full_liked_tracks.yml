@@ -1,9 +1,19 @@
-name: 001a - Full Library Sync
+name: 001d - Full Library Sync incl full liked tracks
 
 on:
-  schedule:
-    - cron: '7 7 * * *'  # 7:07 AM UTC (2:07 AM EST / 3:07 AM EDT)
   workflow_dispatch:      # Allow manual run too
+  workflow_call:
+    secrets:
+      DB_HOST:
+        required: true
+      DB_PORT:
+        required: true
+      DB_NAME:
+        required: true
+      DB_USER:
+        required: true
+      DB_PASSWORD:
+        required: true
 
 jobs:
   sync-albums:
@@ -35,36 +45,17 @@ jobs:
 
   sync-liked-tracks:
     needs: sync-album-tracks
-    runs-on: ubuntu-latest
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v6
-
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.11'
-
-      - name: 📦 Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: 🚀 Run sync_liked_tracks (full on Sundays)
-        run: |
-          if [ "$(date -u +%u)" -eq 7 ]; then
-            PYTHONPATH=. python api_syncs/sync_liked_tracks_full.py
-          else
-            PYTHONPATH=. python api_syncs/sync_liked_tracks.py
-          fi
-        env:
-          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
-          SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    uses: ./.github/workflows/z03b_sync_liked_tracks_full.yml
+    secrets:
+      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+      SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
+      SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
   
   sync-artists:
     needs: sync-liked-tracks

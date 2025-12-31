@@ -3,6 +3,8 @@ from utils.logger import log_event
 from utils.db_utils import get_db_connection
 
 UNIFIED_TRACKS_VIEW = """
+DROP MATERIALIZED VIEW IF EXISTS unified_tracks;
+
 CREATE MATERIALIZED VIEW unified_tracks AS
 -- Step 0: Merge plays + spotify_play_history + apple_music_play_history into a unified plays set
 WITH all_plays AS (
@@ -270,9 +272,33 @@ all_base AS (
     SELECT * FROM non_library_base
 )
 
--- Final SELECT: Merge everything together
 SELECT
-    ab.*,
+    ab.track_id,
+    ab.track_name,
+    ab.artist,
+    ab.artist_id,
+    ab.album_id,
+    ab.album_name,
+    ab.album_type,
+    ab.album_image_url,
+    ab.release_date,
+    ab.genres,
+    ab.artist_image,
+    ab.track_number,
+    ab.disc_number,
+    combined_dates.earliest_added_at AS added_at,
+    combined_dates.earliest_added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS added_at_est,
+    ab.duration_ms,
+    ab.popularity,
+    ab.liked_at,
+    ab.liked_at_est,
+    ab.last_checked_at,
+    ab.is_playable,
+    ab.is_liked,
+    ab.excluded,
+    ab.track_source,
+    ab.library_origin,
+
     COALESCE(ps.library_play_count, 0) AS library_play_count,
     ps.library_play_count_first_played,
     ps.library_play_count_last_played,
@@ -289,15 +315,8 @@ SELECT
       COALESCE(pb.resume_play_count, 0),
     0) AS play_count,
 
-    LEAST(
-      ps.library_play_count_first_played,
-      fp.fuzz_play_count_first_played
-    ) AS first_played_at,
-
-    LEAST(
-      ps.library_play_count_first_played,
-      fp.fuzz_play_count_first_played
-    ) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS first_played_at_est,
+    first_play.first_played_at,
+    first_play.first_played_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS first_played_at_est,
 
     GREATEST(
       ps.library_play_count_last_played,
@@ -313,6 +332,27 @@ FROM all_base ab
 LEFT JOIN play_stats ps ON ps.track_id = ab.track_id
 LEFT JOIN play_behavior_stats pb ON pb.track_id = ab.track_id
 LEFT JOIN fuzzy_play_stats fp ON fp.track_id = ab.track_id
+CROSS JOIN LATERAL (
+    SELECT
+        NULLIF(
+            LEAST(
+                COALESCE(ps.library_play_count_first_played, 'infinity'::timestamptz),
+                COALESCE(fp.fuzz_play_count_first_played, 'infinity'::timestamptz)
+            ),
+            'infinity'::timestamptz
+        ) AS first_played_at
+) AS first_play
+CROSS JOIN LATERAL (
+    SELECT
+        NULLIF(
+            LEAST(
+                COALESCE(ab.added_at, 'infinity'::timestamptz),
+                COALESCE(ab.liked_at, 'infinity'::timestamptz),
+                COALESCE(first_play.first_played_at, 'infinity'::timestamptz)
+            ),
+            'infinity'::timestamptz
+        ) AS earliest_added_at
+) AS combined_dates
 ;
 """
 
