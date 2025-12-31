@@ -308,7 +308,16 @@ if os.environ.get("SPOTIFY_REFRESH_TOKEN"):
 else:
     log_event("startup", "⚠️ Skipping exclusions playlist check. No SPOTIFY_REFRESH_TOKEN found.", level="warning")
 
-from utils.diagnostics import get_duplicate_album_track_counts, get_fuzzy_matched_plays, get_outdated_albums, get_track_count_mismatches, get_pending_playlists
+from utils.diagnostics import (
+    get_duplicate_album_track_counts,
+    get_fuzzy_matched_plays,
+    get_outdated_albums,
+    get_track_count_mismatches,
+    get_pending_playlists,
+    get_track_equivalents,
+    upsert_track_equivalent as db_upsert_track_equivalent,
+    delete_track_equivalent as db_delete_track_equivalent,
+)
 
 @app.route("/diagnostics")
 def diagnostics():
@@ -316,6 +325,7 @@ def diagnostics():
     fuzzy_matches = get_fuzzy_matched_plays()
     outdated_albums = get_outdated_albums()
     mismatches = get_track_count_mismatches()
+    track_equivalents = get_track_equivalents()
     # This variable holds the data
     deletion_candidates = get_pending_playlists() 
     return render_template(
@@ -324,10 +334,59 @@ def diagnostics():
         fuzzy_matches=fuzzy_matches,
         outdated_albums=outdated_albums,
         mismatches=mismatches,
+        track_equivalents=track_equivalents,
         # CHANGE THIS LINE: The key must be 'pending_playlists'
         pending_playlists=deletion_candidates
     )
 
+# ─────────────────────────────────────────────────────
+# Track ID Equivalents (manual overrides)
+@app.route("/track-equivalents", methods=["POST"])
+@login_required
+def upsert_track_equivalent():
+    alias_track_id = (request.form.get("alias_track_id") or "").strip()
+    canonical_track_id = (request.form.get("canonical_track_id") or "").strip()
+    reason = (request.form.get("reason") or "").strip() or None
+
+    if not alias_track_id or not canonical_track_id:
+        flash("Alias Track ID and Canonical Track ID are required.", "error")
+        return redirect(url_for("diagnostics"))
+
+    if alias_track_id == canonical_track_id:
+        flash("Alias and Canonical cannot be the same.", "error")
+        return redirect(url_for("diagnostics"))
+
+    created_by = getattr(current_user, "id", None)
+    try:
+        db_upsert_track_equivalent(
+            alias_track_id=alias_track_id,
+            canonical_track_id=canonical_track_id,
+            reason=reason,
+            created_by=str(created_by) if created_by is not None else None,
+        )
+        flash("✅ Track equivalent saved.", "success")
+    except Exception as e:
+        flash(f"❌ Failed to save mapping: {e}", "error")
+
+    return redirect(url_for("diagnostics"))
+
+
+@app.route("/track-equivalents/delete", methods=["POST"])
+@login_required
+def delete_track_equivalent():
+    alias_track_id = (request.form.get("alias_track_id") or "").strip()
+
+    if not alias_track_id:
+        flash("Missing alias_track_id.", "error")
+        return redirect(url_for("diagnostics"))
+
+    try:
+        db_delete_track_equivalent(alias_track_id)
+        flash("🗑️ Track equivalent deleted.", "success")
+    except Exception as e:
+        flash(f"❌ Failed to delete mapping: {e}", "error")
+
+    return redirect(url_for("diagnostics"))
 
 # ─────────────────────────────────────────────────────
 # Route to resolve fuzzy matched plays

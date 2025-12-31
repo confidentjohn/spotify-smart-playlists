@@ -140,6 +140,92 @@
 <hr class="my-5">
 <div class="container mt-5 mb-5">
     <div class="text-center">
+        <h2 class="display-6 mb-4">🔁 Track ID Equivalents</h2>
+    </div>
+    <p class="text-center text-muted mb-4">
+      Use this to manually declare that an <strong>alias</strong> Spotify track ID (often seen in play history) should be treated as the
+      <strong>canonical</strong> track ID (the one you want to represent the track in your library/playlists).<br>
+      This is useful when Spotify plays a different ID for the same track name/artist and you cannot “fix” it by re-liking.
+    </p>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Add / Update Mapping</h5>
+            <form method="POST" action="{{ url_for('upsert_track_equivalent') }}">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Alias Track ID (played)</label>
+                  <input name="alias_track_id" class="form-control" placeholder="e.g. 56789" required>
+                  <div class="form-text">This is the track ID you see coming in from plays.</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Canonical Track ID (library)</label>
+                  <input name="canonical_track_id" class="form-control" placeholder="e.g. 12345" required>
+                  <div class="form-text">This is the track ID you want the system to treat as the “real” one.</div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Reason (optional)</label>
+                  <input name="reason" class="form-control" placeholder="e.g. Same recording; Spotify relinked to another ID">
+                </div>
+              </div>
+              <div class="text-center mt-3">
+                <button type="submit" class="btn btn-primary">Save mapping</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Existing Mappings</h5>
+
+            {% if track_equivalents %}
+              <div class="table-responsive">
+                <table class="table table-striped table-bordered table-sm">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th>Alias Track ID</th>
+                      <th>Canonical Track ID</th>
+                      <th>Reason</th>
+                      <th>Created By</th>
+                      <th class="text-nowrap">Created At</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in track_equivalents %}
+                      <tr>
+                        <td class="small text-monospace text-nowrap">{{ row[0] }}</td>
+                        <td class="small text-monospace text-nowrap">{{ row[1] }}</td>
+                        <td>{{ row[2] or '' }}</td>
+                        <td>{{ row[3] or '' }}</td>
+                        <td class="text-nowrap">{{ row[4] }}</td>
+                        <td>
+                          <form method="POST" action="{{ url_for('delete_track_equivalent') }}" style="display:inline;">
+                            <input type="hidden" name="alias_track_id" value="{{ row[0] }}">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this mapping?')">Delete</button>
+                          </form>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="alert alert-success text-center" role="alert">
+                ✅ No manual track equivalences yet.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+<hr class="my-5">
+<div class="container mt-5 mb-5">
+    <div class="text-center">
         <h2 class="display-6 mb-4">🕵️ Fuzzy Matched Plays</h2>
     </div>
     <p class="text-center text-muted mb-4">

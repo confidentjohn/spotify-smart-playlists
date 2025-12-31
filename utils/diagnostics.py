@@ -135,3 +135,63 @@ def get_pending_playlists():
     conn.close()
     return results
 
+# ─────────────────────────────────────────────
+# Track ID Equivalents (manual overrides)
+# ─────────────────────────────────────────────
+
+def get_track_equivalents():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT alias_track_id,
+               canonical_track_id,
+               reason,
+               created_by,
+               created_at
+        FROM track_id_equivalents
+        ORDER BY created_at DESC
+    """)
+
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return results
+
+
+def upsert_track_equivalent(alias_track_id, canonical_track_id, reason=None, created_by=None):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO track_id_equivalents (
+            alias_track_id,
+            canonical_track_id,
+            reason,
+            created_by
+        )
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (alias_track_id)
+        DO UPDATE SET
+            canonical_track_id = EXCLUDED.canonical_track_id,
+            reason = EXCLUDED.reason,
+            created_by = EXCLUDED.created_by
+    """, (alias_track_id, canonical_track_id, reason, created_by))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def delete_track_equivalent(alias_track_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "DELETE FROM track_id_equivalents WHERE alias_track_id = %s",
+        (alias_track_id,)
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
