@@ -1,4 +1,4 @@
-name: 001c - Plpaylist Update Only
+name: 001c - Playlist Update Only
 
 on:
   workflow_dispatch:  
