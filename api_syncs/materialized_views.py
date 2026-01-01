@@ -6,55 +6,31 @@ UNIFIED_TRACKS_VIEW = """
 DROP MATERIALIZED VIEW IF EXISTS unified_tracks;
 
 CREATE MATERIALIZED VIEW unified_tracks AS
--- Step 0: Merge plays + spotify_play_history + apple_music_play_history into a unified plays set
+-- Step 0: Use unified_plays_mv (canonicalized track_id via track_id_equivalents)
 WITH all_plays AS (
     SELECT
-        p.id,
-        p.track_id,
-        p.track_name,
-        p.artist_id,
-        p.artist_name,
-        p.album_id,
-        p.album_name,
-        p.album_type,
-        p.duration_ms,
-        p.played_at
-    FROM plays p
-    WHERE p.played_at IS NOT NULL
-
-    UNION ALL
-
-    SELECT
-        sph.id,
-        sph.track_id,
-        sph.track_name,
-        sph.artist_id,
-        sph.artist_name,
-        sph.album_id,
-        sph.album_name,
-        sph.album_type,
-        sph.duration_ms,
-        sph.played_at
-    FROM spotify_play_history sph
-    WHERE sph.played_at IS NOT NULL
-    AND sph.artist_id IS NOT NULL   -- exclude until backfilled
-
-    UNION ALL
-
-    SELECT
-        amph.id,
-        amph.track_id,
-        amph.track_name,
-        amph.artist_id,
-        amph.artist_name,
-        amph.album_id,
-        amph.album_name,
-        amph.album_type,
-        amph.duration_ms,
-        amph.played_at
-    FROM apple_music_play_history amph
-    WHERE amph.played_at IS NOT NULL
-    AND amph.artist_id IS NOT NULL
+        -- unified_plays_mv has no stable source id; generate a deterministic row id for internal matching
+        ROW_NUMBER() OVER (
+            ORDER BY
+                played_at,
+                track_id,
+                COALESCE(duration_ms, 0),
+                COALESCE(album_id, ''),
+                COALESCE(track_name, ''),
+                COALESCE(artist_name, '')
+        ) AS play_row_id,
+        track_id,
+        track_name,
+        artist_id,
+        artist_name,
+        album_id,
+        album_name,
+        album_type,
+        duration_ms,
+        played_at
+    FROM unified_plays_mv
+    WHERE played_at IS NOT NULL
+      AND track_id IS NOT NULL
 ),
 
 -- Step 1: Merge tracks and liked_tracks into a unified base (library source)
@@ -188,7 +164,7 @@ fuzzy_candidates AS (
 -- Step 6: Fuzzy match only those candidates
 fuzzy_matched_tracks AS (
   SELECT 
-    c.id        AS play_id,
+    c.play_row_id AS play_id,
     t.id        AS matched_track_id,
     c.played_at AS fuzzy_played_at
   FROM fuzzy_candidates c
@@ -217,7 +193,7 @@ non_library_candidates AS (
     WHERE p.track_id IS NOT NULL
       AND NOT EXISTS (SELECT 1 FROM tracks t WHERE t.id = p.track_id)
       AND NOT EXISTS (SELECT 1 FROM liked_tracks l WHERE l.track_id = p.track_id)
-      AND NOT EXISTS (SELECT 1 FROM fuzzy_matched_tracks fmt WHERE fmt.play_id = p.id)
+      AND NOT EXISTS (SELECT 1 FROM fuzzy_matched_tracks fmt WHERE fmt.play_id = p.play_row_id)
     GROUP BY p.track_id
 ),
 
@@ -383,6 +359,8 @@ if __name__ == "__main__":
     cur.execute(
         """
         -- Plays & history: speed grouping/windowing and candidate scans
+        CREATE INDEX IF NOT EXISTS idx_unified_plays_track_time ON unified_plays_mv(track_id, played_at);
+        CREATE INDEX IF NOT EXISTS idx_unified_plays_name_artist_lower ON unified_plays_mv(LOWER(track_name), LOWER(artist_name));
         CREATE INDEX IF NOT EXISTS idx_plays_track_time        ON plays(track_id, played_at);
         CREATE INDEX IF NOT EXISTS idx_hist_track_time         ON spotify_play_history(track_id, played_at);
         CREATE INDEX IF NOT EXISTS idx_amph_track_time         ON apple_music_play_history(track_id, played_at);

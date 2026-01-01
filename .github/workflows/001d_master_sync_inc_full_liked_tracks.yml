@@ -98,8 +98,18 @@ jobs:
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
-  build-unified-tracks:
+  build-unified-plays:
     needs: sync-exclusions
+    uses: ./.github/workflows/003_track_plays_unified.yml
+    secrets:
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}  
+  
+  build-unified-tracks:
+    needs: build-unified-plays
     uses: ./.github/workflows/z07_build_unified_tracks.yml
     secrets:
       DB_HOST: ${{ secrets.DB_HOST }}

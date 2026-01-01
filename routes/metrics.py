@@ -59,15 +59,10 @@ def collect_metrics_payload():
 
     # Plays Per Day (last 30 days)
     cur.execute("""
-        WITH all_plays AS (
-            SELECT played_at FROM plays WHERE played_at >= NOW() - INTERVAL '30 days'
-            UNION ALL
-            SELECT played_at FROM apple_music_play_history WHERE played_at >= NOW() - INTERVAL '30 days'
-            UNION ALL
-            SELECT played_at FROM spotify_play_history WHERE played_at >= NOW() - INTERVAL '30 days'
-        )
         SELECT DATE(played_at) AS play_date, COUNT(*) AS daily_play_count
-        FROM all_plays
+        FROM unified_plays_mv
+        WHERE played_at >= NOW() - INTERVAL '30 days'
+          AND played_at IS NOT NULL
         GROUP BY play_date
         ORDER BY play_date ASC;
     """)
@@ -114,18 +109,12 @@ def collect_metrics_payload():
 
     # Plays by Hour of Day
     cur.execute("""
-        WITH all_plays AS (
-            SELECT played_at FROM plays WHERE played_at IS NOT NULL
-            UNION ALL
-            SELECT played_at FROM apple_music_play_history WHERE played_at IS NOT NULL
-            UNION ALL
-            SELECT played_at FROM spotify_play_history WHERE played_at IS NOT NULL
-        ),
-        hourly AS (
+        WITH hourly AS (
             SELECT 
                 EXTRACT(HOUR FROM played_at AT TIME ZONE 'UTC' AT TIME ZONE 'US/Eastern') AS hour,
                 COUNT(*) AS count
-            FROM all_plays
+            FROM unified_plays_mv
+            WHERE played_at IS NOT NULL
             GROUP BY hour
         )
         SELECT 
@@ -141,15 +130,9 @@ def collect_metrics_payload():
 
     # Plays by Month
     cur.execute("""
-        WITH all_plays AS (
-            SELECT played_at FROM plays WHERE played_at IS NOT NULL
-            UNION ALL
-            SELECT played_at FROM apple_music_play_history WHERE played_at IS NOT NULL
-            UNION ALL
-            SELECT played_at FROM spotify_play_history WHERE played_at IS NOT NULL
-        )
         SELECT TO_CHAR(played_at, 'YYYY-MM') AS month, COUNT(*) AS total_plays
-        FROM all_plays
+        FROM unified_plays_mv
+        WHERE played_at IS NOT NULL
         GROUP BY TO_CHAR(played_at, 'YYYY-MM')
         ORDER BY month
     """)
@@ -287,19 +270,6 @@ def collect_metrics_payload():
 
     # Top Artist by Month
     cur.execute("""
-        WITH all_plays AS (
-            SELECT artist_name, played_at
-            FROM plays
-            WHERE played_at >= NOW() - INTERVAL '24 months'
-            UNION ALL
-            SELECT artist_name, played_at
-            FROM apple_music_play_history
-            WHERE played_at >= NOW() - INTERVAL '24 months'
-            UNION ALL
-            SELECT artist_name, played_at
-            FROM spotify_play_history
-            WHERE played_at >= NOW() - INTERVAL '24 months'
-        )
         SELECT artist_name, month, play_count
         FROM (
             SELECT
@@ -310,7 +280,10 @@ def collect_metrics_payload():
                     PARTITION BY TO_CHAR(played_at, 'YYYY-MM')
                     ORDER BY COUNT(*) DESC
                 ) AS rank
-            FROM all_plays
+            FROM unified_plays_mv
+            WHERE played_at >= NOW() - INTERVAL '24 months'
+              AND played_at IS NOT NULL
+              AND artist_name IS NOT NULL
             GROUP BY artist_name, TO_CHAR(played_at, 'YYYY-MM')
         ) ranked
         WHERE rank = 1
