@@ -33,74 +33,98 @@ WITH all_plays AS (
       AND track_id IS NOT NULL
 ),
 
--- Step 1: Merge tracks and liked_tracks into a unified base (library source)
+-- Step 1a: Canonicalize track IDs for tracks and liked_tracks using track_id_equivalents
+tracks_canon AS (
+    SELECT
+        t.*,
+        COALESCE(eq.canonical_track_id, t.id) AS canonical_track_id
+    FROM tracks t
+    LEFT JOIN track_id_equivalents eq
+      ON eq.alias_track_id = t.id
+),
+liked_tracks_canon AS (
+    SELECT
+        lt.*,
+        COALESCE(eq.canonical_track_id, lt.track_id) AS canonical_track_id
+    FROM liked_tracks lt
+    LEFT JOIN track_id_equivalents eq
+      ON eq.alias_track_id = lt.track_id
+),
+
+-- Step 1b: Merge tracks and liked_tracks into a unified base (library source), keyed by canonical track_id
 base_tracks AS (
     SELECT
-        t.id AS track_id,
-        t.name AS track_name,
-        COALESCE(a.artist, lt.track_artist) AS artist,
-        COALESCE(a.artist_id, lt.artist_id) AS artist_id,
-        t.album_id,
+        tc.canonical_track_id AS track_id,
+        tc.name AS track_name,
+        COALESCE(a.artist, ltc.track_artist) AS artist,
+        COALESCE(a.artist_id, ltc.artist_id) AS artist_id,
+        tc.album_id,
         a.name AS album_name,
         a.album_type,
         a.album_image_url,
         a.release_date::text AS release_date,         -- cast to text
         ar.genres,
         ar.image_url AS artist_image,
-        t.track_number,
-        COALESCE(t.disc_number, 1) AS disc_number,
-        t.added_at,                                    -- timestamptz
-        t.added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS added_at_est,
-        t.duration_ms,
-        COALESCE(lt.popularity, t.popularity) AS popularity,
-        lt.liked_at,                                   -- timestamptz
-        lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
-        lt.last_checked_at,                            -- timestamptz
+        tc.track_number,
+        COALESCE(tc.disc_number, 1) AS disc_number,
+        tc.added_at,                                    -- timestamptz
+        tc.added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS added_at_est,
+        tc.duration_ms,
+        COALESCE(ltc.popularity, tc.popularity) AS popularity,
+        ltc.liked_at,                                   -- timestamptz
+        ltc.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS liked_at_est,
+        ltc.last_checked_at,                            -- timestamptz
         ta.is_playable,
-        CASE WHEN lt.liked_at IS NOT NULL THEN TRUE ELSE FALSE END AS is_liked,
-        EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = t.id) AS excluded,
+        CASE WHEN ltc.liked_at IS NOT NULL THEN TRUE ELSE FALSE END AS is_liked,
+        EXISTS (
+            SELECT 1 FROM excluded_tracks et
+            WHERE et.track_id = tc.canonical_track_id OR et.track_id = tc.id
+        ) AS excluded,
         'library'::text AS track_source,
-        'album'::text   AS library_origin              -- NEW
-    FROM tracks t
-    JOIN albums a ON t.album_id = a.id
-    LEFT JOIN liked_tracks lt ON lt.track_id = t.id
-    LEFT JOIN track_availability ta ON ta.track_id = t.id
-    LEFT JOIN artists ar ON ar.id = COALESCE(a.artist_id, lt.artist_id)
+        'album'::text   AS library_origin
+    FROM tracks_canon tc
+    JOIN albums a ON tc.album_id = a.id
+    LEFT JOIN liked_tracks_canon ltc ON ltc.canonical_track_id = tc.canonical_track_id
+    LEFT JOIN track_availability ta ON ta.track_id = tc.canonical_track_id
+    LEFT JOIN artists ar ON ar.id = COALESCE(a.artist_id, ltc.artist_id)
     WHERE a.is_saved = TRUE
 
     UNION ALL
 
     SELECT
-        lt.track_id,
-        lt.track_name,
-        lt.track_artist,
-        lt.artist_id,
-        lt.album_id,
+        ltc.canonical_track_id AS track_id,
+        ltc.track_name,
+        ltc.track_artist,
+        ltc.artist_id,
+        ltc.album_id,
         NULL,
         NULL,
         NULL,
-        NULL::text AS release_date,                    -- match type to text
+        NULL::text AS release_date,
         ar.genres,
         ar.image_url AS artist_image,
         NULL,
         1,
-        lt.added_at,                                   -- timestamptz
-        lt.added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York',
-        lt.duration_ms,
-        COALESCE(lt.popularity, t.popularity) AS popularity,
-        lt.liked_at,                                   -- timestamptz
-        lt.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York',
-        lt.last_checked_at,                            -- timestamptz
+        ltc.added_at,
+        ltc.added_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York',
+        ltc.duration_ms,
+        COALESCE(ltc.popularity, tc.popularity) AS popularity,
+        ltc.liked_at,
+        ltc.liked_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York',
+        ltc.last_checked_at,
         ta.is_playable,
         TRUE,
-        EXISTS (SELECT 1 FROM excluded_tracks et WHERE et.track_id = lt.track_id),
+        EXISTS (
+            SELECT 1 FROM excluded_tracks et
+            WHERE et.track_id = ltc.canonical_track_id OR et.track_id = ltc.track_id
+        ),
         'library'::text    AS track_source,
-        'liked_only'::text AS library_origin           -- NEW
-    FROM liked_tracks lt
-    LEFT JOIN tracks t ON lt.track_id = t.id
-    LEFT JOIN track_availability ta ON ta.track_id = lt.track_id
-    LEFT JOIN artists ar ON ar.id = lt.artist_id
-    WHERE t.id IS NULL
+        'liked_only'::text AS library_origin
+    FROM liked_tracks_canon ltc
+    LEFT JOIN tracks_canon tc ON tc.canonical_track_id = ltc.canonical_track_id
+    LEFT JOIN track_availability ta ON ta.track_id = ltc.canonical_track_id
+    LEFT JOIN artists ar ON ar.id = ltc.artist_id
+    WHERE tc.id IS NULL
 ),
 
 -- Step 2: Aggregate play stats from exact track_id matches (library + non-library)
@@ -118,26 +142,26 @@ play_stats AS (
 classified_plays AS (
     SELECT
         p.track_id,
-        COALESCE(t.duration_ms, lt.duration_ms, p.duration_ms) AS duration_ms,
+        COALESCE(tc.duration_ms, ltc.duration_ms, p.duration_ms) AS duration_ms,
         LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at) AS prev_played,
         LEAD(p.track_id) OVER (ORDER BY p.played_at) AS next_track_id,
         LEAD(p.played_at) OVER (ORDER BY p.played_at) AS next_played,
         CASE
             WHEN LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at) IS NOT NULL
                  AND EXTRACT(EPOCH FROM (p.played_at - LAG(p.played_at) OVER (PARTITION BY p.track_id ORDER BY p.played_at))) * 1000
-                     < COALESCE(t.duration_ms, lt.duration_ms, p.duration_ms)
+                     < COALESCE(tc.duration_ms, ltc.duration_ms, p.duration_ms)
             THEN TRUE ELSE FALSE
         END AS is_resume,
         CASE
             WHEN LEAD(p.track_id) OVER (ORDER BY p.played_at) IS NOT NULL
                  AND LEAD(p.track_id) OVER (ORDER BY p.played_at) != p.track_id
                  AND EXTRACT(EPOCH FROM (LEAD(p.played_at) OVER (ORDER BY p.played_at) - p.played_at)) * 1000
-                     < (COALESCE(t.duration_ms, lt.duration_ms, p.duration_ms) * 0.3)
+                     < (COALESCE(tc.duration_ms, ltc.duration_ms, p.duration_ms) * 0.3)
             THEN TRUE ELSE FALSE
         END AS is_skipped
     FROM all_plays p
-    LEFT JOIN tracks t ON p.track_id = t.id
-    LEFT JOIN liked_tracks lt ON p.track_id = lt.track_id
+    LEFT JOIN tracks_canon tc ON tc.canonical_track_id = p.track_id
+    LEFT JOIN liked_tracks_canon ltc ON ltc.canonical_track_id = p.track_id
 ),
 
 -- Step 4: Aggregate resume/skip counts
@@ -154,11 +178,11 @@ play_behavior_stats AS (
 fuzzy_candidates AS (
   SELECT p.*
   FROM all_plays p
-  LEFT JOIN tracks t  ON t.id = p.track_id
-  LEFT JOIN liked_tracks l ON l.track_id = p.track_id
+  LEFT JOIN tracks_canon tc  ON tc.canonical_track_id = p.track_id
+  LEFT JOIN liked_tracks_canon ltc ON ltc.canonical_track_id = p.track_id
   WHERE p.track_id IS NOT NULL
-    AND t.id IS NULL
-    AND l.track_id IS NULL
+    AND tc.id IS NULL
+    AND ltc.track_id IS NULL
 ),
 
 -- Step 6: Fuzzy match only those candidates
@@ -191,8 +215,8 @@ non_library_candidates AS (
         p.track_id
     FROM all_plays p
     WHERE p.track_id IS NOT NULL
-      AND NOT EXISTS (SELECT 1 FROM tracks t WHERE t.id = p.track_id)
-      AND NOT EXISTS (SELECT 1 FROM liked_tracks l WHERE l.track_id = p.track_id)
+      AND NOT EXISTS (SELECT 1 FROM tracks_canon tc WHERE tc.canonical_track_id = p.track_id)
+      AND NOT EXISTS (SELECT 1 FROM liked_tracks_canon ltc WHERE ltc.canonical_track_id = p.track_id)
       AND NOT EXISTS (SELECT 1 FROM fuzzy_matched_tracks fmt WHERE fmt.play_id = p.play_row_id)
     GROUP BY p.track_id
 ),
