@@ -66,8 +66,6 @@ CREATE MATERIALIZED VIEW {MV_NAME} AS
 WITH all_plays AS (
     -- Primary plays table
     SELECT
-        'plays'::text AS source,
-        p.id::text AS source_row_id,
         p.track_id,
         p.track_name,
         p.artist_id,
@@ -84,8 +82,6 @@ WITH all_plays AS (
 
     -- Spotify play history table
     SELECT
-        'spotify_play_history'::text AS source,
-        sph.id::text AS source_row_id,
         sph.track_id,
         sph.track_name,
         sph.artist_id,
@@ -102,8 +98,6 @@ WITH all_plays AS (
 
     -- Apple Music play history table
     SELECT
-        'apple_music_play_history'::text AS source,
-        amph.id::text AS source_row_id,
         amph.track_id,
         amph.track_name,
         amph.artist_id,
@@ -118,8 +112,15 @@ WITH all_plays AS (
 ),
 resolved AS (
     SELECT
-        ap.*,
-        COALESCE(eq.canonical_track_id, ap.track_id) AS resolved_track_id
+        COALESCE(eq.canonical_track_id, ap.track_id) AS track_id,
+        ap.track_name,
+        ap.artist_id,
+        ap.artist_name,
+        ap.album_id,
+        ap.album_name,
+        ap.album_type,
+        ap.duration_ms,
+        ap.played_at
     FROM all_plays ap
     LEFT JOIN track_id_equivalents eq
       ON eq.alias_track_id = ap.track_id
@@ -153,14 +154,6 @@ def ensure_materialized_view(cur):
 
 def ensure_indexes(cur):
     """Create supporting indexes (safe to re-run)."""
-    # Unique index allows REFRESH CONCURRENTLY.
-    cur.execute(
-        f"""
-        CREATE UNIQUE INDEX IF NOT EXISTS ux_{MV_NAME}_source_row
-          ON {MV_NAME}(source, source_row_id);
-        """
-    )
-
     cur.execute(
         f"""
         CREATE INDEX IF NOT EXISTS ix_{MV_NAME}_played_at
@@ -170,21 +163,16 @@ def ensure_indexes(cur):
 
     cur.execute(
         f"""
-        CREATE INDEX IF NOT EXISTS ix_{MV_NAME}_resolved_track_id
-          ON {MV_NAME}(resolved_track_id);
+        CREATE INDEX IF NOT EXISTS ix_{MV_NAME}_track_id
+          ON {MV_NAME}(track_id);
         """
     )
 
 
 def refresh_materialized_view(cur):
-    """Refresh MV; try concurrently first, fall back to standard refresh."""
-    try:
-        cur.execute(f"REFRESH MATERIALIZED VIEW CONCURRENTLY {MV_NAME};")
-        return "concurrently"
-    except Exception:
-        # Fallback: standard refresh (blocking)
-        cur.execute(f"REFRESH MATERIALIZED VIEW {MV_NAME};")
-        return "standard"
+    """Refresh MV (standard refresh; no unique index for concurrent refresh)."""
+    cur.execute(f"REFRESH MATERIALIZED VIEW {MV_NAME};")
+    return "standard"
 
 
 def build_unified_plays_mv():
