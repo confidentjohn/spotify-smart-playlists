@@ -34,7 +34,7 @@ WITH all_plays AS (
 ),
 
 -- Step 1a: Canonicalize track IDs for tracks and liked_tracks using track_id_equivalents
-tracks_canon AS (
+tracks_canon_raw AS (
     SELECT
         t.*,
         COALESCE(eq.canonical_track_id, t.id) AS canonical_track_id
@@ -42,13 +42,35 @@ tracks_canon AS (
     LEFT JOIN track_id_equivalents eq
       ON eq.alias_track_id = t.id
 ),
-liked_tracks_canon AS (
+tracks_canon AS (
+    -- One row per canonical_track_id.
+    -- Prefer the true canonical row (id == canonical_track_id), then most recent added_at.
+    SELECT DISTINCT ON (canonical_track_id)
+        *
+    FROM tracks_canon_raw
+    ORDER BY
+        canonical_track_id,
+        (id = canonical_track_id) DESC,
+        added_at DESC NULLS LAST
+),
+liked_tracks_canon_raw AS (
     SELECT
         lt.*,
         COALESCE(eq.canonical_track_id, lt.track_id) AS canonical_track_id
     FROM liked_tracks lt
     LEFT JOIN track_id_equivalents eq
       ON eq.alias_track_id = lt.track_id
+),
+liked_tracks_canon AS (
+    -- One row per canonical_track_id.
+    -- Prefer a like that already matches the canonical id, then most recent liked_at.
+    SELECT DISTINCT ON (canonical_track_id)
+        *
+    FROM liked_tracks_canon_raw
+    ORDER BY
+        canonical_track_id,
+        (track_id = canonical_track_id) DESC,
+        liked_at DESC NULLS LAST
 ),
 
 -- Step 1b: Merge tracks and liked_tracks into a unified base (library source), keyed by canonical track_id
